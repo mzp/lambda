@@ -20,7 +20,8 @@ Inductive term : Set :=
     Var     : string -> term
   | Bool    : bool   -> term
   | Lambda  : string -> type -> term -> term
-  | Apply   : term  -> term -> term.
+  | Apply   : term  -> term -> term
+  | If      : term -> term -> term -> term.
 
 (* Eval *)
 Fixpoint subst (t : term) (old : string) (new : term) :=
@@ -32,20 +33,22 @@ Fixpoint subst (t : term) (old : string) (new : term) :=
         new
       else
       	t
-  | Lambda x type body =>
+    | Lambda x type body =>
       if string_dec x old then
       	t
       else
         Lambda x type (subst body old new)
-  | Apply t1 t2 =>
+    | Apply t1 t2 =>
       Apply (subst t1 old new) (subst t2 old new)
+    | If t1 t2 t3 =>
+      If (subst t1 old new) (subst t2 old new) (subst t3 old new)
   end.
 
 Definition is_value (t : term) :=
   match t with
     Var _   | Bool _  | Lambda _ _ _ =>
       true
-  | Apply _ _  =>
+  | Apply _ _  | If _ _ _ =>
       false
   end.
 
@@ -60,9 +63,16 @@ Fixpoint step (t : term) :=
       	Apply t1 (step t2)
   | Apply t1 t2 =>
       Apply (step t1) t2
+  | If (Bool true) t2 t3 =>
+      t2
+  | If (Bool false) t2 t3 =>
+      t3
+  | If t1 t2 t3 =>
+      If (step t1) t2 t3
   end.
 
-Fixpoint term_length (t : term) :=
+
+(*Fixpoint term_length (t : term) :=
   match t with
     Bool _ | Var _  =>
       1
@@ -70,7 +80,9 @@ Fixpoint term_length (t : term) :=
       1 + term_length body
   | Apply t1 t2 =>
       1 + term_length t1 + term_length t2
+  | If t1 t2 t3 =>
   end.
+*)
 
 (* typing *)
 Fixpoint assoc {A : Type} (x : string) (xs : list (string * A)) :=
@@ -104,6 +116,21 @@ Fixpoint typing (t : term) (tenv : list (string * type)) :=
 	  None
       | _ => None
     end
+  | If t1 t2 t3 =>
+    match typing t1 tenv with
+      Some BoolT =>
+      	match (typing t2 tenv, typing t3 tenv) with
+      	(Some ty1, Some ty2) =>
+          if type_dec ty1 ty2 then
+      	    Some ty1
+      	  else
+	    None
+      	| _ =>
+      	  None
+      	end
+    | _ =>
+        None
+    end
   end.
 
 (* theorem *)
@@ -111,7 +138,7 @@ Definition value (t : term) :=
   match t with
     Var _   | Bool _  | Lambda _ _ _ =>
       True
-  | Apply _ _  =>
+  | Apply _ _  | If _ _ _ =>
       False
   end.
 

@@ -60,3 +60,85 @@ Lemma ApplyRel:
       exists t : type,
       Some (FunT t r) = typing f tenv /\
       Some t = typing x tenv.
+Proof.
+intros until tenv.
+simpl in |- *.
+case (typing f tenv).
+ intro.
+ case t.
+  intro.
+  discriminate H.
+
+  case (typing x tenv).
+   intros t0 t1.
+   case (type_dec t1 t0).
+    intros.
+    exists t1.
+    rewrite e in |- *.
+    inversion H.
+    split; reflexivity; reflexivity.
+
+    intros; discriminate.
+
+   intros; discriminate.
+
+ intro; discriminate.
+Qed.
+
+Lemma TrueRel:
+  forall (tenv : list (string * type)) (r : type),
+  Some r = typing (Bool true) tenv -> r = BoolT.
+Proof.
+  intros until r.
+  simpl in |- *.
+  intro.
+  inversion H.
+  reflexivity.
+Qed.
+
+Lemma FalseRel:
+  forall (tenv : list (string * type)) (r : type),
+  Some r = typing (Bool false) tenv -> r = BoolT.
+Proof.
+  intros until r.
+  simpl in |- *.
+  intro.
+  inversion H.
+  reflexivity.
+Qed.
+
+Lemma IfRel:
+  forall (tenv : list (string * type)) (r : type) (t1 t2 t3 : term),
+  Some r = typing (If t1 t2 t3) tenv ->
+  Some BoolT = typing t1 tenv /\  Some r = typing t2 tenv /\  Some r = typing t3 tenv.
+Proof.
+intros until t3.
+simpl in |- *.
+case (typing t1 tenv).
+ intro; case t.
+  case (typing t2 tenv).
+   intro; case (typing t3 tenv).
+    intro t4; case (type_dec t0 t4).
+     intros.
+     rewrite e in |- *.
+     inversion H.
+     rewrite e in |- *.
+     split.
+      reflexivity.
+
+      split.
+       reflexivity.
+
+       reflexivity.
+
+     intros.
+     discriminate.
+
+    intro; discriminate.
+
+   intro; discriminate.
+
+  intros; discriminate.
+
+ intro; discriminate.
+Qed.
