@@ -11,6 +11,11 @@ Inductive type : Set :=
     BoolT : type
   | FunT  : type -> type -> type.
 
+Definition type_dec : forall t1 t2 : type, {t1 = t2} + {t1 <> t2}.
+Proof.
+  decide equality.
+Qed.
+
 Inductive term : Set :=
     Var     : string -> term
   | Bool    : bool   -> term
@@ -79,18 +84,6 @@ Fixpoint assoc {A : Type} (x : string) (xs : list (string * A)) :=
       	assoc x ys
   end.
 
-Definition type_dec : forall t1 t2 : type, {t1 = t2} + {t1 <> t2}.
-
-Fixpoint beq_type (t1 : type) (t2 : type) :=
-  match (t1,t2) with
-    (BoolT,BoolT) =>
-    true
-    | (FunT t1 t2, FunT t3 t4) => andb (beq_type t1 t3) (beq_type t2 t4)
-    | _ => false
-  end.
-
-
-
 Fixpoint typing (t : term) (tenv : list (string * type)) :=
   match t with
     Bool _ =>
@@ -105,7 +98,7 @@ Fixpoint typing (t : term) (tenv : list (string * type)) :=
   | Apply t1 t2 =>
     match (typing t1 tenv, typing t2 tenv) with
        (Some (FunT ty11 ty12),Some ty13) =>
-        if beq_type ty11 ty13 then
+        if type_dec ty11 ty13 then
           Some ty12
       	else
 	  None
