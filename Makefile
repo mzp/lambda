@@ -1,4 +1,4 @@
-Src := Lambda.v TypeInv.v TypeUniq.v CannonicalForm.v
+Src := Lambda.v TypeInv.v TypeUniq.v CannonicalForm.v Progress.v
 Obj := $(patsubst %.v,%.vo,$(Src))
 
 proof: $(Obj)

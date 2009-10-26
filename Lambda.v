@@ -52,37 +52,33 @@ Definition is_value (t : term) :=
       false
   end.
 
-Fixpoint step (t : term) :=
+Fixpoint eval (t : term) :=
   match t with
     Var _   | Bool _  | Lambda _ _ _ =>
-      t
-  | Apply (Lambda x _ body as t1) t2 =>
-      if is_value t2 then
-        subst body x t2
-      else
-      	Apply t1 (step t2)
+      None
   | Apply t1 t2 =>
-      Apply (step t1) t2
+      match eval t1 with
+        Some t => Some (Apply t t2)
+      | None =>
+      	 match eval t2 with
+	  Some t => Some (Apply t1 t)
+       	| None   =>
+      	   match t1 with
+	   Lambda x _ body => Some (subst body x t2)
+      	 | _ => None
+      	   end
+         end
+      end
   | If (Bool true) t2 t3 =>
-      t2
+      Some t2
   | If (Bool false) t2 t3 =>
-      t3
+      Some t3
   | If t1 t2 t3 =>
-      If (step t1) t2 t3
+      match eval t1 with
+      	None   => None
+      | Some t => Some (If t t2 t3)
+      end
   end.
-
-
-(*Fixpoint term_length (t : term) :=
-  match t with
-    Bool _ | Var _  =>
-      1
-  | Lambda _ _ body =>
-      1 + term_length body
-  | Apply t1 t2 =>
-      1 + term_length t1 + term_length t2
-  | If t1 t2 t3 =>
-  end.
-*)
 
 (* typing *)
 Fixpoint assoc {A : Type} (x : string) (xs : list (string * A)) :=
