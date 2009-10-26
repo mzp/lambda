@@ -1,0 +1,27 @@
+# ------------------------------------------------------------
+# rules
+# ------------------------------------------------------------
+
+public.Proof(files) =
+	vo=$(addsuffix .vo,$(files))
+	value $(vo)
+
+%.vo %.glob: %.v
+	coqc $<
+
+.SCANNER: %.vo: %.v
+	coqdep -I . $<
+
+# ------------------------------------------------------------
+FILES[] =
+	Lambda
+	Progress
+	TypeInv
+	TypeUniq
+	Progress
+
+.DEFAULT: $(Proof $(FILES))
+
+.PHONY: clean
+clean:
+	rm -f *.vo *.glob *~ *.omc .omakedb .omakedb.lock

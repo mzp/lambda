@@ -1,3 +1,7 @@
 *.vo
 *.glob
 *~
+*.omc
+.omakedb
+.omakedb.lock
+
