@@ -15,7 +15,7 @@ PREREQUIRED
 PROOF
 -----
 
- $ omake
+  $ omake
 
 
 AUTHOR
