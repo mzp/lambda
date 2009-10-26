@@ -1,6 +1,10 @@
-proof:
-	coqc Lambda.v
-	coqc TypeInv.v
-	coqc TypeUniq.v
+Src := Lambda.v TypeInv.v TypeUniq.v CannonicalForm.v
+Obj := $(patsubst %.v,%.vo,$(Src))
+
+proof: $(Obj)
+
+%.vo %.glob : %.v
+	coqc $<
+
 clean:
 	rm -f *~ *.vo *.glob
