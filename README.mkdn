@@ -1,0 +1,24 @@
+LCC(Lambda calculous on Coq)
+============================
+
+OVERVIEW
+--------
+LCC is a implementation of simple typed lambda calculous.
+
+
+PREREQUIRED
+-----------
+
+* Coq 8.2p1 or latter
+* omake
+
+PROOF
+-----
+
+ $ omake
+
+
+AUTHOR
+------
+MIZUNO "mzp" Hiroki (mzp@ocaml.jp)
+
