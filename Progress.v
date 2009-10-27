@@ -8,6 +8,14 @@ Require Import CannonicalForm.
 Definition WellTyped (t : term) : Prop :=
   exists r : type, Some r = typing t nil.
 
+(*Inductive WellTyped (t : term) : Prop :=
+  | F: forall b:bool, WellTyped (Bool b)
+  | G: forall t1 t2, WellTyped t1 -> WellTyped t2 -> WellTyped (Apply t1 t2)
+  | FunT  : type -> type -> type.
+*)
+
+
+
 Theorem Progress :
   forall (t : term),
     WellTyped t -> value t \/ exists t1 : term, eval t = Some t1.
