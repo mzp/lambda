@@ -18,7 +18,7 @@ Definition WellTyped (t : term) : Prop :=
 
 Theorem Progress :
   forall (t : term),
-    WellTyped t -> value t \/ exists t1 : term, eval t = Some t1.
+    WellTyped t -> value t \/ exists t1 : term, reduce t = Some t1.
 Proof.
 unfold WellTyped in |- *.
 induction t.
@@ -44,7 +44,7 @@ induction t.
 
    intros.
    simpl in |- *.
-   case (eval t2).
+   case (reduce t2).
     intro.
     exists (Apply (Lambda s t t1) t0).
     reflexivity.
@@ -58,7 +58,7 @@ induction t.
    simpl in |- *; intro; contradiction .
 
   simpl in |- *.
-  case (eval t1).
+  case (reduce t1).
    intros.
    exists (Apply t t2).
    reflexivity.
