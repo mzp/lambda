@@ -170,78 +170,134 @@ split.
   intro; reflexivity.
 Qed.
 
-(*Theorem reduce_prop :
-  forall t r : term, Some r = reduce t <-> Reducible t.
-split.
- generalize r.
- induction t.
-  simpl in |- *; intros; discriminate.
+Theorem reduce_prop1 :
+  forall (t r : term), Some r = reduce t -> Reducible t.
+Proof.
+intro t.
+induction t.
+ simpl in |- *; intros; discriminate.
 
-  simpl in |- *; intros; discriminate.
+ simpl in |- *; intros; discriminate.
 
-  simpl in |- *; intros; discriminate.
+ simpl in |- *; intros; discriminate.
 
-  intro.
-  simpl in |- *.
-  destruct (reduce t1).
+ intro.
+ simpl in |- *.
+ destruct (reduce t1).
+  intros.
+  apply RAppLeft.
+  eapply IHt1.
+  reflexivity.
+
+  destruct (reduce t2).
    intros.
-   apply RAppLeft.
+   apply RAppRight.
+   eapply IHt2.
+   reflexivity.
+
+   destruct t1.
+    intro; discriminate.
+
+    intro; discriminate.
+
+    intros; apply RLambda.
+
+    intro; discriminate.
+
+    intro; discriminate.
+
+ simpl in |- *.
+ destruct t1.
+  simpl in |- *.
+  intros; discriminate.
+
+  simpl in |- *.
+  intros; apply RIf.
+
+  simpl in |- *.
+  intros.
+  discriminate.
+
+  destruct (reduce (Apply t1_1 t1_2)).
+   intros.
+   apply RIfCond.
    eapply IHt1.
    reflexivity.
 
-   destruct (reduce t2).
-    intros.
-    apply RAppRight.
-    eapply IHt2.
-    reflexivity.
+   intros; discriminate.
 
-    destruct t1.
-     intro; discriminate.
+  destruct (reduce (If t1_1 t1_2 t1_3)).
+   intros.
+   apply RIfCond.
+   eapply IHt1.
+   reflexivity.
 
-     intro; discriminate.
+   intros; discriminate.
+Qed.
 
-     intro.
-     apply RLambda.
+Theorem reduce_prop2 :
+  forall (t : term), Reducible t -> exists r : term,Some r = reduce t.
+Proof.
+apply Reducible_ind.
+ intros.
+ simpl in |- *.
+ destruct (reduce t1).
+  exists (Apply t t2); reflexivity.
 
-     intro; discriminate.
+  destruct (reduce t2).
+   exists (Apply t1 t).
+   reflexivity.
 
-     intro; discriminate.
+   inversion H0; discriminate.
 
-  intro; simpl in |- *.
-  destruct t1.
-   simpl in |- *.
-   intro; discriminate.
+ intros.
+ simpl in |- *.
+ destruct (reduce t1).
+  exists (Apply t t2).
+  reflexivity.
 
-   intro.
-   apply RIf.
+  destruct (reduce t2).
+   exists (Apply t1 t); reflexivity.
 
-   simpl in |- *; intro; discriminate.
+   inversion H0.
+   discriminate.
 
-   destruct (reduce (Apply t1_1 t1_2)).
-    intro.
-    apply RIfCond.
-    eapply IHt1.
-    reflexivity.
+ intros.
+ simpl in |- *.
+ destruct (reduce arg).
+  exists (Apply (Lambda x ty body) t); reflexivity.
 
-    intro; discriminate.
+  exists (subst body x arg); reflexivity.
 
-   destruct (reduce (If t1_1 t1_2 t1_3)).
-    intro.
-    apply RIfCond.
-    eapply IHt1.
-    reflexivity.
+ intros.
+ generalize H.
+ simpl in |- *.
+ destruct t1.
+  inversion H.
 
-    intro; discriminate.
+  inversion H.
 
- generalize t.
- apply Reducible_ind.
-  <Your Tactic Text here>
-  <Your Tactic Text here>
-  <Your Tactic Text here>
-  <Your Tactic Text here>
-  <Your Tactic Text here>
-Error: Attempt to save an incomplete proof
-*)
+  inversion H.
+
+  intros.
+  inversion H0.
+  rewrite <- H2 in |- *.
+  exists (If x t2 t3).
+  reflexivity.
+
+  intro.
+  inversion H0.
+  rewrite <- H2 in |- *.
+  exists (If x t2 t3).
+  reflexivity.
+
+ intros.
+ simpl in |- *.
+ case b.
+  exists t1; reflexivity.
+
+  exists t2; reflexivity.
+Qed.
 
 Definition value (t : term) :=
   match t with
@@ -250,4 +306,3 @@ Definition value (t : term) :=
   | Apply _ _  | If _ _ _ =>
       False
   end.
-
