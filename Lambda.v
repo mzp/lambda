@@ -39,6 +39,24 @@ Inductive Reducible : term -> Prop :=
 
 Definition tenv := list (string * type).
 
+Fixpoint assoc {A : Type} (x : string) (xs : list (string * A)) :=
+  match xs with
+  | nil =>
+      None
+  | (key, v) :: ys =>
+      if string_dec x key then
+        Some v
+       else
+      	assoc x ys
+  end.
+
+Inductive Typed : term -> tenv -> type -> Prop :=
+  | TVar    : forall (tenv : tenv) (s : string) (ty : type), Some ty = assoc s tenv -> Typed (Var s) tenv ty
+  | TBool   : forall (tenv : tenv) (b : bool) , Typed (Bool b) tenv BoolT
+  | TLambda : forall (tenv : tenv) (x : string)      (a b : type) (body : term), Typed body ((x,a)::tenv) b -> Typed (Lambda x a body) tenv (FunT a b)
+  | TApply  : forall (tenv : tenv) (t1 t2 : term)    (a b : type), Typed t1 tenv (FunT a b) -> Typed t2 tenv a -> Typed (Apply t1 t2) tenv b
+  | TIf     : forall (tenv : tenv) (t1 t2 t3 : term) (ty : type), Typed t1 tenv BoolT -> Typed t2 tenv ty -> Typed t3 tenv ty -> Typed (If t1 t2 t3) tenv ty.
+
 (* function *)
 Fixpoint subst (t : term) (old : string) (new : term) :=
   match t with
@@ -97,17 +115,6 @@ Fixpoint reduce (t : term) :=
   end.
 
 (* typing *)
-Fixpoint assoc {A : Type} (x : string) (xs : list (string * A)) :=
-  match xs with
-  | nil =>
-      None
-  | (key, v) :: ys =>
-      if string_dec x key then
-        Some v
-       else
-      	assoc x ys
-  end.
-
 Fixpoint typing (t : term) (tenv : tenv) :=
   match t with
     Bool _ =>
@@ -299,6 +306,149 @@ apply Reducible_ind.
   exists t2; reflexivity.
 Qed.
 
+Theorem typed_prop1 :
+  forall (t : term) (tenv : tenv) (ty : type),
+    Typed t tenv ty -> Some ty = typing t tenv.
+Proof.
+apply Typed_ind.
+ intros.
+ simpl in |- *.
+ exact H.
+
+ intros.
+ simpl in |- *.
+ reflexivity.
+
+ intros.
+ simpl in |- *.
+ rewrite <- H0 in |- *.
+ reflexivity.
+
+ intros.
+ simpl in |- *.
+ rewrite <- H0 in |- *.
+ rewrite <- H2 in |- *.
+ destruct (type_dec a a).
+  reflexivity.
+
+  tauto.
+
+ intros.
+ simpl in |- *.
+ rewrite <- H0 in |- *.
+ rewrite <- H2 in |- *.
+ rewrite <- H4 in |- *.
+ destruct (type_dec ty ty).
+  reflexivity.
+
+  tauto.
+Qed.
+
+Theorem typed_prop2 :
+  forall (t : term)  (tenv : tenv) (ty : type),
+    Some ty = typing t tenv -> Typed t tenv ty.
+Proof.
+induction t.
+ simpl in |- *.
+ intros.
+ apply TVar.
+ exact H.
+
+ simpl in |- *.
+ intros.
+ inversion H.
+ apply TBool.
+
+ simpl in |- *.
+ intro.
+ intro.
+ specialize (IHt ((s, t) :: tenv0)).
+ destruct (typing t0 ((s, t) :: tenv0)).
+  intros.
+  inversion H.
+  apply TLambda.
+  specialize (IHt t1).
+  tauto.
+
+  intro; discriminate.
+
+ intro.
+ specialize (IHt1 tenv0).
+ specialize (IHt2 tenv0).
+ simpl in |- *.
+ destruct (typing t1 tenv0).
+  destruct t.
+   intros; discriminate.
+
+   destruct (typing t2 tenv0).
+    destruct (type_dec t3 t).
+     rewrite <- e in IHt2.
+     specialize (IHt1 (FunT t3 t4)).
+     intros.
+     specialize (IHt2 t3).
+     assert (Typed t1 tenv0 (FunT t3 t4)).
+      apply IHt1.
+      reflexivity.
+
+      assert (Typed t2 tenv0 t3).
+       apply IHt2.
+       reflexivity.
+
+       generalize H1.
+       generalize H0.
+       inversion H.
+       apply TApply.
+
+     intros; discriminate.
+
+    intros; discriminate.
+
+  intros; discriminate.
+
+ intros tenv0 ty.
+ simpl in |- *.
+ specialize (IHt1 tenv0).
+ specialize (IHt2 tenv0).
+ specialize (IHt3 tenv0).
+ destruct (typing t1 tenv0).
+  destruct t.
+   destruct (typing t2 tenv0).
+    destruct (typing t3 tenv0).
+     destruct (type_dec t t0).
+      intro.
+      specialize (IHt1 BoolT).
+      specialize (IHt2 t0).
+      specialize (IHt3 t0).
+      inversion H.
+      rewrite e in |- *.
+      assert (Typed t1 tenv0 BoolT).
+       apply IHt1.
+       reflexivity.
+
+       assert (Typed t2 tenv0 t0).
+        apply IHt2.
+        rewrite e in |- *.
+        reflexivity.
+
+        assert (Typed t3 tenv0 t0).
+         apply IHt3.
+         reflexivity.
+
+         generalize H0, H2, H3.
+         apply TIf.
+
+      intros; discriminate.
+
+     intros; discriminate.
+
+    intros; discriminate.
+
+   intros; discriminate.
+
+  intros; discriminate.
+Qed.
+
+(* obsolute *)
 Definition value (t : term) :=
   match t with
     Var _   | Bool _  | Lambda _ _ _ =>
