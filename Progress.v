@@ -9,14 +9,18 @@ Theorem Progress :
     Typed t nil r -> Value t \/ Reducible t.
 Proof.
  induction t.
+ (* var *)
  intros.
  left; apply ValVar.
 
+ (* bool *)
  left; apply ValBool.
 
+ (* lambda *)
  intros.
  left; apply ValLambda.
 
+ (* apply *)
  intros.
  right.
  inversion H.
@@ -25,6 +29,7 @@ Proof.
  apply IHt2 in H5.
  case H2.
   case H5.
+   (* App t1 t2, for t1 = Lambda x t body *)
    intros.
    assert (exists s : string, exists body : term, t1 = Lambda s a body).
     generalize H7, H8.
@@ -34,14 +39,17 @@ Proof.
     rewrite H12 in |- *.
     apply RLambda.
 
+   (* App t1 t2, for t2 is reducible *)
    intros.
    generalize H6.
    apply RAppRight.
 
+  (* App t1 t2, for t1 is reducible *)
   intros.
   generalize H6.
   apply RAppLeft.
 
+ (* if *)
  intros.
  right.
  inversion H.
