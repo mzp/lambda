@@ -31,8 +31,7 @@ inversion H.
 reflexivity.
 Qed.
 
-
-
+(* Lambda *)
 Lemma LambdaRel :
   forall (tenv : tenv) (r a : type) (x : string) (body : term),
   Typed (Lambda x a body) tenv r ->
@@ -47,6 +46,7 @@ split.
  reflexivity.
 Qed.
 
+(* Apply *)
 Lemma ApplyRel:
   forall (tenv : tenv) (r : type) (f x : term),
     Typed (Apply f x) tenv r ->
@@ -61,6 +61,7 @@ split.
  exact H5.
 Qed.
 
+(* If *)
 Lemma IfRel:
   forall (tenv : tenv) (r : type) (t1 t2 t3 : term),
     Typed (If t1 t2 t3) tenv r ->
