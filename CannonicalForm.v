@@ -25,7 +25,7 @@ inversion H.
  inversion H0.
 Qed.
 
-Lemma lamda_can :
+Lemma lambda_can :
   forall (v : term) (ty1 ty2 : type),
     Value v -> Typed v nil (FunT ty1 ty2) ->
       exists x : string, exists body : term, v = Lambda x ty1 body.
