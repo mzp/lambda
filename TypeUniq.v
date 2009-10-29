@@ -2,80 +2,46 @@ Require Import Lambda.
 Require Import List.
 Require Import String.
 
-Theorem type_uniq :
-  forall (tenv : list (string * type)) (r1 r2 : type) (t : term),
-    Some r1 = typing t tenv /\ Some r2 = typing t tenv ->
-      r1 = r2.
+Theorem TypeUniq :
+  forall (t : term) (tenv : tenv) (r1 r2 : type),
+    Typed t tenv r1 -> Typed t tenv r2 -> r1 = r2.
 Proof.
-destruct t.
- induction tenv.
-  simpl in |- *.
-  intros; decompose [and] H; discriminate.
-
-  simpl in IHtenv.
-  simpl in |- *.
-  destruct a.
-  case (string_dec s s0).
-   intros; decompose [and] H; inversion H0; inversion H1.
-   reflexivity.
-
-   intro.
-   exact IHtenv.
-
- simpl in |- *.
- intros; decompose [and] H.
- inversion H0; inversion H1.
+induction t.
+ intros.
+ inversion H.
+ inversion H0.
+ rewrite <- H6 in H2.
+ inversion H2.
  reflexivity.
 
- simpl in |- *.
- case (typing t0 ((s, t) :: tenv)).
-  intros.
-  decompose [and] H.
-  inversion H0; inversion H1.
+ intros.
+ inversion H.
+ inversion H0.
+ reflexivity.
+
+ intros.
+ inversion H.
+ inversion H0.
+ assert (b = b0).
+  generalize H6, H12.
+  apply IHt.
+
+  rewrite H13 in |- *.
   reflexivity.
 
-  intro; decompose [and] H.
-  discriminate.
+ intros.
+ inversion H.
+ inversion H0.
+ assert (FunT a r1 = FunT a0 r2).
+  generalize H3, H9.
+  apply IHt1.
 
- simpl in |- *.
- case (typing t1 tenv).
-  intro; case t.
-   intro; decompose [and] H.
-   discriminate.
+  inversion H13.
+  reflexivity.
 
-   case (typing t2 tenv).
-    intros t0 t3.
-    case (type_dec t3 t0).
-     intros.
-     inversion H.
-     inversion H0.
-     inversion H1.
-     reflexivity.
-
-     intros; decompose [and] H; discriminate.
-
-    intros; decompose [and] H; discriminate.
-
-  intros; decompose [and] H; discriminate.
-
- simpl in |- *.
- case (typing t1 tenv).
-  intro; case t.
-   case (typing t2 tenv).
-    case (typing t3 tenv).
-     intros t0 t4; case (type_dec t4 t0).
-      intros.
-      inversion H.
-      inversion H0; inversion H1.
-      reflexivity.
-
-      intros; decompose [and] H; discriminate.
-
-     intros; decompose [and] H; discriminate.
-
-    intros; decompose [and] H; discriminate.
-
-   intros; decompose [and] H; discriminate.
-
-  intros; decompose [and] H; discriminate.
+ intros.
+ inversion H.
+ inversion H0.
+ generalize H7, H15.
+ apply IHt2.
 Qed.
