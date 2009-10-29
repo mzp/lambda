@@ -3,7 +3,7 @@ Require Import List.
 Require Import String.
 
 (* For Var *)
-Lemma VarRel :
+Lemma var_rel :
   forall (tenv : tenv) (r : type) (x : string),
   Typed (Var x) tenv r -> Some r = assoc x tenv.
 Proof.
@@ -13,7 +13,7 @@ exact H1.
 Qed.
 
 (* For Bool *)
-Lemma TrueRel:
+Lemma true_rel:
   forall  (tenv : tenv) (r : type) ,
   Typed  (Bool true) tenv r -> r = BoolT.
 Proof.
@@ -22,7 +22,7 @@ inversion H.
 reflexivity.
 Qed.
 
-Lemma FalseRel:
+Lemma false_rel:
   forall (tenv : tenv) (r : type),
   Typed  (Bool false) tenv r -> r = BoolT.
 Proof.
@@ -32,7 +32,7 @@ reflexivity.
 Qed.
 
 (* Lambda *)
-Lemma LambdaRel :
+Lemma lambda_rel :
   forall (tenv : tenv) (r a : type) (x : string) (body : term),
   Typed (Lambda x a body) tenv r ->
       exists b : type, Typed body ((x,a)::tenv) b /\ r = FunT a b.
@@ -47,7 +47,7 @@ split.
 Qed.
 
 (* Apply *)
-Lemma ApplyRel:
+Lemma apply_rel :
   forall (tenv : tenv) (r : type) (f x : term),
     Typed (Apply f x) tenv r ->
       exists t : type,  Typed f tenv (FunT t r) /\ Typed x tenv t.
@@ -62,7 +62,7 @@ split.
 Qed.
 
 (* If *)
-Lemma IfRel:
+Lemma if_rel:
   forall (tenv : tenv) (r : type) (t1 t2 t3 : term),
     Typed (If t1 t2 t3) tenv r ->
       Typed t1 tenv BoolT /\  Typed t2 tenv r /\ Typed t3 tenv r.

@@ -2,68 +2,46 @@ Require Import List.
 Require Import String.
 Require Import Lambda.
 
-Lemma BoolCan :
+Lemma bool_can :
   forall (v : term),
-  value v /\ Some BoolT = typing v nil -> v = Bool true \/ v = Bool false.
+    Value v -> Typed v nil BoolT ->
+      v = Bool true \/ v = Bool false.
 Proof.
-intro.
-destruct v.
- simpl in |- *.
- intro; decompose [and] H.
+intros.
+inversion H.
+ rewrite <- H1 in H0.
+ inversion H0.
+ simpl in H3.
  discriminate.
 
- simpl in |- *.
- intros; destruct b.
-  left; reflexivity; right; reflexivity.
-
-  right; reflexivity.
-
- simpl in |- *.
- case (typing v ((s, t) :: nil)).
-  intros.
-  decompose [and] H.
-  discriminate.
-
-  intros; decompose [and] H.
-  discriminate.
-
- simpl in |- *.
- intro.
- decompose [and] H.
- contradiction .
-
- simpl in |- *.
- intro.
- decompose [and] H.
- contradiction .
-Qed.
-
-Lemma LambdaCan :
-  forall (v : term) (ty1 ty2 : type),
-  value v /\ Some (FunT ty1 ty2) = typing v nil ->
-  exists x : string, exists body : term, v = Lambda x ty1 body.
-Proof.
-intros v ty1 ty2.
-destruct v.
- simpl in |- *.
- intros; decompose [and] H; discriminate.
-
- simpl in |- *.
- intros; decompose [and] H; discriminate.
-
- simpl in |- *.
- case (typing v ((s, t) :: nil)).
-  intros.
-  inversion H.
-  inversion H1.
-  exists s.
-  exists v.
+ destruct b.
+  left.
   reflexivity.
 
-  intro; decompose [and] H; discriminate.
+  right.
+  reflexivity.
 
- simpl in |- *; intro; decompose [and] H.
- contradiction .
+ rewrite <- H1 in H0.
+ inversion H0.
+Qed.
 
- simpl in |- *; intro; decompose [and] H; contradiction .
+Lemma lamda_can :
+  forall (v : term) (ty1 ty2 : type),
+    Value v -> Typed v nil (FunT ty1 ty2) ->
+      exists x : string, exists body : term, v = Lambda x ty1 body.
+Proof.
+intros.
+inversion H.
+ rewrite <- H1 in H0.
+ inversion H0.
+ simpl in H3.
+ discriminate.
+
+ rewrite <- H1 in H0.
+ inversion H0.
+
+ exists x; exists body.
+ rewrite <- H1 in H0.
+ inversion H0.
+ reflexivity.
 Qed.
