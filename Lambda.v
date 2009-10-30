@@ -66,17 +66,17 @@ Module StrDec : DecidableType with Definition t := string.
   Qed.
 End StrDec.
 
-Module Map := FMapWeakList.Make StrDec.
-Definition tenv := Map.t type.
-Definition empty_env : tenv := Map.empty type.
+Module TEnv := FMapWeakList.Make StrDec.
+Definition tenv := TEnv.t type.
+Definition empty_env : tenv := TEnv.empty type.
 
 Inductive Typed : term -> tenv -> type -> Prop :=
   | TVar    : forall (tenv : tenv) (s : string) (ty : type),
-                Some ty = Map.find s tenv -> Typed (Var s) tenv ty
+                Some ty = TEnv.find s tenv -> Typed (Var s) tenv ty
   | TBool   : forall (tenv : tenv) (b : bool) ,
                 Typed (Bool b) tenv BoolT
   | TLambda : forall (tenv : tenv) (x : string) (a b : type) (body : term),
-                Typed body (Map.add x a tenv) b -> Typed (Lambda x a body) tenv (FunT a b)
+                Typed body (TEnv.add x a tenv) b -> Typed (Lambda x a body) tenv (FunT a b)
   | TApply  : forall (tenv : tenv) (t1 t2 : term) (a b : type),
                 Typed t1 tenv (FunT a b) -> Typed t2 tenv a -> Typed (Apply t1 t2) tenv b
   | TIf     : forall (tenv : tenv) (t1 t2 t3 : term) (ty : type),
