@@ -65,9 +65,9 @@ Fixpoint typing (t : term) (tenv : tenv) :=
     Bool _ =>
       Some BoolT
   | Var x =>
-      assoc x tenv
+      Map.find x tenv
   | Lambda x ty1 body =>
-    match typing body ((x,ty1)::tenv) with
+    match typing body (Map.add x ty1 tenv) with
       None => None
     | Some ty2 => Some (FunT ty1 ty2)
    end
@@ -307,8 +307,8 @@ induction t.
  simpl in |- *.
  intro.
  intro.
- specialize (IHt ((s, t) :: tenv)).
- destruct (typing t0 ((s, t) :: tenv)).
+ specialize (IHt (Map.add s t tenv)).
+ destruct (typing t0 (Map.add s t tenv)).
   intros.
   inversion H.
   apply TLambda.

@@ -5,6 +5,9 @@ Require Import Recdef.
 Require Import List.
 Require Import String.
 Require Import Bool.DecBool.
+Require Import FSets.FMapWeakList.
+Require Import FSets.FMapInterface.
+Require Import Logic.DecidableType.
 
 (* simple type *)
 Inductive type : Set :=
@@ -24,7 +27,7 @@ Proof.
   decide equality.
 Qed.
 
-(* Prop *)
+(* reduce *)
 Inductive Value  : term -> Prop :=
   | ValVar    : forall s : string, Value (Var s)
   | ValBool   : forall b : bool,   Value (Bool b)
@@ -37,32 +40,44 @@ Inductive Reducible : term -> Prop :=
   | RIfCond   : forall (t1 t2 t3 : term), Reducible t1 -> Reducible (If t1 t2 t3)
   | RIf       : forall (b : bool) (t1 t2 : term), Reducible (If (Bool b) t1 t2).
 
-Definition tenv := list (string * type).
+(* type *)
+Module StrDec : DecidableType with Definition t := string.
+  Definition t := string.
+  Definition eq_dec := string_dec.
+  Definition eq (x y : string) := x = y.
 
-Fixpoint assoc {A : Type} (x : string) (xs : list (string * A)) :=
-  match xs with
-  | nil =>
-      None
-  | (key, v) :: ys =>
-      if string_dec x key then
-        Some v
-       else
-      	assoc x ys
-  end.
+  Theorem eq_refl : forall x : t, eq x x.
+  Proof.
+    unfold eq.
+    intros.
+    reflexivity.
+  Qed.
+
+  Theorem eq_sym : forall x y : t, eq x y -> eq y x.
+  Proof.
+    unfold eq.
+    apply sym_eq.
+  Qed.
+
+  Theorem eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
+  Proof.
+    unfold eq.
+    apply trans_eq.
+  Qed.
+End StrDec.
+
+Module Map := FMapWeakList.Make StrDec.
+Definition tenv := Map.t type.
+Definition empty_env : tenv := Map.empty type.
 
 Inductive Typed : term -> tenv -> type -> Prop :=
-  | TVar    : forall (tenv : tenv) (s : string) (ty : type), Some ty = assoc s tenv -> Typed (Var s) tenv ty
-  | TBool   : forall (tenv : tenv) (b : bool) , Typed (Bool b) tenv BoolT
-  | TLambda : forall (tenv : tenv) (x : string)      (a b : type) (body : term), Typed body ((x,a)::tenv) b -> Typed (Lambda x a body) tenv (FunT a b)
-  | TApply  : forall (tenv : tenv) (t1 t2 : term)    (a b : type), Typed t1 tenv (FunT a b) -> Typed t2 tenv a -> Typed (Apply t1 t2) tenv b
-  | TIf     : forall (tenv : tenv) (t1 t2 t3 : term) (ty : type), Typed t1 tenv BoolT -> Typed t2 tenv ty -> Typed t3 tenv ty -> Typed (If t1 t2 t3) tenv ty.
-
-
-(* obsolute *)
-Definition value (t : term) :=
-  match t with
-    Var _   | Bool _  | Lambda _ _ _ =>
-      True
-  | Apply _ _  | If _ _ _ =>
-      False
-  end.
+  | TVar    : forall (tenv : tenv) (s : string) (ty : type),
+                Some ty = Map.find s tenv -> Typed (Var s) tenv ty
+  | TBool   : forall (tenv : tenv) (b : bool) ,
+                Typed (Bool b) tenv BoolT
+  | TLambda : forall (tenv : tenv) (x : string) (a b : type) (body : term),
+                Typed body (Map.add x a tenv) b -> Typed (Lambda x a body) tenv (FunT a b)
+  | TApply  : forall (tenv : tenv) (t1 t2 : term) (a b : type),
+                Typed t1 tenv (FunT a b) -> Typed t2 tenv a -> Typed (Apply t1 t2) tenv b
+  | TIf     : forall (tenv : tenv) (t1 t2 t3 : term) (ty : type),
+                Typed t1 tenv BoolT -> Typed t2 tenv ty -> Typed t3 tenv ty -> Typed (If t1 t2 t3) tenv ty.

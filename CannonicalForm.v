@@ -4,7 +4,7 @@ Require Import Lambda.
 
 Lemma bool_can :
   forall (v : term),
-    Value v -> Typed v nil BoolT ->
+    Value v -> Typed v empty_env BoolT ->
       v = Bool true \/ v = Bool false.
 Proof.
 intros.
@@ -27,7 +27,7 @@ Qed.
 
 Lemma lambda_can :
   forall (v : term) (ty1 ty2 : type),
-    Value v -> Typed v nil (FunT ty1 ty2) ->
+    Value v -> Typed v empty_env (FunT ty1 ty2) ->
       exists x : string, exists body : term, v = Lambda x ty1 body.
 Proof.
 intros.

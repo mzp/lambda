@@ -1,12 +1,11 @@
 Require Import List.
 Require Import String.
-
 Require Import Lambda.
 Require Import CannonicalForm.
 
 Theorem Progress :
   forall (t : term) (r : type),
-    Typed t nil r -> Value t \/ Reducible t.
+    Typed t empty_env r -> Value t \/ Reducible t.
 Proof.
  induction t.
  (* var *)

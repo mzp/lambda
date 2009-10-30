@@ -5,7 +5,7 @@ Require Import String.
 (* For Var *)
 Lemma var_rel :
   forall (tenv : tenv) (r : type) (x : string),
-  Typed (Var x) tenv r -> Some r = assoc x tenv.
+  Typed (Var x) tenv r -> Some r = Map.find x tenv.
 Proof.
 intros.
 inversion H.
@@ -35,7 +35,7 @@ Qed.
 Lemma lambda_rel :
   forall (tenv : tenv) (r a : type) (x : string) (body : term),
   Typed (Lambda x a body) tenv r ->
-      exists b : type, Typed body ((x,a)::tenv) b /\ r = FunT a b.
+      exists b : type, Typed body (Map.add x a tenv) b /\ r = FunT a b.
 Proof.
 intros.
 inversion H.

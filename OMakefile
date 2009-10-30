@@ -18,8 +18,8 @@ FILES[] =
 	Progress
 	TypeInv
 	TypeUniq
-	Progress
 	Implement
+#(*	Permutation*)
 
 .DEFAULT: $(Proof $(FILES))
 
