@@ -5,7 +5,7 @@ Require Import String.
 (* For Var *)
 Lemma var_rel :
   forall (tenv : tenv) (r : type) (x : string),
-  Typed (Var x) tenv r -> Some r = TEnv.find x tenv.
+  Typed (Var x) tenv r -> TEnv.MapsTo x r tenv.
 Proof.
 intros.
 inversion H.

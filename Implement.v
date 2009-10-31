@@ -253,11 +253,11 @@ Qed.
 
 Theorem typed_prop1 :
   forall (t : term) (tenv : tenv) (ty : type),
-    Typed t tenv ty -> Some ty = typing t tenv.
+    Typed t tenv ty -> typing t tenv = Some ty.
 Proof.
 apply Typed_ind.
  intros.
- simpl in |- *.
+ apply TEnv.find_1.
  exact H.
 
  intros.
@@ -266,13 +266,13 @@ apply Typed_ind.
 
  intros.
  simpl in |- *.
- rewrite <- H0 in |- *.
+ rewrite H0 in |- *.
  reflexivity.
 
  intros.
  simpl in |- *.
- rewrite <- H0 in |- *.
- rewrite <- H2 in |- *.
+ rewrite H0 in |- *.
+ rewrite H2 in |- *.
  destruct (type_dec a a).
   reflexivity.
 
@@ -280,9 +280,9 @@ apply Typed_ind.
 
  intros.
  simpl in |- *.
- rewrite <- H0 in |- *.
- rewrite <- H2 in |- *.
- rewrite <- H4 in |- *.
+ rewrite H0 in |- *.
+ rewrite H2 in |- *.
+ rewrite H4 in |- *.
  destruct (type_dec ty ty).
   reflexivity.
 
@@ -291,12 +291,13 @@ Qed.
 
 Theorem typed_prop2 :
   forall (t : term)  (tenv : tenv) (ty : type),
-    Some ty = typing t tenv -> Typed t tenv ty.
+     typing t tenv = Some ty -> Typed t tenv ty.
 Proof.
 induction t.
  simpl in |- *.
  intros.
  apply TVar.
+ apply TEnv.find_2.
  exact H.
 
  simpl in |- *.
@@ -365,7 +366,6 @@ induction t.
       specialize (IHt2 t0).
       specialize (IHt3 t0).
       inversion H.
-      rewrite e in |- *.
       assert (Typed t1 tenv BoolT).
        apply IHt1.
        reflexivity.
@@ -380,6 +380,8 @@ induction t.
          reflexivity.
 
          generalize H0, H2, H3.
+      	 rewrite <- e in |- *.
+      	 rewrite H1 in |- *.
          apply TIf.
 
       intros; discriminate.
@@ -392,3 +394,4 @@ induction t.
 
   intros; discriminate.
 Qed.
+

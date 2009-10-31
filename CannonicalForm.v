@@ -11,15 +11,13 @@ intros.
 inversion H.
  rewrite <- H1 in H0.
  inversion H0.
- simpl in H3.
- discriminate.
+ apply TEnv.empty_1 in H3.
+ tauto.
 
  destruct b.
-  left.
-  reflexivity.
+  left; reflexivity.
 
-  right.
-  reflexivity.
+  right; reflexivity.
 
  rewrite <- H1 in H0.
  inversion H0.
@@ -31,17 +29,17 @@ Lemma lambda_can :
       exists x : string, exists body : term, v = Lambda x ty1 body.
 Proof.
 intros.
-inversion H.
- rewrite <- H1 in H0.
- inversion H0.
- simpl in H3.
- discriminate.
+inversion H0.
+ apply TEnv.empty_1 in H1.
+ tauto.
 
- rewrite <- H1 in H0.
- inversion H0.
-
- exists x; exists body.
- rewrite <- H1 in H0.
- inversion H0.
+ exists x.
+ exists body.
  reflexivity.
+
+ rewrite <- H3 in H.
+ inversion H.
+
+ rewrite <- H4 in H.
+ inversion H.
 Qed.

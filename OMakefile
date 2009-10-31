@@ -10,7 +10,7 @@ public.Proof(files) =
 	coqc $<
 
 .SCANNER: %.vo: %.v
-	coqdep -I . $<
+	coqdep -w -coqlib /opt/local/lib/coq/ -I . $<
 
 # ------------------------------------------------------------
 FILES[] =
@@ -19,7 +19,7 @@ FILES[] =
 	TypeInv
 	TypeUniq
 	Implement
-#(*	Permutation*)
+	Subst
 
 .DEFAULT: $(Proof $(FILES))
 

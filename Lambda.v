@@ -7,6 +7,7 @@ Require Import String.
 Require Import Bool.DecBool.
 Require Import FSets.FMapWeakList.
 Require Import FSets.FMapInterface.
+Require Import FSets.FMapFacts.
 Require Import Logic.DecidableType.
 
 (* simple type *)
@@ -41,7 +42,9 @@ Inductive Reducible : term -> Prop :=
   | RIf       : forall (b : bool) (t1 t2 : term), Reducible (If (Bool b) t1 t2).
 
 (* type *)
-Module StrDec : DecidableType with Definition t := string.
+Module StrDec : DecidableType
+    with Definition t := string
+    with Definition eq := fun (x y : string) => x = y.
   Definition t := string.
   Definition eq_dec := string_dec.
   Definition eq (x y : string) := x = y.
@@ -67,12 +70,13 @@ Module StrDec : DecidableType with Definition t := string.
 End StrDec.
 
 Module TEnv := FMapWeakList.Make StrDec.
+Module TEnvFacts := FMapFacts.WFacts_fun StrDec TEnv.
 Definition tenv := TEnv.t type.
 Definition empty_env : tenv := TEnv.empty type.
 
 Inductive Typed : term -> tenv -> type -> Prop :=
   | TVar    : forall (tenv : tenv) (s : string) (ty : type),
-                Some ty = TEnv.find s tenv -> Typed (Var s) tenv ty
+                TEnv.MapsTo s ty tenv -> Typed (Var s) tenv ty
   | TBool   : forall (tenv : tenv) (b : bool) ,
                 Typed (Bool b) tenv BoolT
   | TLambda : forall (tenv : tenv) (x : string) (a b : type) (body : term),
@@ -80,4 +84,5 @@ Inductive Typed : term -> tenv -> type -> Prop :=
   | TApply  : forall (tenv : tenv) (t1 t2 : term) (a b : type),
                 Typed t1 tenv (FunT a b) -> Typed t2 tenv a -> Typed (Apply t1 t2) tenv b
   | TIf     : forall (tenv : tenv) (t1 t2 t3 : term) (ty : type),
-                Typed t1 tenv BoolT -> Typed t2 tenv ty -> Typed t3 tenv ty -> Typed (If t1 t2 t3) tenv ty.
+                Typed t1 tenv BoolT -> Typed t2 tenv ty -> Typed t3 tenv ty ->
+                   Typed (If t1 t2 t3) tenv ty.

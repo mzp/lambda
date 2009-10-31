@@ -10,9 +10,8 @@ induction t.
  intros.
  inversion H.
  inversion H0.
- rewrite <- H6 in H2.
- inversion H2.
- reflexivity.
+ generalize H2 H6.
+ apply TEnvFacts.MapsTo_fun.
 
  intros.
  inversion H.
@@ -45,3 +44,4 @@ induction t.
  generalize H7, H15.
  apply IHt2.
 Qed.
+
