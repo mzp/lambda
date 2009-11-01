@@ -251,6 +251,111 @@ apply Reducible_ind.
   exists t2; reflexivity.
 Qed.
 
+Theorem subst_1 :
+  forall (t1 t2 : term) (x :string) (s : term),
+    Subst t1 t2 x s -> t2 = subst t1 x s.
+Proof.
+apply Subst_ind.
+ intros.
+ simpl in |- *.
+ destruct (string_dec x s).
+  reflexivity.
+
+  contradiction .
+
+ intros.
+ simpl in |- *.
+ destruct (string_dec x s).
+  contradiction .
+
+  reflexivity.
+
+ intros.
+ simpl in |- *.
+ reflexivity.
+
+ intros.
+ simpl in |- *.
+ destruct (string_dec x s).
+  contradiction .
+
+  rewrite <- H1 in |- *.
+  reflexivity.
+
+ intros.
+ simpl in |- *.
+ destruct (string_dec x s).
+  reflexivity.
+
+  contradiction .
+
+ intros.
+ simpl in |- *.
+ rewrite <- H0 in |- *; rewrite <- H2 in |- *.
+ reflexivity.
+
+ intros.
+ simpl in |- *.
+ rewrite H0 in |- *; rewrite H2 in |- *; rewrite H4 in |- *.
+ reflexivity.
+Qed.
+
+
+Theorem subst_2 :
+  forall (t1 t2 s : term) (x :string),
+    t2 = subst t1 x s -> Subst t1 t2 x s.
+Proof.
+induction t1.
+ simpl in |- *; intros.
+ destruct (string_dec s x).
+  rewrite H in |- *.
+  apply SVar1.
+  exact e.
+
+  rewrite H in |- *.
+  apply SVar2.
+  exact n.
+
+ simpl in |- *; intros.
+ rewrite H in |- *.
+ apply SBool.
+
+ simpl in |- *.
+ intros.
+ destruct (string_dec s x).
+  rewrite H in |- *; rewrite e in |- *.
+  apply SLambda2.
+  reflexivity.
+
+  rewrite H in |- *.
+  apply SLambda1.
+   exact n.
+
+   apply IHt1.
+   reflexivity.
+
+ simpl in |- *.
+ intros.
+ rewrite H in |- *.
+ apply SApply.
+  apply IHt1_1.
+  reflexivity.
+
+  apply IHt1_2.
+  reflexivity.
+
+ intros.
+ rewrite H in |- *.
+ simpl in |- *.
+ apply SIf.
+  apply IHt1_1.
+  reflexivity.
+
+  apply IHt1_2; reflexivity.
+
+  apply IHt1_3; reflexivity.
+Qed.
+
 Theorem typed_prop1 :
   forall (t : term) (tenv : tenv) (ty : type),
     Typed t tenv ty -> typing t tenv = Some ty.

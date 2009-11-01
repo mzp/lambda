@@ -1,10 +1,7 @@
 (* simple typed lambda calculus *)
-Require Import Arith.EqNat.
-Require Import Arith.
-Require Import Recdef.
 Require Import List.
 Require Import String.
-Require Import Bool.DecBool.
+
 Require Import FSets.FMapWeakList.
 Require Import FSets.FMapInterface.
 Require Import FSets.FMapFacts.
@@ -27,6 +24,26 @@ Definition type_dec : forall t1 t2 : type, {t1 = t2} + {t1 <> t2}.
 Proof.
   decide equality.
 Qed.
+
+(* subst *)
+Inductive Subst : term -> term -> string -> term -> Prop :=
+  | SVar1    : forall (s x : string) (t : term),
+      x = s  -> Subst (Var x) t s t
+  | SVar2    : forall (s x : string) (t : term),
+      x <> s -> Subst (Var x) (Var x) s t
+  | SBool    : forall (s : string) (b : bool) (t : term),
+      Subst (Bool b) (Bool b) s t
+  | SLambda1 : forall (x s : string) (body1 body2 t : term) (ty : type),
+      x <> s -> Subst body1 body2 s t ->
+      	Subst (Lambda x ty body1) (Lambda x ty body2) s t
+  | SLambda2 : forall (x s : string) (body t : term) (ty : type),
+      x = s  -> Subst (Lambda x ty body) (Lambda x ty body) s t
+  | SApply   : forall (t1 t2 s1 s2 t : term) (x : string),
+      Subst t1 s1 x t -> Subst t2 s2 x t -> Subst (Apply t1 t2) (Apply s1 s2) x t
+  | SIf      : forall (t1 t2 t3 s1 s2 s3 t : term) (x : string),
+      Subst t1 s1 x t -> Subst t2 s2 x t -> Subst t3 s3 x t ->
+      	Subst (If t1 t2 t3) (If s1 s2 s3) x t.
+
 
 (* reduce *)
 Inductive Value  : term -> Prop :=
