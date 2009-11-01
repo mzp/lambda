@@ -70,7 +70,8 @@ Module StrDec : DecidableType
 End StrDec.
 
 Module TEnv := FMapWeakList.Make StrDec.
-Module TEnvFacts := FMapFacts.WFacts_fun StrDec TEnv.
+Module TEnvWF := FMapFacts.WFacts_fun StrDec TEnv.
+Module TEnvProp := WProperties_fun StrDec TEnv.
 Definition tenv := TEnv.t type.
 Definition empty_env : tenv := TEnv.empty type.
 

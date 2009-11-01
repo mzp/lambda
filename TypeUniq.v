@@ -11,7 +11,7 @@ induction t.
  inversion H.
  inversion H0.
  generalize H2 H6.
- apply TEnvFacts.MapsTo_fun.
+ apply TEnvWF.MapsTo_fun.
 
  intros.
  inversion H.
