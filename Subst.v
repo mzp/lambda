@@ -213,3 +213,102 @@ induction t.
    exact H8.
 Qed.
 
+
+Definition NotIn (x : string) (tenv : tenv) : Prop :=
+  forall (y : string) (T : type),
+    TEnv.MapsTo y T tenv -> x <> y.
+
+Lemma weaking:
+  forall (t : term) (tenv : tenv) (T S : type) (x : string),
+  Typed t tenv T -> NotIn x tenv -> Typed t (TEnv.add x S tenv) T.
+Proof.
+induction t.
+ intros.
+ inversion H.
+ apply TVar.
+ unfold NotIn in H0.
+ apply TEnv.add_2.
+  generalize (H0 s T).
+  intros.
+  apply H5 in H2.
+  exact H2.
+
+  exact H2.
+
+ intros.
+ inversion H.
+ apply TBool.
+
+ intros.
+ inversion H.
+ apply TLambda.
+ generalize (add_add tenv s x t S).
+ intros.
+ decompose [and] H7.
+ assert (s = x \/ s <> x).
+  generalize (string_dec s x).
+  tauto.
+
+  decompose [or] H10.
+   apply H9 in H11.
+   eapply permutation.
+    apply TEnvWF.Equal_sym.
+    apply H11.
+
+    exact H6.
+
+   generalize H11.
+   apply H8 in H11.
+   intros.
+   eapply permutation.
+    apply TEnvWF.Equal_sym.
+    apply H11.
+
+    apply IHt.
+     exact H6.
+
+     unfold NotIn in |- *.
+     intros.
+     apply TEnvWF.add_mapsto_iff in H13.
+     decompose [or] H13.
+      inversion H14.
+      rewrite <- H15 in |- *.
+      auto.
+
+      unfold NotIn in H10.
+      unfold NotIn in H0.
+      eapply H0.
+      inversion H14.
+      apply H16.
+
+ intros.
+ inversion H.
+ eapply TApply.
+  apply IHt1.
+   apply H3.
+
+   exact H0.
+
+  apply IHt2.
+   exact H6.
+
+   exact H0.
+
+ intros.
+ inversion H.
+ apply TIf.
+  apply IHt1.
+   exact H4.
+
+   exact H0.
+
+  apply IHt2.
+   exact H7.
+
+   exact H0.
+
+  apply IHt3.
+   exact H8.
+
+   exact H0.
+Qed.
