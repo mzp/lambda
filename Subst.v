@@ -10,15 +10,19 @@ Lemma swap:
 Proof.
 intros.
 eapply TEnvWF.Equal_mapsto_iff.
+
 split.
+  (* TEnv.MapsTo k e (TEnv.add x r tenv1) -> TEnv.MapsTo k e (TEnv.add x r tenv2) *)
  intros.
  apply TEnvWF.add_mapsto_iff in H0.
  decompose [or] H0.
+  (* k = x *)
   inversion H1.
   rewrite H2 in |- *; rewrite H3 in |- *.
   apply TEnv.add_1.
   reflexivity.
 
+  (* k <> x *)
   inversion H1.
   apply TEnv.add_2.
    exact H2.
@@ -27,14 +31,17 @@ split.
    apply H.
    exact H3.
 
+ (* TEnv.MapsTo k e (TEnv.add x r tenv2) -> TEnv.MapsTo k e (TEnv.add x r tenv1) *)
  intros.
  apply TEnvWF.add_mapsto_iff in H0.
  decompose [or] H0.
+  (* k = x *)
   inversion H1.
   rewrite H3 in |- *; rewrite H2 in |- *.
   apply TEnv.add_1.
   reflexivity.
 
+  (* k <> x *)
   inversion H1.
   apply TEnv.add_2.
    exact H2.
@@ -45,114 +52,12 @@ split.
     exact H3.
 Qed.
 
-Lemma add_add :
-  forall (tenv : tenv) (x y : string) (r1 r2 : type),
-    (x <> y -> TEnv.Equal (TEnv.add x r1 (TEnv.add y r2 tenv)) (TEnv.add y r2 (TEnv.add x r1 tenv)))  /\
-    (x =  y -> TEnv.Equal (TEnv.add x r1 (TEnv.add y r2 tenv)) (TEnv.add x r1 tenv)).
+Lemma string_mid:
+  forall (x y : string), x = y \/ x <> y.
 Proof.
-split.
- intros.
- eapply TEnvWF.Equal_mapsto_iff.
- split.
   intros.
-  apply TEnvWF.add_mapsto_iff in H0.
-  decompose [or] H0.
-   inversion H1.
-   rewrite H2 in |- *.
-   rewrite H3 in |- *.
-   rewrite H2 in H.
-   apply TEnv.add_2.
-    auto.
-
-    apply TEnv.add_1.
-    reflexivity.
-
-   decompose [and] H1.
-   apply TEnvWF.add_mapsto_iff in H3.
-   decompose [or] H3.
-    inversion H4.
-    rewrite H5 in |- *; rewrite H6 in |- *.
-    apply TEnv.add_1.
-    reflexivity.
-
-    decompose [and] H4.
-    apply TEnv.add_2.
-     exact H5.
-
-     apply TEnv.add_2.
-      exact H2.
-
-      exact H6.
-
-  intros.
-  apply TEnvWF.add_mapsto_iff in H0.
-  decompose [or] H0.
-   inversion H1.
-   rewrite H2 in |- *; rewrite H3 in |- *.
-   rewrite H2 in H.
-   apply TEnv.add_2.
-    exact H.
-
-    apply TEnv.add_1.
-    reflexivity.
-
-   inversion H1.
-   apply TEnvWF.add_mapsto_iff in H3.
-   decompose [or] H3.
-    inversion H4.
-    rewrite H6 in |- *.
-    rewrite H5 in |- *.
-    apply TEnv.add_1.
-    reflexivity.
-
-    decompose [and] H4.
-    apply TEnv.add_2.
-     exact H5.
-
-     apply TEnv.add_2.
-      exact H2.
-
-      exact H6.
-
- intros.
- rewrite H in |- *.
- eapply TEnvWF.Equal_mapsto_iff.
- split.
-  intros.
-  apply TEnvWF.add_mapsto_iff in H0.
-  decompose [or] H0.
-   decompose [and] H1.
-   rewrite H3 in |- *.
-   rewrite H2 in |- *.
-   apply TEnv.add_1.
-   reflexivity.
-
-   decompose [and] H1.
-   apply TEnv.add_2.
-    exact H2.
-
-    apply TEnv.add_3 in H3.
-     exact H3.
-
-     exact H2.
-
-  intros.
-  apply TEnvWF.add_mapsto_iff in H0.
-  decompose [or] H0.
-   inversion H1.
-   rewrite H2 in |- *.
-   rewrite H3 in |- *.
-   apply TEnv.add_1.
-   reflexivity.
-
-   decompose [and] H1.
-   apply TEnv.add_2.
-    exact H2.
-
-    apply TEnv.add_2.
-     exact H2.
-
-     exact H3.
+  generalize (string_dec x y).
+  tauto.
 Qed.
 
 Lemma permutation:
@@ -161,6 +66,7 @@ Lemma permutation:
       Typed t tenv1 r -> Typed t tenv2 r.
 Proof.
 induction t.
+ (* Var *)
  intros.
  inversion H0.
  apply TVar.
@@ -168,10 +74,12 @@ induction t.
  apply H.
  exact H2.
 
+ (* Bool *)
  intros.
  inversion H0.
  apply TBool.
 
+ (* Lambda *)
  intros.
  inversion H0.
  apply TLambda.
@@ -181,6 +89,7 @@ induction t.
 
   exact H6.
 
+ (* Apply *)
  intros.
  inversion H0.
  apply TApply with (a := a).
@@ -194,6 +103,7 @@ induction t.
 
    exact H.
 
+ (* If *)
  intros.
  inversion H0.
  apply TIf.
@@ -213,16 +123,150 @@ induction t.
    exact H8.
 Qed.
 
+Lemma Equal_add_1 :
+  forall (tenv : tenv) (x y : string) (r1 r2 : type),
+    x = y -> TEnv.Equal (TEnv.add x r1 (TEnv.add y r2 tenv)) (TEnv.add x r1 tenv).
+Proof.
+intros.
+rewrite H in |- *.
+eapply TEnvWF.Equal_mapsto_iff.
+split.
+ (* TEnv.MapsTo k e (TEnv.add y r1 (TEnv.add y r2 tenv)) ->
+    TEnv.MapsTo k e (TEnv.add y r1 tenv) *)
+ intros.
+ apply TEnvWF.add_mapsto_iff in H0.
+ decompose [or] H0.
+  (* k = y *)
+  decompose [and] H1.
+  rewrite H3 in |- *.
+  rewrite H2 in |- *.
+  apply TEnv.add_1.
+  reflexivity.
+
+  (* k <> y *)
+  decompose [and] H1.
+  apply TEnv.add_2.
+   exact H2.
+
+   apply TEnv.add_3 in H3.
+    exact H3.
+
+    exact H2.
+
+ (* TEnv.MapsTo k e (TEnv.add y r1 tenv) ->
+    TEnv.MapsTo k e (TEnv.add y r1 (TEnv.add y r2 tenv)) *)
+ intros.
+ apply TEnvWF.add_mapsto_iff in H0.
+ decompose [or] H0.
+  (* k = y *)
+  inversion H1.
+  rewrite H2 in |- *.
+  rewrite H3 in |- *.
+  apply TEnv.add_1.
+  reflexivity.
+
+  (* k <> y *)
+  decompose [and] H1.
+  apply TEnv.add_2.
+   exact H2.
+
+   apply TEnv.add_2.
+    exact H2.
+
+    exact H3.
+Qed.
+
+Lemma Equal_add_2 :
+  forall (tenv : tenv) (x y : string) (r1 r2 : type),
+    x <> y -> TEnv.Equal (TEnv.add x r1 (TEnv.add y r2 tenv))
+                         (TEnv.add y r2 (TEnv.add x r1 tenv)).
+Proof.
+intros.
+eapply TEnvWF.Equal_mapsto_iff.
+split.
+ (* TEnv.MapsTo k e (TEnv.add x r1 (TEnv.add y r2 tenv)) ->
+      TEnv.MapsTo k e (TEnv.add y r2 (TEnv.add x r1 tenv)) *)
+ intros.
+ apply TEnvWF.add_mapsto_iff in H0.
+ decompose [or] H0.
+  (* k = x *)
+  inversion H1.
+  rewrite H2 in |- *.
+  rewrite H3 in |- *.
+  rewrite H2 in H.
+  apply TEnv.add_2.
+   auto.
+
+   apply TEnv.add_1.
+   reflexivity.
+
+  (* k <> x*)
+  decompose [and] H1.
+  apply TEnvWF.add_mapsto_iff in H3.
+  decompose [or] H3.
+   (* y = k*)
+   inversion H4.
+   rewrite H5 in |- *; rewrite H6 in |- *.
+   apply TEnv.add_1.
+   reflexivity.
+
+   (* y <> k*)
+   decompose [and] H4.
+   apply TEnv.add_2.
+    exact H5.
+
+    apply TEnv.add_2.
+     exact H2.
+
+     exact H6.
+
+ (* TEnv.MapsTo k e (TEnv.add y r2 (TEnv.add x r1 tenv)) ->
+    TEnv.MapsTo k e (TEnv.add x r1 (TEnv.add y r2 tenv)) *)
+ intros.
+ apply TEnvWF.add_mapsto_iff in H0.
+ decompose [or] H0.
+  (* k = y *)
+  inversion H1.
+  rewrite H2 in |- *; rewrite H3 in |- *.
+  rewrite H2 in H.
+  apply TEnv.add_2.
+   exact H.
+
+   apply TEnv.add_1.
+   reflexivity.
+
+  (* k <> y *)
+  inversion H1.
+  apply TEnvWF.add_mapsto_iff in H3.
+  decompose [or] H3.
+   (* k = x *)
+   inversion H4.
+   rewrite H6 in |- *.
+   rewrite H5 in |- *.
+   apply TEnv.add_1.
+   reflexivity.
+
+   (* k <> x *)
+   decompose [and] H4.
+   apply TEnv.add_2.
+    exact H5.
+
+    apply TEnv.add_2.
+     exact H2.
+
+     exact H6.
+Qed.
+
 
 Definition NotIn (x : string) (tenv : tenv) : Prop :=
-  forall (y : string) (T : type),
-    TEnv.MapsTo y T tenv -> x <> y.
+  forall (y : string) (T : type), TEnv.MapsTo y T tenv -> x <> y.
 
 Lemma weaking:
   forall (t : term) (tenv : tenv) (T S : type) (x : string),
   Typed t tenv T -> NotIn x tenv -> Typed t (TEnv.add x S tenv) T.
 Proof.
 induction t.
+ (* Var *)
  intros.
  inversion H.
  apply TVar.
@@ -235,52 +279,51 @@ induction t.
 
   exact H2.
 
+ (* Bool *)
  intros.
  inversion H.
  apply TBool.
 
+ (* Lambda *)
  intros.
  inversion H.
  apply TLambda.
- generalize (add_add tenv s x t S).
+ generalize (string_mid s x).
  intros.
- decompose [and] H7.
- assert (s = x \/ s <> x).
-  generalize (string_dec s x).
-  tauto.
 
-  decompose [or] H10.
-   apply H9 in H11.
-   eapply permutation.
-    apply TEnvWF.Equal_sym.
-    apply H11.
+ decompose [or] H7.
+  (* s = x *)
+  eapply Equal_add_1 in H8.
+  eapply permutation.
+   apply TEnvWF.Equal_sym.
+   apply H8.
 
+   exact H6.
+
+  (* s <> x *)
+  generalize H8; intro.
+  eapply Equal_add_2 in H8.
+  eapply permutation.
+   apply TEnvWF.Equal_sym.
+   apply H8.
+
+   apply IHt.
     exact H6.
 
-   generalize H11.
-   apply H8 in H11.
-   intros.
-   eapply permutation.
-    apply TEnvWF.Equal_sym.
-    apply H11.
+    unfold NotIn in |- *.
+    intros.
+    apply TEnvWF.add_mapsto_iff in H10.
+    decompose [or] H10.
+     inversion H11.
+     rewrite <- H12 in |- *.
+     auto.
 
-    apply IHt.
-     exact H6.
+     unfold NotIn in H0.
+     eapply H0.
+     inversion H11.
+     apply H13.
 
-     unfold NotIn in |- *.
-     intros.
-     apply TEnvWF.add_mapsto_iff in H13.
-     decompose [or] H13.
-      inversion H14.
-      rewrite <- H15 in |- *.
-      auto.
-
-      unfold NotIn in H10.
-      unfold NotIn in H0.
-      eapply H0.
-      inversion H14.
-      apply H16.
-
+ (* Apply *)
  intros.
  inversion H.
  eapply TApply.
@@ -294,6 +337,7 @@ induction t.
 
    exact H0.
 
+ (* If *)
  intros.
  inversion H.
  apply TIf.
@@ -312,3 +356,5 @@ induction t.
 
    exact H0.
 Qed.
+
+
