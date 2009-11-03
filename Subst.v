@@ -357,4 +357,45 @@ induction t.
    exact H0.
 Qed.
 
+Lemma subst:
+  forall (t : term) (u s: term) (x : string) (T S : type) (tenv : tenv),
+    Typed t (TEnv.add x S tenv) T -> Typed s tenv S -> Subst t u x s ->
+      Typed u tenv T.
+Proof.
+induction t.
+ (* Var z *)
+ intros.
+ inversion H1.
+  (* x = z *)
+  rewrite H3 in H.
+  inversion H.
+  apply TEnvWF.add_mapsto_iff in H8.
+  decompose [or] H8.
+   inversion H11.
+   rewrite <- H13 in |- *.
+   exact H0.
 
+   tauto.
+
+  (* x <> z *)
+  inversion H.
+  apply TEnvWF.add_mapsto_iff in H8.
+  decompose [or] H8.
+   inversion H11.
+   rewrite H12 in H3.
+   tauto.
+
+   inversion H11.
+   apply TVar.
+   exact H13.
+
+ (* Bool *)
+ intros.
+ inversion H; inversion H1.
+ apply TBool.
+
+ (* Lambda *)
+ intros.
+ inversion H.
+ inversion H1.
+  apply (Equal_add_2 tenv s x t S) in H14.
