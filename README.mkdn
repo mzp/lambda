@@ -1,9 +1,9 @@
-LCC(Lambda calculous on Coq)
+LCC(Lambda calculus on Coq)
 ============================
 
 OVERVIEW
 --------
-LCC is a implementation of simple typed lambda calculous.
+LCC is a implementation of simple typed lambda calculus.
 
 
 PREREQUIRED
