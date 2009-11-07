@@ -1,7 +1,10 @@
 Require Import List.
+Require Import ListSet.
 Require Import String.
+Require Import Recdef.
 
 Require Import Term.
+
 
 (** * Propotion *)
 Inductive Value  : term -> Prop :=
@@ -16,26 +19,104 @@ Inductive Reducible : term -> Prop :=
   | RIf       : forall (b : bool) (t1 t2 : term), Reducible (If (Bool b) t1 t2).
 
 (** * function *)
-Fixpoint subst (t : term) (old : string) (new : term) :=
+(** ** free variable *)
+Definition empty :=
+  ListSet.empty_set string.
+Definition add (x : string) (xs : set string) :=
+  ListSet.set_add string_dec x xs.
+Definition remove (x : string) (xs : set string) :=
+  ListSet.set_remove string_dec x xs.
+Definition union (xs ys : set string) :=
+  ListSet.set_union string_dec xs ys.
+Definition in_dec (x : string) (xs : set string) :=
+  set_In_dec string_dec x xs.
+
+Fixpoint FV (t : term) : set string :=
   match t with
-    | Bool _ =>
+  | Var x =>
+    add x empty
+  | Bool _ =>
+    empty
+  | Lambda x _ body =>
+    remove x (FV body)
+  | Apply t1 t2 =>
+    union (FV t1) (FV t2)
+  | If t1 t2 t3 =>
+    union (union (FV t1) (FV t2)) (FV t3)
+  end.
+
+Fixpoint assoc {A B : Type} (dec : forall x y : A, {x = y} + {x <> y}) (x : A) (xs : list (A * B)) :=
+  match xs with
+  | nil => None
+  | (key,val)::xs =>
+    if dec key x then
+      Some val
+    else
+      assoc dec x xs
+  end.
+
+(** ** Substitution *)
+Variable Gensym : set string -> set string -> string.
+
+Hypothesis Gensym_uniq : forall (xs ys : set string) (z : string),
+  z = Gensym xs ys -> ~ set_In z xs /\ ~ set_In z ys.
+
+Fixpoint rename_var (t : term) (old new : string) :=
+  match t with
+  |  Var s =>
+    if string_dec s old then
+      Var new
+    else
       t
-    | Var x =>
+  | Bool _  =>
+      t
+  | Lambda x T body =>
       if string_dec x old then
-        new
+      	Lambda x T body
       else
-      	t
-    | Lambda x type body =>
+        Lambda x T (rename_var body old new)
+  | Apply t1 t2 =>
+      Apply (rename_var t1 old new) (rename_var t2 old new)
+  | If t1 t2 t3 =>
+      If (rename_var t1 old new) (rename_var t2 old new) (rename_var t3 old new)
+  end.
+
+Fixpoint term_length (t : term) :=
+  match t with
+  |  Var _ | Bool _ =>
+    1
+  | Lambda _ _ body =>
+    1 + term_length body
+  | Apply t1 t2 =>
+    1 + term_length t1 + term_length t2
+  | If t1 t2 t3 =>
+    1 + term_length t1 + term_length t2 + term_length t3
+  end.
+
+Function subst (t : term) (old : string) (new : term) {measure term_length t}: term :=
+  match t with
+  |  Var s =>
+    if string_dec s old then
+      new
+    else
+      t
+  | Bool _  =>
+      t
+  | Lambda x T body =>
       if string_dec x old then
-      	t
+      	Lambda x T body
+      else if in_dec x (FV new) then
+      	let y := Gensym (FV new) (FV body) in
+          Lambda y T (subst (rename_var body x y) old new)
       else
-        Lambda x type (subst body old new)
-    | Apply t1 t2 =>
+        Lambda x T (subst body old new)
+  | Apply t1 t2 =>
       Apply (subst t1 old new) (subst t2 old new)
-    | If t1 t2 t3 =>
+  | If t1 t2 t3 =>
       If (subst t1 old new) (subst t2 old new) (subst t3 old new)
   end.
 
+(*
 Definition is_value (t : term) :=
   match t with
     Var _   | Bool _  | Lambda _ _ _ =>
@@ -207,3 +288,5 @@ apply Reducible_ind.
   exists t2; reflexivity.
 Qed.
 
+
+*)
