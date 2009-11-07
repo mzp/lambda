@@ -25,12 +25,6 @@ Proof.
   decide equality.
 Qed.
 
-(* bound *)
-Inductive NotFV : string -> term -> Prop :=
-  | BLambda : forall (x : string) (T : type) (body : term), NotFV x (Lambda x T body)
-  | BApply  : forall (x : string) (t1 t2 : term)          , NotFV x t1 -> NotFV x t2 -> NotFV x (Apply t1 t2)
-  | BIf     : forall (x : string) (t1 t2 t3 : term)       , NotFV x t1 -> NotFV x t2 -> NotFV x t3 -> NotFV x (If t1 t2 t3).
-
 (* subst *)
 Inductive Subst : term -> term -> string -> term -> Prop :=
   | SVar1    : forall (s x : string) (t : term),
@@ -40,7 +34,7 @@ Inductive Subst : term -> term -> string -> term -> Prop :=
   | SBool    : forall (s : string) (b : bool) (t : term),
       Subst (Bool b) (Bool b) s t
   | SLambda1 : forall (x s : string) (body1 body2 t : term) (ty : type),
-      x <> s -> NotFV x t -> Subst body1 body2 s t ->
+      x <> s -> Subst body1 body2 s t ->
       	Subst (Lambda x ty body1) (Lambda x ty body2) s t
   | SLambda2 : forall (x s : string) (body t : term) (ty : type),
       x = s  -> Subst (Lambda x ty body) (Lambda x ty body) s t

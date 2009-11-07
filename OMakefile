@@ -19,7 +19,7 @@ FILES[] =
 	TypeInv
 	TypeUniq
 	Implement
-	Subst
+#	Subst
 
 .DEFAULT: $(Proof $(FILES))
 
