@@ -1,6 +1,9 @@
 Require Import List.
 Require Import String.
-Require Import Lambda.
+
+Require Import Term.
+Require Import Eval.
+Require Import Typing.
 
 Lemma bool_can :
   forall (v : term),
@@ -31,7 +34,7 @@ Proof.
 intros.
 inversion H0.
  apply TEnv.empty_1 in H1.
- tauto.
+ contradiction .
 
  exists x.
  exists body.
@@ -43,3 +46,4 @@ inversion H0.
  rewrite <- H4 in H.
  inversion H.
 Qed.
+

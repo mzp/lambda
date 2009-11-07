@@ -1,6 +1,8 @@
-Require Import Lambda.
 Require Import List.
 Require Import String.
+
+Require Import Term.
+Require Import Typing.
 
 (* For Var *)
 Lemma var_rel :

@@ -14,11 +14,13 @@ public.Proof(files) =
 
 # ------------------------------------------------------------
 FILES[] =
-	Lambda
-	Progress
+	Term
+	Eval
+	Typing
 	TypeInv
 	TypeUniq
-	Implement
+	CannonicalForm
+	Progress
 #	Subst
 
 .DEFAULT: $(Proof $(FILES))

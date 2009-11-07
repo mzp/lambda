@@ -1,6 +1,9 @@
 Require Import List.
 Require Import String.
-Require Import Lambda.
+
+Require Import Term.
+Require Import Eval.
+Require Import Typing.
 Require Import CannonicalForm.
 
 Theorem Progress :
