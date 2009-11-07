@@ -5,7 +5,6 @@ Require Import Recdef.
 
 Require Import Term.
 
-
 (** * Propotion *)
 Inductive Value  : term -> Prop :=
   | VBool   : forall b : bool,   Value (Bool b)
@@ -45,6 +44,11 @@ Fixpoint FV (t : term) : set string :=
     union (union (FV t1) (FV t2)) (FV t3)
   end.
 
+(** ** Substitution *)
+Variable Gensym : set string -> set string -> string.
+Hypothesis Gensym_uniq : forall (xs ys : set string) (z : string),
+  z = Gensym xs ys -> ~ set_In z xs /\ ~ set_In z ys.
+
 Fixpoint assoc {A B : Type} (dec : forall x y : A, {x = y} + {x <> y}) (x : A) (xs : list (A * B)) :=
   match xs with
   | nil => None
@@ -54,12 +58,6 @@ Fixpoint assoc {A B : Type} (dec : forall x y : A, {x = y} + {x <> y}) (x : A) (
     else
       assoc dec x xs
   end.
-
-(** ** Substitution *)
-Variable Gensym : set string -> set string -> string.
-
-Hypothesis Gensym_uniq : forall (xs ys : set string) (z : string),
-  z = Gensym xs ys -> ~ set_In z xs /\ ~ set_In z ys.
 
 Fixpoint rename_var (t : term) (old new : string) :=
   match t with
@@ -93,6 +91,39 @@ Fixpoint term_length (t : term) :=
     1 + term_length t1 + term_length t2 + term_length t3
   end.
 
+Lemma rename_var_length :
+  forall (t : term) (x y : string),
+  term_length t = term_length (rename_var t x y).
+Proof.
+induction t.
+ simpl in |- *.
+ intros.
+ destruct string_dec; simpl in |- *; reflexivity.
+
+ simpl in |- *.
+ intros; reflexivity.
+
+ simpl in |- *.
+ intros.
+ destruct (string_dec s x); simpl in |- *.
+  reflexivity.
+
+  rewrite (IHt x y) in |- *.
+  reflexivity.
+
+ simpl in |- *.
+ intros.
+ rewrite (IHt1 x y) in |- *.
+ rewrite (IHt2 x y) in |- *.
+ reflexivity.
+
+ simpl in |- *.
+ intros.
+ rewrite (IHt1 x y) in |- *; rewrite (IHt2 x y) in |- *;
+  rewrite (IHt3 x y) in |- *.
+ reflexivity.
+Qed.
+
 Function subst (t : term) (old : string) (new : term) {measure term_length t}: term :=
   match t with
   |  Var s =>
@@ -115,15 +146,45 @@ Function subst (t : term) (old : string) (new : term) {measure term_length t}: t
   | If t1 t2 t3 =>
       If (subst t1 old new) (subst t2 old new) (subst t3 old new)
   end.
+Proof.
+ intros.
+ rewrite <- (rename_var_length body x (Gensym (FV new) (FV body))) in |- *.
+ simpl in |- *.
+ apply Lt.le_lt_n_Sm.
+ apply le_n.
 
-(*
-Definition is_value (t : term) :=
-  match t with
-    Var _   | Bool _  | Lambda _ _ _ =>
-      true
-  | Apply _ _  | If _ _ _ =>
-      false
-  end.
+ intros.
+ simpl in |- *.
+ apply Lt.le_lt_n_Sm.
+ apply le_n.
+
+ intros.
+ simpl in |- *.
+ apply Lt.le_lt_n_Sm.
+ apply Plus.le_plus_r.
+
+ intros.
+ simpl in |- *.
+ apply Lt.le_lt_n_Sm.
+ apply Plus.le_plus_l.
+
+ intros.
+ simpl in |- *.
+ apply Lt.le_lt_n_Sm.
+ apply Plus.le_plus_r.
+
+ intros.
+ simpl in |- *.
+ apply Lt.le_lt_n_Sm.
+ apply Plus.le_plus_trans.
+ apply Plus.le_plus_r.
+
+ intros.
+ simpl in |- *.
+ apply Lt.le_lt_n_Sm.
+ apply Plus.le_plus_trans.
+ apply Plus.le_plus_l.
+Qed.
 
 Definition mbind {A : Type} (x : option A) (f : A -> option A) : option A :=
   match x with
@@ -288,5 +349,3 @@ apply Reducible_ind.
   exists t2; reflexivity.
 Qed.
 
-
-*)
