@@ -45,6 +45,14 @@ Definition is_value (t : term) :=
       false
   end.
 
+Definition mbind {A : Type} (x : option A) (f : A -> option A) : option A :=
+  match x with
+  | None => None
+  | Some y => f y
+  end.
+
+Infix ">>=" := mbind (at level 50).
+
 Fixpoint reduce (t : term) :=
   match t with
     Var _   | Bool _  | Lambda _ _ _ =>
@@ -67,10 +75,7 @@ Fixpoint reduce (t : term) :=
   | If (Bool false) t2 t3 =>
       Some t3
   | If t1 t2 t3 =>
-      match reduce t1 with
-      	None   => None
-      | Some t => Some (If t t2 t3)
-      end
+      reduce t1 >>= (fun x => Some (If x t2 t3))
   end.
 
 (** * Theorem *)
