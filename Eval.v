@@ -5,9 +5,8 @@ Require Import Term.
 
 (** * Propotion *)
 Inductive Value  : term -> Prop :=
-  | ValVar    : forall s : string, Value (Var s)
-  | ValBool   : forall b : bool,   Value (Bool b)
-  | ValLambda : forall (x : string) (ty : type) (body : term), Value (Lambda x ty body).
+  | VBool   : forall b : bool,   Value (Bool b)
+  | VLambda : forall (x : string) (ty : type) (body : term), Value (Lambda x ty body).
 
 Inductive Reducible : term -> Prop :=
   | RAppLeft  : forall t1 t2 : term, Reducible t1 -> Reducible (Apply t1 t2)

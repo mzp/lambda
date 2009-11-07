@@ -13,14 +13,16 @@ Proof.
  induction t.
  (* var *)
  intros.
- left; apply ValVar.
+ inversion H.
+ apply TEnv.empty_1 in H1.
+ contradiction.
 
  (* bool *)
- left; apply ValBool.
+ left; apply VBool.
 
  (* lambda *)
  intros.
- left; apply ValLambda.
+ left; apply VLambda.
 
  (* apply *)
  intros.

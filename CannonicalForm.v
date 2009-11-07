@@ -12,11 +12,6 @@ Lemma bool_can :
 Proof.
 intros.
 inversion H.
- rewrite <- H1 in H0.
- inversion H0.
- apply TEnv.empty_1 in H3.
- tauto.
-
  destruct b.
   left; reflexivity.
 
