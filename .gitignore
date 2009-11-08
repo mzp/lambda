@@ -4,4 +4,6 @@
 *.omc
 .omakedb
 .omakedb.lock
-
+*.html
+*.css
+*.swp
