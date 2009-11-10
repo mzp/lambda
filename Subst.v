@@ -1,7 +1,9 @@
 Require Import List.
 Require Import String.
 
-Require Import Lambda.
+Require Import Term.
+Require Import Eval.
+Require Import Typing.
 
 Lemma swap:
   forall (tenv1 tenv2 : tenv) (x : string) (r : type),
@@ -357,10 +359,27 @@ induction t.
    exact H0.
 Qed.
 
-Lemma subst:
-  forall (t : term) (u s: term) (x : string) (T S : type) (tenv : tenv),
-    Typed t (TEnv.add x S tenv) T -> Typed s tenv S -> Subst t u x s ->
-      Typed u tenv T.
+Lemma subst_presarve:
+  forall (t : term) (s: term) (x : string) (T S : type) (tenv : tenv),
+    Typed t (TEnv.add x S tenv) T -> Typed s tenv S -> Typed (subst t x s) tenv T.
+Proof.
+intros t s x.
+pattern t, x, s, (subst t x s) in |- *.
+apply subst_ind.
+ (* Var *)
+ intros.
+ rewrite _x in H.
+ inversion H.
+ apply TEnvWF.add_mapsto_iff in H2.
+ decompose [or] H2.
+  inversion H5.
+  rewrite <- H7 in |- *.
+  exact H0.
+
+  inversion H5.
+  info tauto.
+Save.
+(*
 Proof.
 induction t.
  (* Var z *)
@@ -399,3 +418,4 @@ induction t.
  inversion H.
  inversion H1.
   apply (Equal_add_2 tenv s x t S) in H14.
+*)
