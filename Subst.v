@@ -359,7 +359,7 @@ induction t.
    exact H0.
 Qed.
 
-Lemma subst_presarve:
+(*Lemma subst_presarve:
   forall (t : term) (s: term) (x : string) (T S : type) (tenv : tenv),
     Typed t (TEnv.add x S tenv) T -> Typed s tenv S -> Typed (subst t x s) tenv T.
 Proof.
@@ -416,7 +416,7 @@ apply subst_ind.
  apply TLambda.
  inversion H0.
  apply H with (S := S).
-
+*)
 (*
 Proof.
 induction t.
@@ -458,7 +458,126 @@ induction t.
   apply (Equal_add_2 tenv s x t S) in H14.
 *)
 
+Lemma Var_add_eq:
+  forall (x : string) (S T : type) (tenv : tenv),
+     Typed (Var x) (TEnv.add x S tenv) T -> S = T.
+Proof.
+intros.
+inversion H.
+apply TEnvWF.add_mapsto_iff in H1.
+inversion H1.
+ inversion H4.
+ exact H6.
+
+ inversion H4.
+ tauto.
+Qed.
+
+Lemma Var_add_elim:
+  forall (x y : string) (S T : type) (tenv : tenv),
+     x <> y -> Typed (Var x) (TEnv.add y S tenv) T -> Typed (Var x) tenv T.
+Proof.
+intros.
+inversion H0.
+apply TEnvWF.add_mapsto_iff in H2.
+inversion H2.
+ inversion H5.
+ rewrite H6 in H.
+ tauto.
+
+ inversion H5.
+ apply TVar.
+ exact H7.
+Qed.
+
+Lemma Var_add_intro:
+  forall (x y : string) (S T : type) (tenv : tenv),
+     x <> y -> Typed (Var x) tenv T -> Typed (Var x) (TEnv.add y S tenv) T.
+Proof.
+intros.
+apply TVar.
+apply TEnv.add_2.
+ apply sym_not_equal.
+ exact H.
+
+ inversion H0.
+ exact H2.
+Qed.
+
+Lemma Typed_add_elim:
+  forall (t : term) (S T U : type) (s : string) (tenv : tenv),
+      Typed t (TEnv.add s T (TEnv.add s S tenv)) U -> Typed t (TEnv.add s T tenv) U.
+Proof.
+intros.
+apply permutation with (tenv1 := TEnv.add s T (TEnv.add s S tenv)).
+ apply Equal_add_1.
+ reflexivity.
+
+ exact H.
+Qed.
+
+Lemma Typed_add_intro:
+  forall (t : term) (S T U : type) (s : string) (tenv : tenv),
+      Typed t (TEnv.add s T tenv) U -> Typed t (TEnv.add s T (TEnv.add s S tenv)) U.
+Proof.
+intros.
+apply permutation with (tenv1 := TEnv.add s T tenv).
+ apply TEnvWF.Equal_sym.
+ apply Equal_add_1.
+ reflexivity.
+
+ exact H.
+Qed.
+
+Lemma weaking_FV:
+  forall (t : term) (S T : type) (tenv : tenv) (s : string),
+    ~ ListSet.set_In s (FV t) -> Typed t tenv T -> Typed t (TEnv.add s S tenv) T.
+
+
 Lemma Typed_rename:
-  forall (tenv : tenv) (S T : type) (t : term) (x y : string),
+  forall (t : term) (tenv : tenv) (S T : type) (x y : string),
     y = Gensym (FV t) ->
       Typed t (TEnv.add x S tenv) T -> Typed (rename_var t x y) (TEnv.add y S tenv) T.
+Proof.
+induction t.
+ (* Var *)
+ simpl in |- *.
+ intros.
+ destruct (string_dec s x).
+  rewrite e in H0.
+  apply Var_add_eq in H0.
+  rewrite H0 in |- *.
+  apply TVar.
+  apply TEnv.add_1.
+  reflexivity.
+
+  apply Var_add_intro.
+   apply Gensym_uniq in H.
+   unfold ListSet.set_In in H.
+   unfold not in |- *.
+   unfold not in H.
+   intro.
+   apply H.
+   rewrite H1 in |- *.
+   apply in_eq.
+
+   apply Var_add_elim in H0.
+    exact H0.
+
+    exact n.
+
+  (* Bool*)
+ intros.
+ inversion H0.
+ simpl in |- *.
+ apply TBool.
+
+ (* Lambda *)
+ intros.
+ inversion H0.
+ simpl in |- *.
+ destruct (string_dec s x).
+  apply TLambda.
+  rewrite <- e in H6.
+
+
