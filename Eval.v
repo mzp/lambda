@@ -45,9 +45,9 @@ Fixpoint FV (t : term) : set string :=
   end.
 
 (** ** Substitution *)
-Variable Gensym : set string -> set string -> string.
-Hypothesis Gensym_uniq : forall (xs ys : set string) (z : string),
-  z = Gensym xs ys -> ~ set_In z xs /\ ~ set_In z ys.
+Variable Gensym : set string -> string.
+Hypothesis Gensym_uniq : forall (xs : set string) (x : string),
+  x = Gensym xs -> ~ set_In x xs.
 
 Fixpoint assoc {A B : Type} (dec : forall x y : A, {x = y} + {x <> y}) (x : A) (xs : list (A * B)) :=
   match xs with
@@ -137,7 +137,7 @@ Function subst (t : term) (old : string) (new : term) {measure term_length t}: t
       if string_dec x old then
       	Lambda x T body
       else if in_dec x (FV new) then
-      	let y := Gensym (FV new) (FV body) in
+      	let y := Gensym (union (FV new) (FV body)) in
           Lambda y T (subst (rename_var body x y) old new)
       else
         Lambda x T (subst body old new)
@@ -148,7 +148,7 @@ Function subst (t : term) (old : string) (new : term) {measure term_length t}: t
   end.
 Proof.
  intros.
- rewrite <- (rename_var_length body x (Gensym (FV new) (FV body))) in |- *.
+ rewrite <- (rename_var_length body x (Gensym (union (FV new) (FV body)))) in |- *.
  simpl in |- *.
  apply Lt.le_lt_n_Sm.
  apply le_n.

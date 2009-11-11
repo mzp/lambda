@@ -377,8 +377,46 @@ apply subst_ind.
   exact H0.
 
   inversion H5.
-  info tauto.
-Save.
+  tauto.
+
+ intros.
+ inversion H.
+ apply TEnvWF.add_mapsto_iff in H2.
+ decompose [or] H2.
+  inversion H5.
+  apply sym_eq in H6.
+  contradiction.
+
+  inversion H5.
+  rewrite e in |- *.
+  apply TVar.
+  exact H7.
+
+ (* Bool *)
+ intros.
+ rewrite e in |- *.
+ inversion H.
+ apply TBool.
+
+ (* Lambda-1 *)
+ intros.
+ generalize _x.
+ intro.
+ inversion H.
+ apply TLambda.
+ apply Equal_add_1 with (tenv := tenv) (r1 := T) (r2 := S) in _x0.
+ apply permutation with (t := body) (r := b) in _x0.
+  exact _x0.
+
+  exact H6.
+
+ (* Lambda-2 *)
+ intros.
+ inversion H0.
+ apply TLambda.
+ inversion H0.
+ apply H with (S := S).
+
 (*
 Proof.
 induction t.
@@ -419,3 +457,8 @@ induction t.
  inversion H1.
   apply (Equal_add_2 tenv s x t S) in H14.
 *)
+
+Lemma Typed_rename:
+  forall (tenv : tenv) (S T : type) (t : term) (x y : string),
+    y = Gensym (FV t) ->
+      Typed t (TEnv.add x S tenv) T -> Typed (rename_var t x y) (TEnv.add y S tenv) T.
