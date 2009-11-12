@@ -653,14 +653,12 @@ induction t.
    exact H8.
 Qed.
 
-(*
 Lemma Typed_rename:
   forall (t : term) (tenv : tenv) (S T : type) (x y : string),
     y = Gensym (FV t) ->
       Typed t (TEnv.add x S tenv) T -> Typed (rename_var t x y) (TEnv.add y S tenv) T.
 Proof.
 induction t.
- (* Var *)
  simpl in |- *.
  intros.
  destruct (string_dec s x).
@@ -675,7 +673,6 @@ induction t.
    apply Gensym_uniq in H.
    unfold ListSet.set_In in H.
    unfold not in |- *.
-   unfold not in H.
    intro.
    apply H.
    rewrite H1 in |- *.
@@ -686,19 +683,46 @@ induction t.
 
     exact n.
 
-  (* Bool*)
  intros.
  inversion H0.
  simpl in |- *.
  apply TBool.
 
- (* Lambda *)
  intros.
  inversion H0.
  simpl in |- *.
  destruct (string_dec s x).
   apply TLambda.
   rewrite <- e in H6.
+  destruct (string_dec s y).
+   rewrite <- e0 in |- *.
+   exact H6.
 
+   apply permutation with (tenv1 := TEnv.add y S (TEnv.add s t tenv)).
+    apply Equal_add_2.
+    apply sym_not_eq.
+    exact n.
 
-*)
+    apply weaking_FV.
+     simpl in H.
+     apply Gensym_uniq in H.
+     unfold not in |- *.
+     intro.
+     apply H.
+     unfold remove in |- *.
+     apply ListSet.set_diff_intro.
+      exact H7.
+
+      simpl in |- *.
+      unfold not in |- *.
+      intro.
+      inversion H8.
+       tauto.
+
+       tauto.
+
+     apply permutation with (tenv1 := TEnv.add s t (TEnv.add s S tenv)).
+      apply Equal_add_1.
+      reflexivity.
+
+      exact H6.
