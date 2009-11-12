@@ -24,7 +24,7 @@ Definition empty :=
 Definition add (x : string) (xs : set string) :=
   ListSet.set_add string_dec x xs.
 Definition remove (x : string) (xs : set string) :=
-  ListSet.set_remove string_dec x xs.
+  ListSet.set_diff string_dec xs (add x empty).
 Definition union (xs ys : set string) :=
   ListSet.set_union string_dec xs ys.
 Definition in_dec (x : string) (xs : set string) :=

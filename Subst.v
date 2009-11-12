@@ -532,8 +532,128 @@ Qed.
 Lemma weaking_FV:
   forall (t : term) (S T : type) (tenv : tenv) (s : string),
     ~ ListSet.set_In s (FV t) -> Typed t tenv T -> Typed t (TEnv.add s S tenv) T.
+Proof.
+induction t.
+ (* Var *)
+ simpl in |- *.
+ intros.
+ apply Decidable.not_or in H.
+ inversion H.
+ inversion H0.
+ apply TVar.
+ apply TEnv.add_2.
+  apply sym_not_eq.
+  exact H1.
 
+  exact H4.
 
+ (* Bool *)
+ intros.
+ inversion H0.
+ apply TBool.
+
+ (* Lambda *)
+ simpl in |- *.
+ intros.
+ inversion H0.
+ apply TLambda.
+ unfold remove in H.
+ destruct (string_dec s s0).
+  rewrite <- e in |- *.
+  apply Typed_add_intro.
+  exact H6.
+
+  apply permutation with (tenv1 := TEnv.add s0 S (TEnv.add s t tenv)).
+   apply Equal_add_2.
+   apply sym_not_eq.
+   exact n.
+
+   apply IHt.
+    unfold not in |- *.
+    unfold not in H.
+    intro.
+    apply H.
+    apply ListSet.set_diff_intro.
+     exact H7.
+
+     unfold add in |- *.
+     unfold empty in |- *.
+     unfold ListSet.set_In in |- *.
+     simpl in |- *.
+     unfold not in |- *.
+     intro.
+     inversion H8; tauto.
+
+    exact H6.
+
+ (* Apply *)
+ intros.
+ simpl in H.
+ unfold union in H.
+ inversion H0.
+ apply TApply with (a := a).
+  apply IHt1.
+   unfold not in |- *.
+   intro.
+   apply H.
+   apply ListSet.set_union_intro.
+   left.
+   exact H7.
+
+   exact H3.
+
+  apply IHt2.
+   unfold not in |- *.
+   intro.
+   apply H.
+   apply ListSet.set_union_intro.
+   right.
+   exact H7.
+
+   exact H6.
+
+ (* If *)
+ intros.
+ inversion H0.
+ simpl in H.
+ unfold union in H.
+ apply TIf.
+  apply IHt1.
+   unfold not in |- *.
+   intro.
+   apply H.
+   apply ListSet.set_union_intro.
+   left.
+   apply ListSet.set_union_intro.
+   left.
+   exact H9.
+
+   exact H4.
+
+  apply IHt2.
+   unfold not in |- *.
+   intro.
+   apply H.
+   apply ListSet.set_union_intro.
+   left.
+   apply ListSet.set_union_intro.
+   right.
+   exact H9.
+
+   exact H7.
+
+  apply IHt3.
+   unfold not in |- *.
+   intro.
+   apply H.
+   apply ListSet.set_union_intro.
+   right.
+   exact H9.
+
+   exact H8.
+Qed.
+
+(*
 Lemma Typed_rename:
   forall (t : term) (tenv : tenv) (S T : type) (x y : string),
     y = Gensym (FV t) ->
@@ -581,3 +701,4 @@ induction t.
   rewrite <- e in H6.
 
 
+*)
