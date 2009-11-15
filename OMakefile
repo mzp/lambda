@@ -14,6 +14,7 @@ public.Proof(files) =
 
 # ------------------------------------------------------------
 FILES[] =
+	Alpha
 	Term
 	Eval
 	Typing

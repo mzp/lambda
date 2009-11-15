@@ -4,6 +4,7 @@ Require Import String.
 Require Import Recdef.
 
 Require Import Term.
+Require Import Alpha.
 
 (** * Propotion *)
 Inductive Value  : term -> Prop :=
@@ -17,89 +18,6 @@ Inductive Reducible : term -> Prop :=
   | RIfCond   : forall (t1 t2 t3 : term), Reducible t1 -> Reducible (If t1 t2 t3)
   | RIf       : forall (b : bool) (t1 t2 : term), Reducible (If (Bool b) t1 t2).
 
-Inductive FV : string -> term -> Prop :=
-  | FVVar    : forall s, FV s (Var s)
-  | FVLambda : forall x y t T, x <> y -> FV x t -> FV x (Lambda y T t)
-  | FVApply  : forall x t1 t2, FV x t1 \/ FV x t2 -> FV x (Apply t1 t2)
-  | FVIf     : forall x t1 t2 t3, FV x t1 \/ FV x t2 \/ FV x t3 -> FV x (If t1 t2 t3).
-
-Inductive BV : string -> term -> Prop :=
-  | BVLambda1 : forall x T t, BV x (Lambda x T t)
-  | BVLambda2 : forall x y T t, BV x t -> BV x (Lambda y T t)
-  | BVApply   : forall x t1 t2, BV x t1 \/ BV x t2 -> BV x (Apply t1 t2)
-  | BVIf      : forall x t1 t2 t3, BV x t1 \/ BV x t2 \/ BV x t3 -> BV x (If t1 t2 t3).
-
-(** ** Substitution *)
-Variable Flesh : string -> term -> term -> string.
-Hypothesis Flesh_x : forall x s t, x <> Flesh x s t.
-Hypothesis Flesh_fv1 : forall x s t, ~FV (Flesh x s t) s.
-Hypothesis Flesh_fv2 : forall x s t, ~FV (Flesh x s t) t.
-Hypothesis Flesh_bv : forall x s t, ~BV (Flesh x s t) t.
-
-Fixpoint alpha (t : term) (old new : string) :=
-  match t with
-  |  Var s =>
-    if string_dec s old then
-      Var new
-    else
-      t
-  | Bool _  =>
-      t
-  | Lambda x T body =>
-      if string_dec x old then
-      	Lambda x T body
-      else
-        Lambda x T (alpha body old new)
-  | Apply t1 t2 =>
-      Apply (alpha t1 old new) (alpha t2 old new)
-  | If t1 t2 t3 =>
-      If (alpha t1 old new) (alpha t2 old new) (alpha t3 old new)
-  end.
-
-Fixpoint term_length (t : term) :=
-  match t with
-  |  Var _ | Bool _ =>
-    1
-  | Lambda _ _ body =>
-    1 + term_length body
-  | Apply t1 t2 =>
-    1 + term_length t1 + term_length t2
-  | If t1 t2 t3 =>
-    1 + term_length t1 + term_length t2 + term_length t3
-  end.
-
-Lemma alpha_length :
-  forall (t : term) (x y : string),
-  term_length t = term_length (alpha t x y).
-Proof.
-induction t.
- simpl in |- *.
- intros.
- destruct string_dec; simpl in |- *; reflexivity.
-
- simpl in |- *.
- intros; reflexivity.
-
- simpl in |- *.
- intros.
- destruct (string_dec s x); simpl in |- *.
-  reflexivity.
-
-  rewrite (IHt x y) in |- *.
-  reflexivity.
-
- simpl in |- *.
- intros.
- rewrite (IHt1 x y) in |- *.
- rewrite (IHt2 x y) in |- *.
- reflexivity.
-
- simpl in |- *.
- intros.
- rewrite (IHt1 x y) in |- *; rewrite (IHt2 x y) in |- *;
-  rewrite (IHt3 x y) in |- *.
- reflexivity.
-Qed.
 
 Function subst (t : term) (old : string) (new : term) {measure term_length t}: term :=
   match t with
