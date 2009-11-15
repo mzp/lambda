@@ -17,49 +17,26 @@ Inductive Reducible : term -> Prop :=
   | RIfCond   : forall (t1 t2 t3 : term), Reducible t1 -> Reducible (If t1 t2 t3)
   | RIf       : forall (b : bool) (t1 t2 : term), Reducible (If (Bool b) t1 t2).
 
-(** * function *)
-(** ** free variable *)
-Definition empty :=
-  ListSet.empty_set string.
-Definition add (x : string) (xs : set string) :=
-  ListSet.set_add string_dec x xs.
-Definition remove (x : string) (xs : set string) :=
-  ListSet.set_diff string_dec xs (add x empty).
-Definition union (xs ys : set string) :=
-  ListSet.set_union string_dec xs ys.
-Definition in_dec (x : string) (xs : set string) :=
-  set_In_dec string_dec x xs.
+Inductive FV : string -> term -> Prop :=
+  | FVVar    : forall s, FV s (Var s)
+  | FVLambda : forall x y t T, x <> y -> FV x t -> FV x (Lambda y T t)
+  | FVApply  : forall x t1 t2, FV x t1 \/ FV x t2 -> FV x (Apply t1 t2)
+  | FVIf     : forall x t1 t2 t3, FV x t1 \/ FV x t2 \/ FV x t3 -> FV x (If t1 t2 t3).
 
-Fixpoint FV (t : term) : set string :=
-  match t with
-  | Var x =>
-    add x empty
-  | Bool _ =>
-    empty
-  | Lambda x _ body =>
-    remove x (FV body)
-  | Apply t1 t2 =>
-    union (FV t1) (FV t2)
-  | If t1 t2 t3 =>
-    union (union (FV t1) (FV t2)) (FV t3)
-  end.
+Inductive BV : string -> term -> Prop :=
+  | BVLambda1 : forall x T t, BV x (Lambda x T t)
+  | BVLambda2 : forall x y T t, BV x t -> BV x (Lambda y T t)
+  | BVApply   : forall x t1 t2, BV x t1 \/ BV x t2 -> BV x (Apply t1 t2)
+  | BVIf      : forall x t1 t2 t3, BV x t1 \/ BV x t2 \/ BV x t3 -> BV x (If t1 t2 t3).
 
 (** ** Substitution *)
-Variable Gensym : set string -> string.
-Hypothesis Gensym_uniq : forall (xs : set string) (x : string),
-  x = Gensym xs -> ~ set_In x xs.
+Variable Flesh : string -> term -> term -> string.
+Hypothesis Flesh_x : forall x s t, x <> Flesh x s t.
+Hypothesis Flesh_fv1 : forall x s t, ~FV (Flesh x s t) s.
+Hypothesis Flesh_fv2 : forall x s t, ~FV (Flesh x s t) t.
+Hypothesis Flesh_bv : forall x s t, ~BV (Flesh x s t) t.
 
-Fixpoint assoc {A B : Type} (dec : forall x y : A, {x = y} + {x <> y}) (x : A) (xs : list (A * B)) :=
-  match xs with
-  | nil => None
-  | (key,val)::xs =>
-    if dec key x then
-      Some val
-    else
-      assoc dec x xs
-  end.
-
-Fixpoint rename_var (t : term) (old new : string) :=
+Fixpoint alpha (t : term) (old new : string) :=
   match t with
   |  Var s =>
     if string_dec s old then
@@ -72,11 +49,11 @@ Fixpoint rename_var (t : term) (old new : string) :=
       if string_dec x old then
       	Lambda x T body
       else
-        Lambda x T (rename_var body old new)
+        Lambda x T (alpha body old new)
   | Apply t1 t2 =>
-      Apply (rename_var t1 old new) (rename_var t2 old new)
+      Apply (alpha t1 old new) (alpha t2 old new)
   | If t1 t2 t3 =>
-      If (rename_var t1 old new) (rename_var t2 old new) (rename_var t3 old new)
+      If (alpha t1 old new) (alpha t2 old new) (alpha t3 old new)
   end.
 
 Fixpoint term_length (t : term) :=
@@ -91,9 +68,9 @@ Fixpoint term_length (t : term) :=
     1 + term_length t1 + term_length t2 + term_length t3
   end.
 
-Lemma rename_var_length :
+Lemma alpha_length :
   forall (t : term) (x y : string),
-  term_length t = term_length (rename_var t x y).
+  term_length t = term_length (alpha t x y).
 Proof.
 induction t.
  simpl in |- *.
@@ -136,11 +113,9 @@ Function subst (t : term) (old : string) (new : term) {measure term_length t}: t
   | Lambda x T body =>
       if string_dec x old then
       	Lambda x T body
-      else if in_dec x (FV new) then
-      	let y := Gensym (union (FV new) (FV body)) in
-          Lambda y T (subst (rename_var body x y) old new)
       else
-        Lambda x T (subst body old new)
+      	let y := Flesh x new body in
+          Lambda y T (subst (alpha body x y) old new)
   | Apply t1 t2 =>
       Apply (subst t1 old new) (subst t2 old new)
   | If t1 t2 t3 =>
@@ -148,12 +123,7 @@ Function subst (t : term) (old : string) (new : term) {measure term_length t}: t
   end.
 Proof.
  intros.
- rewrite <- (rename_var_length body x (Gensym (union (FV new) (FV body)))) in |- *.
- simpl in |- *.
- apply Lt.le_lt_n_Sm.
- apply le_n.
-
- intros.
+ rewrite <- alpha_length in |- *.
  simpl in |- *.
  apply Lt.le_lt_n_Sm.
  apply le_n.
