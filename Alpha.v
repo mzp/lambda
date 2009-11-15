@@ -29,8 +29,7 @@ Fixpoint alpha (t : term) (old new : string) :=
       If (alpha t1 old new) (alpha t2 old new) (alpha t3 old new)
   end.
 
-Theorem alpha_length :
-  forall (t : term) (x y : string),
+Theorem alpha_length : forall (t : term) (x y : string),
   term_length t = term_length (alpha t x y).
 Proof.
 induction t.
