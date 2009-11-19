@@ -15,14 +15,16 @@ public.Proof(files) =
 # ------------------------------------------------------------
 FILES[] =
 	Alpha
+	AlphaFact
 	Term
 	Eval
 	Typing
+	TypingFact
 	TypeInv
 	TypeUniq
 	CannonicalForm
 	Progress
-	Weaking
+#	Weaking
 #	Subst
 
 .DEFAULT: $(Proof $(FILES))
