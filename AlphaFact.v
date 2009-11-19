@@ -15,7 +15,7 @@ induction t
  intros.
  apply TVar.
  apply TEnv.add_2.
-  unfold not in |- *; intro; apply H.
+  intro; apply H.
   rewrite H2 in |- *.
   apply FVVar.
 
@@ -33,22 +33,20 @@ induction t
  apply TLambda.
  apply permutation with (tenv1 := TEnv.add s0 S (TEnv.add s t tenv)).
   apply Equal_add_2.
-  unfold not in |- *; intro; apply H0.
+  intro; apply H0.
   rewrite H8 in |- *.
   apply BVLambda1.
 
   apply IHt.
-   unfold not in |- *.
-   intro.
-   apply H.
+   intro; apply H.
    apply FVLambda.
-    unfold not in |- *; intro; apply H0.
+    intro; apply H0.
     rewrite H9 in |- *.
     apply BVLambda1.
 
     exact H8.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply BVLambda2.
    exact H8.
 
@@ -59,22 +57,22 @@ induction t
  inversion H1.
  apply TApply with (a := a).
   apply IHt1.
-   unfold not in |- *; intro; apply H.
+   intro; apply H.
    apply FVApply.
    left; exact H8.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply BVApply.
    left; exact H8.
 
    exact H4.
 
   apply IHt2.
-   unfold not in |- *; intro; apply H.
+   intro; apply H.
    apply FVApply.
    right; exact H8.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply BVApply.
    right; exact H8.
 
@@ -85,33 +83,33 @@ induction t
  inversion H1.
  apply TIf.
   apply IHt1.
-   unfold not in |- *; intro; apply H.
+   intro; apply H.
    apply FVIf.
    left; exact H10.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply BVIf.
    left; exact H10.
 
    exact H5.
 
   apply IHt2.
-   unfold not in |- *; intro; apply H.
+   intro; apply H.
    apply FVIf.
    right; left; exact H10.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply BVIf.
    right; left; exact H10.
 
    exact H8.
 
   apply IHt3.
-   unfold not in |- *; intro; apply H.
+   intro; apply H.
    apply FVIf.
    right; right; exact H10.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply BVIf.
    right; right; exact H10.
 
@@ -140,10 +138,7 @@ induction t.
   apply TVar.
   inversion H.
   apply TEnv.add_2.
-   unfold not in |- *.
-   unfold not in H0.
-   intro.
-   apply H0.
+   intro; apply H0.
    rewrite H7 in |- *.
    apply FVVar.
 
@@ -163,22 +158,21 @@ induction t.
   apply TLambda.
   apply permutation with (tenv1 := TEnv.add y S (TEnv.add s t tenv)).
    apply Equal_add_2.
-   unfold not in |- *; intro; apply H1.
+   intro; apply H1.
    rewrite H9 in |- *.
    apply BVLambda1.
 
    apply weaking_FV.
-    unfold not in |- *.
     intro.
     apply H0.
     apply FVLambda.
-     unfold not in |- *; intro; apply H1.
+     intro; apply H1.
      rewrite H10 in |- *.
      apply BVLambda1.
 
      exact H9.
 
-    unfold not in |- *; intro; apply H1.
+    intro; apply H1.
     apply BVLambda2.
     exact H9.
 
@@ -188,7 +182,6 @@ induction t.
   apply TLambda.
   apply permutation with (tenv1 := TEnv.add y S (TEnv.add s t tenv)).
    apply Equal_add_2.
-   unfold not in |- *.
    intro.
    apply H1.
    rewrite H9 in |- *.
@@ -197,17 +190,16 @@ induction t.
    apply IHt.
     exact H8.
 
-    unfold not in |- *.
     intro.
     apply H0.
     apply FVLambda.
-     unfold not in |- *; intro; apply H1.
+     intro; apply H1.
      rewrite H10 in |- *.
      apply BVLambda1.
 
      exact H9.
 
-    unfold not in |- *; intro.
+    intro.
     apply H1.
     apply BVLambda2.
     exact H9.
@@ -225,11 +217,11 @@ induction t.
   apply IHt1.
    exact H5.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply FVApply.
    left; exact H9.
 
-   unfold not in |- *; intro; apply H1.
+   intro; apply H1.
    apply BVApply.
    left; exact H9.
 
@@ -238,11 +230,11 @@ induction t.
   apply IHt2.
    exact H8.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply FVApply.
    right; exact H9.
 
-   unfold not in |- *; intro; apply H1.
+   intro; apply H1.
    apply BVApply.
    right; exact H9.
 
@@ -256,11 +248,11 @@ induction t.
   apply IHt1.
    exact H6.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply FVIf.
    left; exact H11.
 
-   unfold not in |- *; intro; apply H1.
+   intro; apply H1.
    apply BVIf.
    left; exact H11.
 
@@ -269,11 +261,11 @@ induction t.
   apply IHt2.
    exact H9.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply FVIf.
    right; left; exact H11.
 
-   unfold not in |- *; intro; apply H1.
+   intro; apply H1.
    apply BVIf.
    right; left; exact H11.
 
@@ -282,13 +274,14 @@ induction t.
   apply IHt3.
    exact H10.
 
-   unfold not in |- *; intro; apply H0.
+   intro; apply H0.
    apply FVIf.
    right; right; exact H11.
 
-   unfold not in |- *; intro; apply H1.
+   intro; apply H1.
    apply BVIf.
    right; right; exact H11.
 
    exact H2.
 Qed.
+
