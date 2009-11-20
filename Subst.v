@@ -3,6 +3,8 @@ Require Import String.
 
 Require Import Term.
 Require Import Eval.
+Require Import Alpha.
+Require Import AlphaFact.
 Require Import Typing.
 Require Import TypingFact.
 
@@ -51,4 +53,24 @@ functional induction (subst x0 x s) .
   reflexivity.
 
  intros.
- simpl in |- *.
+ inversion H.
+ apply TLambda.
+ apply IHt with (S := S).
+  destruct (string_dec x (Flesh old new body)).
+   rewrite <- e in |- *.
+   rewrite alpha_id in |- *.
+   apply permutation with (tenv1 := TEnv.add x T (TEnv.add old S tenv)).
+    apply Equal_add_2.
+    exact _x.
+
+    exact H6.
+
+   apply
+    permutation
+     with (tenv1 := TEnv.add (Flesh old new body) T (TEnv.add old S tenv)).
+    apply Equal_add_2.
+    apply sym_not_eq.
+    apply Flesh_x.
+
+    apply alpha_preserve.
+
