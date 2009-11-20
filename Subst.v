@@ -4,6 +4,7 @@ Require Import String.
 Require Import Term.
 Require Import Eval.
 Require Import Typing.
+Require Import TypingFact.
 
 Theorem subst_preserve : forall t s x T S tenv,
     Typed t (TEnv.add x S tenv) T -> Typed s tenv S -> Typed (subst t x s) tenv T.
@@ -38,3 +39,16 @@ functional induction (subst x0 x s) .
  inversion H.
  apply TBool.
 
+ intros.
+ inversion H.
+ apply TLambda.
+ rewrite _x in H6.
+ apply permutation with (tenv2 := TEnv.add x T tenv) in H6.
+  exact H6.
+
+  rewrite _x in |- *.
+  apply Equal_add_1.
+  reflexivity.
+
+ intros.
+ simpl in |- *.

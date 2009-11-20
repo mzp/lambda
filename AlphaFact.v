@@ -285,3 +285,37 @@ induction t.
    exact H2.
 Qed.
 
+Lemma alpha_id: forall t x,
+  alpha t x x = t.
+Proof.
+induction t.
+ intro.
+ simpl in |- *.
+ destruct (string_dec s x).
+  rewrite e in |- *.
+  reflexivity.
+
+  reflexivity.
+
+ intro.
+ simpl in |- *.
+ reflexivity.
+
+ intro.
+ simpl in |- *.
+ destruct (string_dec s x).
+  reflexivity.
+
+  rewrite IHt in |- *.
+  reflexivity.
+
+ intro.
+ simpl in |- *.
+ rewrite IHt1,  IHt2 in |- *.
+ reflexivity.
+
+ intro.
+ simpl in |- *.
+ rewrite IHt1,  IHt2,  IHt3 in |- *.
+ reflexivity.
+Qed.
