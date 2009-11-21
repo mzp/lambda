@@ -7,6 +7,75 @@ Require Import Alpha.
 Require Import Typing.
 Require Import TypingFact.
 
+Theorem alpha_fv : forall t x y,
+  x <> y -> ~ FV x (alpha t x y).
+Proof.
+induction t.
+ intros.
+ simpl in |- *.
+ destruct (string_dec s x).
+  intro.
+  apply H.
+  inversion H0.
+  reflexivity.
+
+  intro.
+  apply n.
+  inversion H0.
+  reflexivity.
+
+ intros.
+ simpl in |- *.
+ intro.
+ inversion H0.
+
+ intros.
+ simpl in |- *.
+ destruct (string_dec s x).
+  rewrite e in |- *.
+  intro.
+  inversion H0.
+  tauto.
+
+  intro.
+  inversion H0.
+  generalize H6.
+  fold not in |- *.
+  apply IHt.
+  exact H.
+
+ intros.
+ simpl in |- *.
+ intro.
+ inversion H0.
+ inversion H3.
+  generalize H5.
+  apply IHt1.
+  exact H.
+
+  generalize H5.
+  apply IHt2.
+  exact H.
+
+ simpl in |- *.
+ intros.
+ intro.
+ inversion H0.
+ inversion H3.
+  generalize H6.
+  apply IHt1.
+  exact H.
+
+  inversion H6.
+   generalize H7.
+   apply IHt2.
+   exact H.
+
+   generalize H7.
+   apply IHt3.
+   exact H.
+Qed.
+
 Theorem alpha_preserve : forall t tenv x y T S,
   Typed t tenv T -> ~FV y t -> ~BV y t -> TEnv.MapsTo x S tenv ->
      Typed (alpha t x y) (TEnv.add y S tenv) T.
