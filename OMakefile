@@ -30,4 +30,4 @@ FILES[] =
 
 .PHONY: clean
 clean:
-	rm -f *.vo *.glob *~ *.omc .omakedb .omakedb.lock
+	rm -f *.vo *.glob *~ *.omc .omakedb .omakedb.lock *.html

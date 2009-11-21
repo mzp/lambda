@@ -2,7 +2,6 @@ Require Import List.
 Require Import String.
 
 Require Import Term.
-Require Import TermFact.
 Require Import Alpha.
 Require Import Typing.
 Require Import TypingFact.

@@ -2,7 +2,6 @@ Require Import List.
 Require Import String.
 
 Require Import Term.
-Require Import TermFact.
 Require Import Eval.
 Require Import Typing.
 
@@ -392,7 +391,7 @@ induction t.
    exact e.
 
   apply IHt with (S := S) (s := s0).
-   apply FV_Lambda with (y := s) (T := t).
+   apply FV_Lambda_inv with (y := s) (T := t).
     apply sym_not_eq.
     exact n.
 
@@ -408,13 +407,13 @@ induction t.
  inversion H0.
  apply TApply with (a := a).
   apply IHt1 with (S := S) (s := s).
-   apply FV_Apply_1 with (t2 := t2).
+   apply FV_Apply_inv_1 with (t2 := t2).
    exact H.
 
    exact H3.
 
   apply IHt2 with (S := S) (s := s).
-   apply FV_Apply_2 with (t1 := t1).
+   apply FV_Apply_inv_2 with (t1 := t1).
    exact H.
 
    exact H6.
@@ -423,19 +422,19 @@ induction t.
  inversion H0.
  apply TIf.
   apply IHt1 with (S := S) (s := s).
-   apply FV_If_1 with (t2 := t2) (t3 := t3).
+   apply FV_If_inv_1 with (t2 := t2) (t3 := t3).
    exact H.
 
    exact H4.
 
   apply IHt2 with (S := S) (s := s).
-   apply FV_If_2 with (t1 := t1) (t3 := t3).
+   apply FV_If_inv_2 with (t1 := t1) (t3 := t3).
    exact H.
 
    exact H7.
 
   apply IHt3 with (S := S) (s := s).
-   apply FV_If_3 with (t1 := t1) (t2 := t2).
+   apply FV_If_inv_3 with (t1 := t1) (t2 := t2).
    exact H.
 
    exact H8.
