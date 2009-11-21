@@ -18,7 +18,6 @@ Inductive Reducible : term -> Prop :=
   | RIfCond   : forall (t1 t2 t3 : term), Reducible t1 -> Reducible (If t1 t2 t3)
   | RIf       : forall (b : bool) (t1 t2 : term), Reducible (If (Bool b) t1 t2).
 
-
 Function subst (t : term) (old : string) (new : term) {measure term_length t}: term :=
   match t with
   |  Var s =>
@@ -74,6 +73,14 @@ Proof.
  apply Plus.le_plus_l.
 Qed.
 
+Inductive Eval : term -> term -> Prop :=
+  | EAppLeft  : forall t1 t2 t' : term, Eval t1 t' -> Eval (Apply t1 t2) (Apply t' t2)
+  | EAppRight : forall t1 t2 t' : term, Eval t2 t' -> Eval (Apply t1 t2) (Apply t1 t')
+  | ELambda   : forall (x : string) (T : type) (t v : term), Value v -> Eval (Apply (Lambda x T t) v) (subst t x v)
+  | EIfCond   : forall (t1 t2 t3 : term) t', Eval t1 t' -> Eval (If t1 t2 t3) (If t' t2 t3)
+  | EIfTrue   : forall (b : bool) (t1 t2 : term), Eval (If (Bool true) t1 t2) t1
+  | EIfFalse  : forall (b : bool) (t1 t2 : term), Eval (If (Bool false) t1 t2) t2.
+
 Definition mbind {A : Type} (x : option A) (f : A -> option A) : option A :=
   match x with
   | None => None
@@ -107,10 +114,40 @@ Fixpoint reduce (t : term) :=
       reduce t1 >>= (fun x => Some (If x t2 t3))
   end.
 
-
 Theorem reduce_prop1 : forall t r,
-  Some r = reduce t -> Reducible t.
+  Some r = reduce t -> Eval t r.
 Proof.
+induction t.
+ simpl in |- *; intros; discriminate.
+
+ simpl in |- *; intros; discriminate.
+
+ simpl in |- *; intros; discriminate.
+
+ simpl in |- *.
+ destruct (reduce t1).
+  intros.
+  inversion H.
+  apply EAppLeft.
+  apply IHt1.
+  reflexivity.
+
+  destruct (reduce t2).
+   intros.
+   inversion H.
+   apply EAppRight.
+   apply IHt2.
+   reflexivity.
+
+   destruct t1.
+    intros; discriminate.
+
+    intros; discriminate.
+
+    intros.
+    inversion H.
+
+(*Proof.
 intro t.
 induction t.
  simpl in |- *; intros; discriminate.
@@ -171,7 +208,7 @@ induction t.
    reflexivity.
 
    intros; discriminate.
-Qed.
+Qed.*)
 
 Theorem reduce_prop2 : forall t,
   Reducible t -> exists r : term,Some r = reduce t.
