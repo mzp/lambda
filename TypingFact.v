@@ -6,10 +6,9 @@ Require Import TermFact.
 Require Import Eval.
 Require Import Typing.
 
-Lemma swap:
-  forall (tenv1 tenv2 : tenv) (x : string) (r : type),
-    TEnv.Equal tenv1 tenv2 ->
-      TEnv.Equal (TEnv.add x r tenv1) (TEnv.add x r tenv2).
+Lemma swap: forall tenv1 tenv2 x (r : type),
+  TEnv.Equal tenv1 tenv2 ->
+     TEnv.Equal (TEnv.add x r tenv1) (TEnv.add x r tenv2).
 Proof.
 intros.
 eapply TEnvWF.Equal_mapsto_iff.
@@ -63,11 +62,11 @@ Proof.
   tauto.
 Qed.
 
-Theorem permutation:
-  forall (t : term) (tenv1 tenv2 : tenv) (r : type),
+Lemma permutation: forall t tenv1 tenv2 r,
     TEnv.Equal tenv1 tenv2 ->
       Typed t tenv1 r -> Typed t tenv2 r.
 Proof.
+intro.
 induction t.
  (* Var *)
  intros.
@@ -126,8 +125,7 @@ induction t.
    exact H8.
 Qed.
 
-Lemma Equal_add_1 :
-  forall (tenv : tenv) (x y : string) (r1 r2 : type),
+Lemma Equal_add_1 : forall tenv x y (r1 r2 : type),
     x = y -> TEnv.Equal (TEnv.add x r1 (TEnv.add y r2 tenv)) (TEnv.add x r1 tenv).
 Proof.
 intros.
@@ -179,8 +177,7 @@ split.
     exact H3.
 Qed.
 
-Lemma Equal_add_2 :
-  forall (tenv : tenv) (x y : string) (r1 r2 : type),
+Lemma Equal_add_2 : forall tenv x y (r1 r2 : type),
     x <> y -> TEnv.Equal (TEnv.add x r1 (TEnv.add y r2 tenv))
                          (TEnv.add y r2 (TEnv.add x r1 tenv)).
 Proof.
@@ -264,7 +261,7 @@ Qed.
 Definition NotIn (x : string) (tenv : tenv) : Prop :=
   forall (y : string) (T : type), TEnv.MapsTo y T tenv -> x <> y.
 
-Theorem weaking:
+Lemma weaking:
   forall (t : term) (tenv : tenv) (T S : type) (x : string),
   Typed t tenv T -> NotIn x tenv -> Typed t (TEnv.add x S tenv) T.
 Proof.

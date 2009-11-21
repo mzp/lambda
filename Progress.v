@@ -6,8 +6,7 @@ Require Import Eval.
 Require Import Typing.
 Require Import CannonicalForm.
 
-Theorem Progress :
-  forall (t : term) (r : type),
+Theorem Progress : forall t r,
     Typed t empty_env r -> Value t \/ Reducible t.
 Proof.
  induction t.

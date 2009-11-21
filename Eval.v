@@ -107,9 +107,9 @@ Fixpoint reduce (t : term) :=
       reduce t1 >>= (fun x => Some (If x t2 t3))
   end.
 
-(** * Theorem *)
-Theorem reduce_prop1 :
-  forall (t r : term), Some r = reduce t -> Reducible t.
+
+Theorem reduce_prop1 : forall t r,
+  Some r = reduce t -> Reducible t.
 Proof.
 intro t.
 induction t.
@@ -173,8 +173,8 @@ induction t.
    intros; discriminate.
 Qed.
 
-Theorem reduce_prop2 :
-  forall (t : term), Reducible t -> exists r : term,Some r = reduce t.
+Theorem reduce_prop2 : forall t,
+  Reducible t -> exists r : term,Some r = reduce t.
 Proof.
 apply Reducible_ind.
  intros.
@@ -236,4 +236,3 @@ apply Reducible_ind.
 
   exists t2; reflexivity.
 Qed.
-

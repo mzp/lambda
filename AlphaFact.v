@@ -7,7 +7,7 @@ Require Import Alpha.
 Require Import Typing.
 Require Import TypingFact.
 
-Theorem alpha_fv : forall t x y,
+Lemma alpha_fv : forall t x y,
   x <> y -> ~ FV x (alpha t x y).
 Proof.
 induction t.
@@ -76,7 +76,7 @@ induction t.
    exact H.
 Qed.
 
-Theorem alpha_preserve : forall t tenv x y T S,
+Lemma alpha_preserve : forall t tenv x y T S,
   Typed t tenv T -> ~FV y t -> ~BV y t -> TEnv.MapsTo x S tenv ->
      Typed (alpha t x y) (TEnv.add y S tenv) T.
 Proof.

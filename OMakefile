@@ -17,7 +17,6 @@ FILES[] =
 	Alpha
 	AlphaFact
 	Term
-	TermFact
 	Eval
 	Typing
 	TypingFact
@@ -25,8 +24,7 @@ FILES[] =
 	TypeUniq
 	CannonicalForm
 	Progress
-#	Weaking
-#	Subst
+	Subst
 
 .DEFAULT: $(Proof $(FILES))
 
