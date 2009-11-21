@@ -361,35 +361,35 @@ induction t.
 Qed.
 
 Lemma Typed_add_elim: forall t S T tenv s,
-    ~ FV s t -> ~ BV s t -> Typed t (TEnv.add s S tenv) T -> Typed t tenv T.
+    ~ FV s t -> Typed t (TEnv.add s S tenv) T -> Typed t tenv T.
 Proof.
 intro.
 induction t.
  intros.
- inversion H1.
+ inversion H0.
  apply TVar.
- apply TEnvWF.add_mapsto_iff in H3.
- inversion H3.
-  inversion H6.
+ apply TEnvWF.add_mapsto_iff in H2.
+ inversion H2.
+  inversion H5.
   assert (FV s0 (Var s)).
-   rewrite H7 in |- *.
+   rewrite H6 in |- *.
    apply FVVar.
 
    contradiction .
 
-  inversion H6.
-  exact H8.
+  inversion H5.
+  exact H7.
 
  intros.
- inversion H1.
+ inversion H0.
  apply TBool.
 
  intros.
- inversion H1.
+ inversion H0.
  apply TLambda.
  destruct (string_dec s s0).
-  apply permutation with (tenv2 := TEnv.add s t tenv) in H7.
-   exact H7.
+  apply permutation with (tenv2 := TEnv.add s t tenv) in H6.
+   exact H6.
 
    apply Equal_add_1.
    exact e.
@@ -401,65 +401,47 @@ induction t.
 
     exact H.
 
-   apply BV_Lambda with (y := s) (T := t).
-   exact H0.
-
    apply permutation with (tenv1 := TEnv.add s t (TEnv.add s0 S tenv)).
     apply Equal_add_2.
     exact n.
 
-    exact H7.
+    exact H6.
 
  intros.
- inversion H1.
+ inversion H0.
  apply TApply with (a := a).
   apply IHt1 with (S := S) (s := s).
    apply FV_Apply_1 with (t2 := t2).
    exact H.
 
-   apply BV_Apply_1 with (t2 := t2).
-   exact H0.
-
-   exact H4.
+   exact H3.
 
   apply IHt2 with (S := S) (s := s).
    apply FV_Apply_2 with (t1 := t1).
    exact H.
 
-   apply BV_Apply_2 with (t1 := t1).
-   exact H0.
-
-   exact H7.
+   exact H6.
 
  intros.
- inversion H1.
+ inversion H0.
  apply TIf.
   apply IHt1 with (S := S) (s := s).
    apply FV_If_1 with (t2 := t2) (t3 := t3).
    exact H.
 
-   apply BV_If_1 with (t2 := t2) (t3 := t3).
-   exact H0.
-
-   exact H5.
+   exact H4.
 
   apply IHt2 with (S := S) (s := s).
    apply FV_If_2 with (t1 := t1) (t3 := t3).
    exact H.
 
-   apply BV_If_2 with (t1 := t1) (t3 := t3).
-   exact H0.
-
-   exact H8.
+   exact H7.
 
   apply IHt3 with (S := S) (s := s).
    apply FV_If_3 with (t1 := t1) (t2 := t2).
    exact H.
 
-   apply BV_If_3 with (t1 := t1) (t2 := t2).
-   exact H0.
-
-   exact H9.
+   exact H8.
 Qed.
 
 
