@@ -72,5 +72,5 @@ functional induction (subst x0 x s) .
     apply sym_not_eq.
     apply Flesh_x.
 
-    apply alpha_preserve.
+(*    apply alpha_preserve.*)
 

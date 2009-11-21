@@ -17,6 +17,7 @@ FILES[] =
 	Alpha
 	AlphaFact
 	Term
+	TermFact
 	Eval
 	Typing
 	TypingFact

@@ -2,6 +2,7 @@ Require Import List.
 Require Import String.
 
 Require Import Term.
+Require Import TermFact.
 Require Import Eval.
 Require Import Typing.
 
@@ -359,3 +360,214 @@ induction t.
    exact H0.
 Qed.
 
+Lemma Typed_add_elim: forall t S T tenv s,
+    ~ FV s t -> ~ BV s t -> Typed t (TEnv.add s S tenv) T -> Typed t tenv T.
+Proof.
+intro.
+induction t.
+ intros.
+ inversion H1.
+ apply TVar.
+ apply TEnvWF.add_mapsto_iff in H3.
+ inversion H3.
+  inversion H6.
+  assert (FV s0 (Var s)).
+   rewrite H7 in |- *.
+   apply FVVar.
+
+   contradiction .
+
+  inversion H6.
+  exact H8.
+
+ intros.
+ inversion H1.
+ apply TBool.
+
+ intros.
+ inversion H1.
+ apply TLambda.
+ destruct (string_dec s s0).
+  apply permutation with (tenv2 := TEnv.add s t tenv) in H7.
+   exact H7.
+
+   apply Equal_add_1.
+   exact e.
+
+  apply IHt with (S := S) (s := s0).
+   apply FV_Lambda with (y := s) (T := t).
+    apply sym_not_eq.
+    exact n.
+
+    exact H.
+
+   apply BV_Lambda with (y := s) (T := t).
+   exact H0.
+
+   apply permutation with (tenv1 := TEnv.add s t (TEnv.add s0 S tenv)).
+    apply Equal_add_2.
+    exact n.
+
+    exact H7.
+
+ intros.
+ inversion H1.
+ apply TApply with (a := a).
+  apply IHt1 with (S := S) (s := s).
+   apply FV_Apply_1 with (t2 := t2).
+   exact H.
+
+   apply BV_Apply_1 with (t2 := t2).
+   exact H0.
+
+   exact H4.
+
+  apply IHt2 with (S := S) (s := s).
+   apply FV_Apply_2 with (t1 := t1).
+   exact H.
+
+   apply BV_Apply_2 with (t1 := t1).
+   exact H0.
+
+   exact H7.
+
+ intros.
+ inversion H1.
+ apply TIf.
+  apply IHt1 with (S := S) (s := s).
+   apply FV_If_1 with (t2 := t2) (t3 := t3).
+   exact H.
+
+   apply BV_If_1 with (t2 := t2) (t3 := t3).
+   exact H0.
+
+   exact H5.
+
+  apply IHt2 with (S := S) (s := s).
+   apply FV_If_2 with (t1 := t1) (t3 := t3).
+   exact H.
+
+   apply BV_If_2 with (t1 := t1) (t3 := t3).
+   exact H0.
+
+   exact H8.
+
+  apply IHt3 with (S := S) (s := s).
+   apply FV_If_3 with (t1 := t1) (t2 := t2).
+   exact H.
+
+   apply BV_If_3 with (t1 := t1) (t2 := t2).
+   exact H0.
+
+   exact H9.
+Qed.
+
+
+Lemma Typed_add_intro: forall t S T tenv s,
+    ~ FV s t -> ~ BV s t -> Typed t tenv T -> Typed t (TEnv.add s S tenv) T.
+Proof.
+induction t
+ (* Var *).
+ intros.
+ apply TVar.
+ apply TEnv.add_2.
+  intro; apply H.
+  rewrite H2 in |- *.
+  apply FVVar.
+
+  inversion H1.
+  exact H3.
+
+ (* Bool *)
+ intros.
+ inversion H1.
+ apply TBool.
+
+ (* Lambda *)
+ intros.
+ inversion H1.
+ apply TLambda.
+ apply permutation with (tenv1 := TEnv.add s0 S (TEnv.add s t tenv)).
+  apply Equal_add_2.
+  intro; apply H0.
+  rewrite H8 in |- *.
+  apply BVLambda1.
+
+  apply IHt.
+   intro; apply H.
+   apply FVLambda.
+    intro; apply H0.
+    rewrite H9 in |- *.
+    apply BVLambda1.
+
+    exact H8.
+
+   intro; apply H0.
+   apply BVLambda2.
+   exact H8.
+
+   exact H7.
+
+ (* Apply *)
+ intros.
+ inversion H1.
+ apply TApply with (a := a).
+  apply IHt1.
+   intro; apply H.
+   apply FVApply.
+   left; exact H8.
+
+   intro; apply H0.
+   apply BVApply.
+   left; exact H8.
+
+   exact H4.
+
+  apply IHt2.
+   intro; apply H.
+   apply FVApply.
+   right; exact H8.
+
+   intro; apply H0.
+   apply BVApply.
+   right; exact H8.
+
+   exact H7.
+
+ (* If *)
+ intros.
+ inversion H1.
+ apply TIf.
+  apply IHt1.
+   intro; apply H.
+   apply FVIf.
+   left; exact H10.
+
+   intro; apply H0.
+   apply BVIf.
+   left; exact H10.
+
+   exact H5.
+
+  apply IHt2.
+   intro; apply H.
+   apply FVIf.
+   right; left; exact H10.
+
+   intro; apply H0.
+   apply BVIf.
+   right; left; exact H10.
+
+   exact H8.
+
+  apply IHt3.
+   intro; apply H.
+   apply FVIf.
+   right; right; exact H10.
+
+   intro; apply H0.
+   apply BVIf.
+   right; right; exact H10.
+
+   exact H9.
+Qed.
