@@ -6,6 +6,8 @@ Require Import Recdef.
 Require Import Term.
 Require Import Alpha.
 
+Open Scope bool_scope.
+
 (** * Propotion *)
 Inductive Value  : term -> Prop :=
   | VBool   : forall b : bool,   Value (Bool b)
@@ -75,11 +77,11 @@ Qed.
 
 Inductive Eval : term -> term -> Prop :=
   | EAppLeft  : forall t1 t2 t' : term, Eval t1 t' -> Eval (Apply t1 t2) (Apply t' t2)
-  | EAppRight : forall t1 t2 t' : term, Eval t2 t' -> Eval (Apply t1 t2) (Apply t1 t')
+  | EAppRight : forall t1 t2 t' : term, Value t1   -> Eval t2 t' -> Eval (Apply t1 t2) (Apply t1 t')
   | ELambda   : forall (x : string) (T : type) (t v : term), Value v -> Eval (Apply (Lambda x T t) v) (subst t x v)
   | EIfCond   : forall (t1 t2 t3 : term) t', Eval t1 t' -> Eval (If t1 t2 t3) (If t' t2 t3)
-  | EIfTrue   : forall (b : bool) (t1 t2 : term), Eval (If (Bool true) t1 t2) t1
-  | EIfFalse  : forall (b : bool) (t1 t2 : term), Eval (If (Bool false) t1 t2) t2.
+  | EIfTrue   : forall (t1 t2 : term), Eval (If (Bool true) t1 t2) t1
+  | EIfFalse  : forall (t1 t2 : term), Eval (If (Bool false) t1 t2) t2.
 
 Definition mbind {A : Type} (x : option A) (f : A -> option A) : option A :=
   match x with
@@ -89,33 +91,72 @@ Definition mbind {A : Type} (x : option A) (f : A -> option A) : option A :=
 
 Infix ">>=" := mbind (at level 50).
 
-Fixpoint reduce (t : term) :=
+Definition value_dec : forall (t : term), {Value t} + {~ Value t}.
+Proof.
+destruct t.
+ right.
+ intro.
+ inversion H.
+
+ left.
+ apply VBool.
+
+ left.
+ apply VLambda.
+
+ right; intro.
+ inversion H.
+
+ right.
+ intro.
+ inversion H.
+Qed.
+
+Fixpoint eval (t : term) :=
   match t with
     Var _   | Bool _  | Lambda _ _ _ =>
       None
   | Apply t1 t2 =>
-      match reduce t1 with
-        Some t => Some (Apply t t2)
-      | None =>
-      	 match reduce t2 with
-	  Some t => Some (Apply t1 t)
-       	| None   =>
-      	   match t1 with
-	   Lambda x _ body => Some (subst body x t2)
-      	 | _ => None
-      	   end
-         end
-      end
+      if value_dec t1 then
+      	if value_dec t2 then
+       	  match t1 with
+      	    Lambda x _ body => Some (subst body x t2)
+          | _ => None
+      	  end
+      	else
+	  eval t2 >>= (fun t => Some (Apply t1 t))
+      else
+      	eval t1 >>= (fun t => Some (Apply t t2))
   | If (Bool true) t2 t3 =>
       Some t2
   | If (Bool false) t2 t3 =>
       Some t3
   | If t1 t2 t3 =>
-      reduce t1 >>= (fun x => Some (If x t2 t3))
+      eval t1 >>= (fun x => Some (If x t2 t3))
   end.
 
-Theorem reduce_prop1 : forall t r,
-  Some r = reduce t -> Eval t r.
+Lemma not_eval : forall t,
+  Value t -> None = eval t.
+Proof.
+destruct t.
+ simpl in |- *; intro.
+ inversion H.
+
+ simpl in |- *; intro.
+ reflexivity.
+
+ simpl in |- *; intro.
+ reflexivity.
+
+ intro.
+ inversion H.
+
+ intro.
+ inversion H.
+Qed.
+
+Theorem eval_equal1 : forall t r,
+  Some r = eval t -> Eval t r.
 Proof.
 induction t.
  simpl in |- *; intros; discriminate.
@@ -125,151 +166,145 @@ induction t.
  simpl in |- *; intros; discriminate.
 
  simpl in |- *.
- destruct (reduce t1).
-  intros.
-  inversion H.
-  apply EAppLeft.
-  apply IHt1.
-  reflexivity.
-
-  destruct (reduce t2).
-   intros.
-   inversion H.
-   apply EAppRight.
-   apply IHt2.
-   reflexivity.
-
+ destruct (value_dec t1).
+  destruct (value_dec t2).
    destruct t1.
-    intros; discriminate.
+    inversion v.
 
     intros; discriminate.
 
     intros.
     inversion H.
+    apply ELambda.
+    exact v0.
 
-(*Proof.
-intro t.
-induction t.
- simpl in |- *; intros; discriminate.
+    intros; discriminate.
 
- simpl in |- *; intros; discriminate.
+    intros; discriminate.
 
- simpl in |- *; intros; discriminate.
+   destruct (eval t2).
+    simpl in |- *.
+    intros.
+    inversion H.
+    apply EAppRight.
+     exact v.
 
- intro.
- simpl in |- *.
- destruct (reduce t1).
-  intros.
-  apply RAppLeft.
-  eapply IHt1.
-  reflexivity.
+     apply IHt2.
+     reflexivity.
 
-  destruct (reduce t2).
+    simpl in |- *.
+    intros; discriminate.
+
+  destruct (eval t1).
+   simpl in |- *.
    intros.
-   apply RAppRight.
-   eapply IHt2.
+   inversion H.
+   apply EAppLeft.
+   apply IHt1.
    reflexivity.
 
-   destruct t1.
-    intro; discriminate.
-
-    intro; discriminate.
-
-    intros; apply RLambda.
-
-    intro; discriminate.
-
-    intro; discriminate.
+   simpl in |- *.
+   intros; discriminate.
 
  simpl in |- *.
  destruct t1.
-  simpl in |- *.
-  intros; discriminate.
+  simpl in |- *; intros; discriminate.
 
-  simpl in |- *.
-  intros; apply RIf.
+  destruct b.
+   simpl in |- *.
+   intros.
+   inversion H.
+   apply EIfTrue.
 
-  simpl in |- *.
-  intros.
+   intros.
+   inversion H.
+   apply EIfFalse.
+
+  simpl in |- *; intros; discriminate.
+
+  destruct (eval (Apply t1_1 t1_2)).
+   simpl in |- *.
+   intros.
+   inversion H.
+   apply EIfCond.
+   apply IHt1.
+   reflexivity.
+
+   simpl in |- *; intros; discriminate.
+
+  destruct (eval (If t1_1 t1_2 t1_3)).
+   simpl in |- *; intros.
+   inversion H.
+   apply EIfCond.
+   apply IHt1.
+   reflexivity.
+
+   simpl in |- *; intros; discriminate.
+Qed.
+
+Theorem eval_equal2 : forall t r,
+  Eval t r -> Some r = eval t.
+Proof.
+apply Eval_ind.
+ intros.
+ simpl in |- *.
+ destruct (value_dec t1).
+  apply not_eval in v.
+  rewrite <- v in H0.
   discriminate.
 
-  destruct (reduce (Apply t1_1 t1_2)).
-   intros.
-   apply RIfCond.
-   eapply IHt1.
-   reflexivity.
-
-   intros; discriminate.
-
-  destruct (reduce (If t1_1 t1_2 t1_3)).
-   intros.
-   apply RIfCond.
-   eapply IHt1.
-   reflexivity.
-
-   intros; discriminate.
-Qed.*)
-
-Theorem reduce_prop2 : forall t,
-  Reducible t -> exists r : term,Some r = reduce t.
-Proof.
-apply Reducible_ind.
- intros.
- simpl in |- *.
- destruct (reduce t1).
-  exists (Apply t t2); reflexivity.
-
-  destruct (reduce t2).
-   exists (Apply t1 t).
-   reflexivity.
-
-   inversion H0; discriminate.
-
- intros.
- simpl in |- *.
- destruct (reduce t1).
-  exists (Apply t t2).
+  rewrite <- H0 in |- *.
+  simpl in |- *.
   reflexivity.
 
-  destruct (reduce t2).
-   exists (Apply t1 t); reflexivity.
-
-   inversion H0.
+ intros.
+ simpl in |- *.
+ destruct (value_dec t1).
+  destruct (value_dec t2).
+   apply not_eval in v0.
+   rewrite <- v0 in H1.
    discriminate.
 
+   rewrite <- H1 in |- *.
+   simpl in |- *.
+   reflexivity.
+
+  contradiction .
+
  intros.
  simpl in |- *.
- destruct (reduce arg).
-  exists (Apply (Lambda x ty body) t); reflexivity.
+ destruct (value_dec (Lambda x T t)).
+  destruct (value_dec v).
+   reflexivity.
 
-  exists (subst body x arg); reflexivity.
+   contradiction .
+
+  assert (Value (Lambda x T t)).
+   apply VLambda.
+
+   contradiction .
 
  intros.
- generalize H.
+ simpl in |- *.
+ rewrite <- H0 in |- *.
  simpl in |- *.
  destruct t1.
-  inversion H.
-
-  inversion H.
-
-  inversion H.
-
-  intros.
-  inversion H0.
-  rewrite <- H2 in |- *.
-  exists (If x t2 t3).
   reflexivity.
 
-  intro.
-  inversion H0.
-  rewrite <- H2 in |- *.
-  exists (If x t2 t3).
+  simpl in H0.
+  discriminate.
+
   reflexivity.
 
- intros.
+  reflexivity.
+
+  reflexivity.
+
  simpl in |- *.
- case b.
-  exists t1; reflexivity.
+ intros.
+ reflexivity.
 
-  exists t2; reflexivity.
+ simpl in |- *.
+ intros.
+ reflexivity.
 Qed.
