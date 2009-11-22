@@ -7,71 +7,79 @@ Require Import Typing.
 Require Import CannonicalForm.
 
 Theorem Progress : forall t r,
-    Typed t empty_env r -> Value t \/ Reducible t.
+    Typed t empty_env r -> Value t \/ (exists t', Eval t t').
 Proof.
- induction t.
- (* var *)
+induction t.
  intros.
  inversion H.
  apply TEnv.empty_1 in H1.
- contradiction.
+ contradiction .
 
- (* bool *)
- left; apply VBool.
-
- (* lambda *)
  intros.
- left; apply VLambda.
+ left.
+ apply VBool.
 
- (* apply *)
+ intros.
+ left.
+ apply VLambda.
+
  intros.
  right.
  inversion H.
  generalize H2, H5.
- apply IHt1 in H2.
- apply IHt2 in H5.
- case H2.
-  case H5.
-   (* App t1 t2, for t1 = Lambda x t body *)
-   intros.
+ apply IHt1 in H2; apply IHt2 in H5.
+ intros.
+ inversion H2.
+  inversion H5.
    assert (exists s : string, exists body : term, t1 = Lambda s a body).
-    generalize H7, H8.
-    apply lambda_can.
+    apply lambda_can with (ty2 := r).
+     exact H8.
+
+     exact H6.
 
     decompose [ex] H10.
     rewrite H12 in |- *.
-    apply RLambda.
+    exists (subst x0 x t2).
+    apply ELambda.
+    exact H9.
 
-   (* App t1 t2, for t2 is reducible *)
-   intros.
-   generalize H6.
-   apply RAppRight.
+   decompose [ex] H9.
+   exists (Apply t1 x).
+   apply EAppRight.
+    exact H8.
 
-  (* App t1 t2, for t1 is reducible *)
-  intros.
-  generalize H6.
-  apply RAppLeft.
+    exact H10.
 
- (* if *)
+  decompose [ex] H8.
+  exists (Apply x t2).
+  apply EAppLeft.
+  exact H9.
+
  intros.
  right.
  inversion H.
- generalize H3.
- apply IHt1 in H3.
- destruct H3.
-  intros.
+ generalize H3, H6, H7.
+ apply IHt1 in H3; apply IHt2 in H6; apply IHt3 in H7.
+ intros.
+ inversion H3.
   assert (t1 = Bool true \/ t1 = Bool false).
-   generalize H3, H8.
    apply bool_can.
+    exact H11.
 
-   decompose [or] H9.
-    rewrite H10 in |- *.
-    apply RIf.
+    exact H8.
 
-    rewrite H10 in |- *; apply RIf.
+   inversion H12.
+    rewrite H13 in |- *.
+    exists t2.
+    apply EIfTrue.
 
-  intro.
-  generalize H3.
-  apply RIfCond.
+    rewrite H13 in |- *.
+    exists t3.
+    apply EIfFalse.
+
+  decompose [ex] H11.
+  exists (If x t2 t3).
+  apply EIfCond.
+  exact H12.
 Qed.
 

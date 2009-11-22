@@ -6,19 +6,10 @@ Require Import Recdef.
 Require Import Term.
 Require Import Alpha.
 
-Open Scope bool_scope.
-
 (** * Propotion *)
 Inductive Value  : term -> Prop :=
   | VBool   : forall b : bool,   Value (Bool b)
   | VLambda : forall (x : string) (ty : type) (body : term), Value (Lambda x ty body).
-
-Inductive Reducible : term -> Prop :=
-  | RAppLeft  : forall t1 t2 : term, Reducible t1 -> Reducible (Apply t1 t2)
-  | RAppRight : forall t1 t2 : term, Reducible t2 -> Reducible (Apply t1 t2)
-  | RLambda   : forall (x : string) (ty : type) (body arg : term), Reducible (Apply (Lambda x ty body) arg)
-  | RIfCond   : forall (t1 t2 t3 : term), Reducible t1 -> Reducible (If t1 t2 t3)
-  | RIf       : forall (b : bool) (t1 t2 : term), Reducible (If (Bool b) t1 t2).
 
 Function subst (t : term) (old : string) (new : term) {measure term_length t}: term :=
   match t with
