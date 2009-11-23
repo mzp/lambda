@@ -9,7 +9,8 @@ Require Import Logic.DecidableType.
 
 (* simple type *)
 Inductive type : Set :=
-    BoolT : type
+  | VarT  : string -> type
+  | BoolT : type
   | FunT  : type -> type -> type.
 
 Inductive term : Set :=
