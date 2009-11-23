@@ -78,6 +78,40 @@ induction T.
    reflexivity.
 Qed.
 
+Lemma subst_add : forall ctx tenv1 tenv2 x S T,
+   TEnvSubst tenv1 tenv2 ctx ->
+   TypeSubst S T ctx ->
+   TEnvSubst (TEnv.add x S tenv1) (TEnv.add x T tenv2) ctx.
+Proof.
+intros.
+unfold TEnvSubst in |- *.
+intros.
+apply TEnvWF.add_mapsto_iff in H1.
+inversion H1.
+ inversion H3.
+ rewrite <- H5 in H2.
+ rewrite <- H4 in |- *.
+ assert (S0 = T).
+  apply subst_uniq with (T := S) (ctx := ctx0).
+   exact H2.
+
+   exact H0.
+
+  rewrite H6 in |- *.
+  apply TEnv.add_1.
+  reflexivity.
+
+ inversion H3.
+ apply TEnv.add_2.
+  exact H4.
+
+  unfold TEnvSubst in H.
+  apply H with (T := T0).
+   exact H5.
+
+   exact H2.
+Qed.
+
 Theorem subst_preserve : forall ctx s tenv2 S t tenv1 T,
   Typed t tenv1 T -> (TEnvSubst tenv1 tenv2 ctx -> TermSubst t s ctx -> TypeSubst T S ctx ->
   Typed s tenv2 S).
@@ -108,12 +142,17 @@ apply Typed_ind.
   apply subst_uniq with (ctx := ctx1) (T := a).
    exact H10.
 
-   exact H13.
+   exact H14.
 
-  rewrite H17 in |- *.
+  rewrite H18 in |- *.
   apply TLambda.
   apply H1 with (ctx0 := ctx1).
-   unfold TEnvSubst in |- *.
-   unfold TEnvSubst in H2.
-   intros.
-   apply TEnvWF.add_mapsto_iff in H18.
+   apply subst_add.
+    exact H2.
+
+    exact H14.
+
+   exact H11.
+
+   exact H17.
+
