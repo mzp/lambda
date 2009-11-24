@@ -112,6 +112,34 @@ inversion H1.
    exact H2.
 Qed.
 
+Lemma subst_exists : forall T ctx,
+   exists S, TypeSubst T S ctx.
+Proof.
+intros.
+induction T.
+ destruct (TEnvWF.In_dec ctx0 s).
+  inversion i.
+  exists x.
+  apply SVarT1.
+  unfold TEnv.MapsTo in |- *.
+  exact H.
+
+  exists (VarT s).
+  apply SVarT2.
+  exact n.
+
+ exists BoolT.
+ apply SBoolT.
+
+ decompose [ex] IHT1.
+ decompose [ex] IHT2.
+ exists (FunT x x0).
+ apply SFunT.
+  exact H.
+
+  exact H0.
+Qed.
+
 Theorem subst_preserve : forall ctx s tenv2 S t tenv1 T,
   Typed t tenv1 T -> (TEnvSubst tenv1 tenv2 ctx -> TermSubst t s ctx -> TypeSubst T S ctx ->
   Typed s tenv2 S).
@@ -156,3 +184,53 @@ apply Typed_ind.
 
    exact H17.
 
+ intros.
+ inversion H5.
+ assert (exists T : type, TypeSubst a T ctx1).
+  apply subst_exists.
+
+  decompose [ex] H13.
+  apply TApply with (a := x).
+   apply H1 with (ctx0 := ctx1).
+    exact H4.
+
+    exact H9.
+
+    apply SFunT.
+     exact H14.
+
+     exact H6.
+
+   apply H3 with (ctx0 := ctx1).
+    exact H4.
+
+    exact H12.
+
+    exact H14.
+
+ intros.
+ inversion H7.
+ apply TIf.
+  apply H1 with (ctx0 := ctx1).
+   exact H6.
+
+   exact H12.
+
+   apply SBoolT.
+
+  apply H3 with (ctx0 := ctx1).
+   exact H6.
+
+   exact H15.
+
+   exact H8.
+
+  apply H5 with (ctx0 := ctx1).
+   exact H6.
+
+   exact H16.
+
+   exact H8.
+
+ exact H.
+Qed.
