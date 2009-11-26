@@ -20,8 +20,13 @@ Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
 | CTApply : forall x t1 t2 T1 T2 tenv X1 X2 X C1 C2 C,
     TypeConstraint t1 tenv T1 X1 C1 ->
     TypeConstraint t2 tenv T2 X2 C2 ->
+    X = x :: X1 ++ X2 -> NoDup X ->
+    (* memo:
+        - NoUnion X (FV T2)
+        - NoUnion X (FV T1)
+        -X is not in (X1 X2 T1 T2 C1 C2 tenv t1 t2)
+    *)
     C = (T1,FunT T2 (VarT x)) :: C1 ++ C2 ->
-    X = x :: X1 ++ X2 ->
     TypeConstraint (Apply t1 t2) tenv (VarT x) X C
 | CTBool : forall b tenv X C,
     TypeConstraint (Bool b) tenv BoolT X C
@@ -29,6 +34,7 @@ Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
     TypeConstraint t1 tenv T1 X1 C1 ->
     TypeConstraint t2 tenv T2 X2 C3 ->
     TypeConstraint t3 tenv T3 X3 C3 ->
-    X = X1 ++ X2 ++ X3 ->
-    C = (T1,BoolT)::(T2,T3)::C1 ++ C2 ++ C3 ->
+    X = X1 ++ X2 ++ X3 -> NoDup X ->
+    C = (T1,BoolT) :: (T2,T3) :: C1 ++ C2 ++ C3 ->
     TypeConstraint (If t1 t2 t3) tenv T2 X C.
+
