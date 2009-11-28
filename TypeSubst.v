@@ -17,14 +17,25 @@ Definition TEnvSubst (tenv1 tenv2 : tenv) (tsubst : tsubst):= forall x T S,
   TEnv.MapsTo x T tenv1 -> TypeSubst T S tsubst -> TEnv.MapsTo x S tenv2.
 
 Inductive TermSubst : term -> term -> tsubst -> Prop :=
-   SVar  : forall tsubst x, TermSubst (Var x) (Var x) tsubst
- | SBool : forall tsubst b, TermSubst (Bool b) (Bool b) tsubst
- | SLambda : forall tsubst x T S t s, TypeSubst T S tsubst -> TermSubst t s tsubst ->
-              TermSubst (Lambda x T t) (Lambda x S s) tsubst
- | SApply : forall tsubst t1 t2 s1 s2,       TermSubst t1 s1 tsubst -> TermSubst t2 s2 tsubst ->
-              TermSubst (Apply t1 t2) (Apply s1 s2) tsubst
- | SIf    : forall tsubst t1 t2 t3 s1 s2 s3, TermSubst t1 s1 tsubst -> TermSubst t2 s2 tsubst -> TermSubst t3 s3 tsubst ->
-              TermSubst (If t1 t2 t3) (If s1 s2 s3) tsubst.
+   SVar    : forall tsubst x, TermSubst (Var x) (Var x) tsubst
+ | SBool   : forall tsubst b, TermSubst (Bool b) (Bool b) tsubst
+ | SLambda : forall tsubst x T S t s,
+               TypeSubst T S tsubst ->
+               TermSubst t s tsubst ->
+               TermSubst (Lambda x T t) (Lambda x S s) tsubst
+ | SApply  : forall tsubst t1 t2 s1 s2,
+               TermSubst t1 s1 tsubst ->
+               TermSubst t2 s2 tsubst ->
+               TermSubst (Apply t1 t2) (Apply s1 s2) tsubst
+ | SIf     : forall tsubst t1 t2 t3 s1 s2 s3,
+               TermSubst t1 s1 tsubst ->
+               TermSubst t2 s2 tsubst ->
+               TermSubst t3 s3 tsubst ->
+               TermSubst (If t1 t2 t3) (If s1 s2 s3) tsubst.
+
+Definition Solution tsubst T tenv t := forall tenv' s,
+  TEnvSubst tenv tenv' tsubst -> TermSubst t s tsubst ->
+  Typed s tenv' T.
 
 Lemma MapsTo_In : forall (A : Type) (tsubst : TEnv.t A) x (T : A),
   TEnv.MapsTo x T tsubst -> TEnv.In x tsubst.
@@ -234,3 +245,4 @@ apply Typed_ind.
 
  exact H.
 Qed.
+

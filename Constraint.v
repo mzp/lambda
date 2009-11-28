@@ -37,7 +37,7 @@ Definition Fresh x X1 X2 T1 T2 C1 C2 tenv t1 t2 :=
   ~ FvT x T1 /\ ~ FvT x T2 /\
   ~ FvTConst x C1 /\ ~ FvTConst x C2 /\
   ~ FvTEnv x tenv /\
-   ~ FvTt x t1 /\ ~ FvTt x t2.
+  ~ FvTt x t1 /\ ~ FvTt x t2.
 
 Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
   CTVar : forall s tenv T X C,
@@ -65,3 +65,5 @@ Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
     C = (T1,BoolT) :: (T2,T3) :: C1 ++ C2 ++ C3 ->
     TypeConstraint (If t1 t2 t3) tenv T2 X C.
 
+Definition Solution tsubst T tenv t S C :=
+  TypeConstraint t tenv S nil C -> Unified C tsubst /\ TypeSubst S T tsubst.

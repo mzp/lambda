@@ -26,6 +26,7 @@ FILES[] =
 	Progress
 	Subst
 	TypeSubst
+	Constraint
 
 .DEFAULT: $(Proof $(FILES))
 
