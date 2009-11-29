@@ -40,14 +40,14 @@ Definition Fresh x X1 X2 T1 T2 C1 C2 tenv t1 t2 :=
   ~ FvTt x t1 /\ ~ FvTt x t2.
 
 Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
-  CTVar : forall s tenv T,
+  CTVar : forall s tenv T X C,
     TEnv.MapsTo s T tenv ->
-    TypeConstraint (Var s) tenv T nil nil
+    TypeConstraint (Var s) tenv T X C
 | CTLambda : forall x T1 T2 t tenv X C,
     TypeConstraint t (TEnv.add x T1 tenv) T2 X C ->
     TypeConstraint (Lambda x T1 t) tenv (FunT T1 T2) X C
-| CTBool : forall b tenv,
-    TypeConstraint (Bool b) tenv BoolT nil nil
+| CTBool : forall b tenv X C,
+    TypeConstraint (Bool b) tenv BoolT X C
 | CTApply : forall x t1 t2 T1 T2 tenv X1 X2 X C1 C2 C,
     TypeConstraint t1 tenv T1 X1 C1 ->
     TypeConstraint t2 tenv T2 X2 C2 ->

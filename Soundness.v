@@ -6,13 +6,38 @@ Require Import Typing.
 Require Import Constraint.
 Require Import TypeSubst.
 
-Lemma apply_solution: forall tsubst tenv T S1 S2 U1 U2 t1 t2 C C1 C2,
-  Constraint.Solution tsubst T tenv (Apply t1 t2) S2 C ->
-  TypeSubst S1 U1 tsubst ->
-  TypeSubst S2 U2 tsubst ->
-  Unified C1 tsubst -> Unified C2 tsubst ->
-  Constraint.Solution tsubst U1 tenv t1 S1 C1 /\
-  Constraint.Solution tsubst U2 tenv t2 S2 C2.
+Definition Subset {A : Type} (xs ys : list A) := forall e,
+   In e ys -> In e xs.
+
+Lemma tvars_intro: forall t tenv T X1 X C,
+   TypeConstraint t tenv T X1 C -> Subset X1 X ->
+   TypeConstraint t tenv T X C.
+Proof.
+induction t.
+ intros.
+ inversion H.
+ apply CTVar.
+ trivial.
+
+ intros.
+ inversion H.
+ apply CTBool.
+
+ intros.
+ inversion H.
+ apply CTLambda.
+ apply IHt with (X1 := X1).
+  trivial.
+
+  trivial.
+
+
+(*Lemma apply_solution: forall tsubst tenv x T T1 T2 S1 S2 t1 t2 C,
+  Constraint.Solution tsubst T tenv (Apply t1 t2) (VarT x) C ->
+  TypeSubst T1 S1 tsubst ->
+  TypeSubst T2 S2 tsubst ->
+  (exists C1, Constraint.Solution tsubst S1 tenv t1 T1 C1) /\
+  (exists C2, Constraint.Solution tsubst S2 tenv t2 T2 C2).*)
 
 Lemma lambda_solution: forall tsubst T S T1 T2 tenv x t C,
   Constraint.Solution tsubst T tenv (Lambda x T1 t) (FunT T1 T2) C ->
@@ -59,7 +84,7 @@ assert (S = S1).
   exact H9.
 Qed.
 
-
+(*
 Theorem soundness : forall tenv t T S C tsubst,
   TypeConstraint t tenv S nil C ->
   Constraint.Solution tsubst T tenv t S C ->
@@ -125,5 +150,4 @@ apply TypeConstraint_ind.
   trivial.
 
   apply SBoolT.
-
-
+*)
