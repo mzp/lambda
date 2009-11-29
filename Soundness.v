@@ -80,5 +80,20 @@ apply TypeConstraint_ind.
   trivial.
 
  intros.
- eapply lambda_solution in H2.
+ generalize H2; intro.
+ unfold Constraint.Solution in H3.
+ inversion H3.
+ inversion H5.
+ inversion H7.
+ apply lambda_solution with (S := S2) in H2.
+  trivial.
   apply H1 in H2.
+  apply lambda_intro.
+   trivial.
+
+   trivial.
+
+  trivial.
+
+(* eapply lambda_solution in H2.
+  apply H1 in H2.*)
