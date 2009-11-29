@@ -65,5 +65,5 @@ Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
     C = (T1,BoolT) :: (T2,T3) :: C1 ++ C2 ++ C3 ->
     TypeConstraint (If t1 t2 t3) tenv T2 X C.
 
-Definition Solution tsubst T tenv t S C :=
-  TypeConstraint t tenv S nil C /\ Unified C tsubst /\ TypeSubst S T tsubst.
+Definition Solution tsubst T tenv t S C := forall X,
+  TypeConstraint t tenv S X C /\ Unified C tsubst /\ TypeSubst S T tsubst.
