@@ -133,11 +133,11 @@ induction T.
   exists x.
   apply SVarT1.
   unfold TEnv.MapsTo in |- *.
-  exact H.
+  trivial.
 
   exists (VarT s).
   apply SVarT2.
-  exact n.
+  trivial.
 
  exists BoolT.
  apply SBoolT.
@@ -146,10 +146,11 @@ induction T.
  decompose [ex] IHT2.
  exists (FunT x x0).
  apply SFunT.
-  exact H.
+  trivial.
 
-  exact H0.
+  trivial.
 Qed.
+
 
 Theorem subst_preserve : forall tsubst s tenv2 S t tenv1 T,
   Typed t tenv1 T -> (TEnvSubst tenv1 tenv2 tsubst -> TermSubst t s tsubst -> TypeSubst T S tsubst ->
@@ -245,4 +246,5 @@ apply Typed_ind.
 
  exact H.
 Qed.
+
 

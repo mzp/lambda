@@ -54,8 +54,8 @@ assert (S = S1).
 Qed.
 
 
-Lemma apply_solution: forall tsubst tenv x T S t1 t2 C,
-  Constraint.Solution tsubst T tenv (Apply t1 t2) (VarT x) C ->
+Lemma apply_solution: forall tsubst tenv T U S t1 t2 C,
+  Constraint.Solution tsubst T tenv (Apply t1 t2) U C ->
   (exists C, exists T1, TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv t1 T1 C) /\
   (exists C, exists T1, TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv t2 T1 C).
 Proof.
@@ -71,7 +71,7 @@ split.
 
   split.
    apply Unified_Union with (C2 := C2).
-   apply Unified_Add with (c := (T1, FunT T2 (VarT x))).
+   apply Unified_Add with (c := (T1, FunT T2 (VarT x0))).
    rewrite <- H16 in |- *.
    trivial.
 
@@ -87,13 +87,14 @@ split.
    apply Unified_Union with (C2 := C1).
    unfold UnionConst in |- *.
    rewrite Union_sym in |- *.
-   apply Unified_Add with (c := (T1, FunT T2 (VarT x))).
+   apply Unified_Add with (c := (T1, FunT T2 (VarT x0))).
    unfold UnionConst in H16.
    rewrite <- H16 in |- *.
    trivial.
 
    trivial.
 Qed.
+
 
 Theorem soundness : forall tenv t T S X C tsubst,
   TypeConstraint t tenv S X C ->
@@ -103,14 +104,20 @@ Proof.
 intros until tsubst.
 intro.
 generalize T.
+generalize C.
+generalize S.
 pattern t, tenv, S, X, C in |- *.
 apply TypeConstraint_ind.
- (* var *)
+ intros.
+ unfold Constraint.Solution in H1.
  unfold Solution in |- *.
  intros.
  apply
   subst_preserve
-   with (tsubst := tsubst) (t := Var s) (tenv1 := tenv0) (T := T0).
+   with (tsubst := tsubst) (t := Var s) (tenv1 := tenv0) (T := S0).
+  decompose [ex] H1.
+  inversion H4.
+  inversion H5.
   apply TVar.
   trivial.
 
@@ -118,20 +125,20 @@ apply TypeConstraint_ind.
 
   trivial.
 
-  unfold Constraint.Solution in H1.
-  decompose [ex] H1.
+  inversion H1.
   inversion H4.
   inversion H6.
   trivial.
 
- (* lambda *)
  intros.
  generalize H2; intro.
  unfold Constraint.Solution in H3.
  decompose [ex] H3.
  inversion H4.
- inversion H6.
- inversion H8.
+ inversion H5; inversion H6.
+ rewrite <- H11 in H16.
+ inversion H16.
+ rewrite <- H11 in H2.
  apply lambda_solution with (S := S2) in H2.
   apply H1 in H2.
   apply lambda_intro.
@@ -141,14 +148,12 @@ apply TypeConstraint_ind.
 
   trivial.
 
- (* bool *)
  unfold Solution in |- *.
  unfold Constraint.Solution in |- *.
  intros.
  decompose [ex] H0.
  inversion H3.
- inversion H5.
- inversion H7.
+ inversion H4; inversion H5.
  apply
   subst_preserve
    with (tsubst := tsubst) (t := Bool b) (tenv1 := tenv0) (T := BoolT).
@@ -158,19 +163,27 @@ apply TypeConstraint_ind.
 
   trivial.
 
-  apply SBoolT.
+  rewrite <- H8 in H12.
+  trivial.
 
  intros.
- (* avoid coq bug: I cannot use "apply apply_solution in H10"  *)
- apply apply_solution in H10.
-(* assert
+ assert
   ((exists C : _,
       exists T1 : _,
         TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv0 t1 T1 C) /\
    (exists C : _,
       exists T1 : _,
         TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv0 t2 T1 C)).
-  apply apply_solution with (x := x) (T := T0) (C := C0).
-  trivial.
+ (* avoid coq bug: I cannot use "apply apply_solution in H10"  *)
+ assert
+  ((exists C : _,
+      exists T1 : _,
+        TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv0 t1 T1 C) /\
+   (exists C : _,
+      exists T1 : _,
+        TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv0 t2 T1 C)).
+   apply apply_solution with (U := S0) (T := T0) (C := C3).
+(*  apply apply_solution with (x := x) (T := T0) (C := C0).*)
+(*  trivial.*)
 
-*)
+
