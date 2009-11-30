@@ -67,7 +67,7 @@ Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
     C = AddConst (T1,BoolT) (AddConst (T2,T3) (UnionConst C1 (UnionConst C2 C3))) ->
     TypeConstraint (If t1 t2 t3) tenv T2 X C.
 
-Definition Solution tsubst T tenv t S C := forall X,
+Definition Solution tsubst T tenv t S C := exists X,
   TypeConstraint t tenv S X C /\ Unified C tsubst /\ TypeSubst S T tsubst.
 
 Lemma Disjoint_union : forall A (X Y Z: Ensemble A),
@@ -138,7 +138,30 @@ split; intros.
   trivial.
 Qed.
 
+Lemma Unified_Union : forall C1 C2 tsubst,
+  Unified (UnionConst C1 C2) tsubst -> Unified C1 tsubst.
+Proof.
+unfold Unified in |- *.
+unfold InConst in |- *.
+intros.
+apply H.
+unfold UnionConst in |- *.
+apply Union_introl.
+trivial.
+Qed.
 
+Lemma Unified_Add : forall c C tsubst,
+  Unified (AddConst c C) tsubst -> Unified C tsubst.
+Proof.
+unfold AddConst in |- *.
+unfold Add in |- *.
+intros.
+apply Unified_Union with (C2 := Singleton (type * type) c).
+trivial.
+Qed.
+
+
+(*
 Lemma tvars_preserve: forall t tenv T X1 X2 X C,
    TypeConstraint t tenv T X1 C ->
    X = UnionTVars X1 X2 ->
@@ -165,3 +188,4 @@ Focus 4.
    reflexivity.
 
 
+*)

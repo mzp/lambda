@@ -6,38 +6,46 @@ Require Import Typing.
 Require Import Constraint.
 Require Import TypeSubst.
 
-Definition Subset {A : Type} (xs ys : list A) := forall e,
-   In e ys -> In e xs.
-
-Lemma tvars_intro: forall t tenv T X1 X C,
-   TypeConstraint t tenv T X1 C -> Subset X1 X ->
-   TypeConstraint t tenv T X C.
-Proof.
-induction t.
- intros.
- inversion H.
- apply CTVar.
- trivial.
-
- intros.
- inversion H.
- apply CTBool.
-
- intros.
- inversion H.
- apply CTLambda.
- apply IHt with (X1 := X1).
-  trivial.
-
-  trivial.
-
-
-(*Lemma apply_solution: forall tsubst tenv x T T1 T2 S1 S2 t1 t2 C,
+Lemma apply_solution: forall tsubst tenv x T S t1 t2 C,
   Constraint.Solution tsubst T tenv (Apply t1 t2) (VarT x) C ->
-  TypeSubst T1 S1 tsubst ->
-  TypeSubst T2 S2 tsubst ->
-  (exists C1, Constraint.Solution tsubst S1 tenv t1 T1 C1) /\
-  (exists C2, Constraint.Solution tsubst S2 tenv t2 T2 C2).*)
+  (exists C, exists T1, TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv t1 T1 C) /\
+  (exists C, exists T1, TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv t2 T1 C).
+Proof.
+unfold Constraint.Solution in |- *.
+intros.
+decompose [ex] H.
+inversion H0.
+inversion H1; inversion H2.
+split.
+ exists C1; exists T1; intro; exists X1.
+ split.
+  trivial.
+
+  split.
+   apply Unified_Union with (C2 := C2).
+   apply Unified_Add with (c := (T1, FunT T2 (VarT x))).
+   rewrite <- H16 in |- *.
+   trivial.
+
+   trivial.
+
+ exists C2; exists T2.
+ intro.
+ exists X2.
+ split.
+  trivial.
+
+  split.
+   apply Unified_Union with (C2 := C1).
+   unfold UnionConst in |- *.
+   rewrite Union_sym in |- *.
+   apply Unified_Add with (c := (T1, FunT T2 (VarT x))).
+   unfold UnionConst in H16.
+   rewrite <- H16 in |- *.
+   trivial.
+
+   trivial.
+Qed.
 
 Lemma lambda_solution: forall tsubst T S T1 T2 tenv x t C,
   Constraint.Solution tsubst T tenv (Lambda x T1 t) (FunT T1 T2) C ->
@@ -46,17 +54,19 @@ Lemma lambda_solution: forall tsubst T S T1 T2 tenv x t C,
 Proof.
 unfold Constraint.Solution in |- *.
 intros.
-specialize (H X).
-inversion H.
+decompose [ex] H.
+exists x0.
+inversion H1.
+inversion H3.
 split.
- inversion H1.
- exact H10.
-
  inversion H2.
- split.
-  exact H3.
+ trivial.
 
-  exact H0.
+ split.
+  trivial.
+
+  inversion H5.
+  trivial.
 Qed.
 
 Lemma lambda_intro : forall T1 T2 S1 tsubst tenv x t,
@@ -84,12 +94,12 @@ assert (S = S1).
   exact H9.
 Qed.
 
-(*
-Theorem soundness : forall tenv t T S C tsubst,
-  TypeConstraint t tenv S nil C ->
+
+Theorem soundness : forall tenv t T S X C tsubst,
+  TypeConstraint t tenv S X C ->
   Constraint.Solution tsubst T tenv t S C ->
   TypeSubst.Solution tsubst T tenv t.
-Proof.
+(*Proof.
 intros until tsubst.
 intro.
 generalize T.
