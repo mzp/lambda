@@ -54,11 +54,56 @@ assert (S = S1).
 Qed.
 
 
-Lemma apply_solution: forall tsubst tenv x T S t1 t2 C,
-  Constraint.Solution tsubst T tenv (Apply t1 t2) (VarT x) C ->
-  (exists C, exists T1, TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv t1 T1 C) /\
-  (exists C, exists T1, TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv t2 T1 C).
+Lemma apply_solution: forall tsubst tenv x S S1 S2 t1 t2 C,
+  Constraint.Solution tsubst S tenv (Apply t1 t2) (VarT x) C ->
+  exists C1, exists C2, exists T1, exists T2,
+  TypeSubst T1 S1 tsubst ->
+  TypeSubst T2 S2 tsubst ->
+  C = (AddConst (T1,FunT T2 (VarT x)) (UnionConst C1 C2)) /\
+  Constraint.Solution tsubst S1 tenv t1 T1 C1 /\
+  Constraint.Solution tsubst S2 tenv t2 T2 C2.
 Proof.
+unfold Constraint.Solution in |- *.
+intros.
+decompose [ex] H.
+inversion H0.
+inversion H2.
+inversion H1.
+exists C1; exists C2; exists T1; exists T2.
+intros.
+split.
+ trivial.
+
+ split.
+  exists X1.
+  split.
+   trivial.
+
+   split.
+    apply Unified_Union with (C2 := C2).
+    apply Unified_Add with (c := (T1, FunT T2 (VarT x))).
+    rewrite <- H18 in |- *.
+    trivial.
+
+    trivial.
+
+  exists X2.
+  split.
+   trivial.
+
+   split.
+    apply Unified_Union with (C2 := C1).
+    unfold UnionConst in |- *.
+    rewrite Union_sym in |- *.
+    apply Unified_Add with (c := (T1, FunT T2 (VarT x))).
+    unfold UnionConst in H16.
+    unfold UnionConst in H18.
+    rewrite <- H18 in |- *.
+    trivial.
+
+    trivial.
+Qed.
+(*Proof.
 unfold Constraint.Solution in |- *.
 intros.
 decompose [ex] H.
@@ -94,6 +139,7 @@ split.
 
    trivial.
 Qed.
+*)
 
 Theorem soundness : forall tenv t T S X C tsubst,
   TypeConstraint t tenv S X C ->
@@ -162,7 +208,6 @@ apply TypeConstraint_ind.
 
  intros.
  (* avoid coq bug: I cannot use "apply apply_solution in H10"  *)
- apply apply_solution in H10.
 (* assert
   ((exists C : _,
       exists T1 : _,
@@ -172,5 +217,5 @@ apply TypeConstraint_ind.
         TypeSubst T1 S tsubst -> Constraint.Solution tsubst S tenv0 t2 T1 C)).
   apply apply_solution with (x := x) (T := T0) (C := C0).
   trivial.
-
 *)
+
