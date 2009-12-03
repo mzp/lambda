@@ -6,37 +6,56 @@ Require Import Typing.
 Definition tsubst := tenv.
 Module Tsubst := TEnv.
 
-Inductive TypeSubst : type -> type -> tsubst -> Prop :=
-  SVarT1 : forall tsubst x T, Tsubst.MapsTo x T tsubst -> TypeSubst (VarT x) T tsubst
-| SVarT2 : forall tsubst x, ~ Tsubst.In x tsubst -> TypeSubst (VarT x) (VarT x) tsubst
-| SBoolT : forall tsubst    , TypeSubst BoolT BoolT tsubst
-| SFunT  : forall tsubst T1 T2 S1 S2 ,
-    TypeSubst T1 S1 tsubst -> TypeSubst T2 S2 tsubst -> TypeSubst (FunT T1 T2) (FunT S1 S2) tsubst.
+Fixpoint type_subst t tsubst :=
+  match t with
+  | VarT x => match Tsubst.find x tsubst with
+              | Some y => VarT y
+      	      | None   => VarT x
+              end
+  | BoolT =>  BoolT
+  | FunT T1 T2 => FunT (type_subst T1 tsubst) (type_subst T2 tsubst)
+  end.
 
-Definition TEnvSubst (tenv1 tenv2 : tenv) (tsubst : tsubst):= forall x T S,
-  TEnv.MapsTo x T tenv1 -> TypeSubst T S tsubst -> TEnv.MapsTo x S tenv2.
+Definition tenv_subst tenv tsubst :=
+  Tsubst.map (fun T => type_subst T tsubst) tenv.
 
-Inductive TermSubst : term -> term -> tsubst -> Prop :=
-   SVar    : forall tsubst x, TermSubst (Var x) (Var x) tsubst
- | SBool   : forall tsubst b, TermSubst (Bool b) (Bool b) tsubst
- | SLambda : forall tsubst x T S t s,
-               TypeSubst T S tsubst ->
-               TermSubst t s tsubst ->
-               TermSubst (Lambda x T t) (Lambda x S s) tsubst
- | SApply  : forall tsubst t1 t2 s1 s2,
-               TermSubst t1 s1 tsubst ->
-               TermSubst t2 s2 tsubst ->
-               TermSubst (Apply t1 t2) (Apply s1 s2) tsubst
- | SIf     : forall tsubst t1 t2 t3 s1 s2 s3,
-               TermSubst t1 s1 tsubst ->
-               TermSubst t2 s2 tsubst ->
-               TermSubst t3 s3 tsubst ->
-               TermSubst (If t1 t2 t3) (If s1 s2 s3) tsubst.
+Fixpoint term_subst t tsubst :=
+  match t with
+  | Var x => Var x
+  | Bool b => Bool b
+  | Lambda x T t =>
+     Lambda x (type_subst T tsubst) (term_subst t tsubst)
+  | Apply t1 t2 =>
+     Apply (term_subst t1 tsubst) (term_subst t2 tsubst)
+  | If t1 t2 t3 =>
+     If (term_subst t1 tsubst) (term_subst t2 tsubst) (term_subst t3 tsubst)
+  end.
 
-Definition Solution tsubst T tenv t := forall tenv' s,
-  TEnvSubst tenv tenv' tsubst -> TermSubst t s tsubst ->
-  Typed s tenv' T.
+Definition Solution tsubst T tenv t :=
+  Typed (term_subst t tsubst) (tenv_subst tenv tsubst) T.
 
+Lemma tenv_subst_add : forall x T tenv tsubst,
+  TEnv.Equal (TEnv.add x (type_subst T tsubst) (tenv_subst tenv tsubst))
+             (tenv_subst (TEnv.add x T tenv) tsubst).
+
+Lemma tenv_subst_MapsTo : forall tenv tsubst x T,
+  TEnv.MapsTo x T tenv ->
+  TEnv.MapsTo x (type_subst T tsubst) (tenv_subst tenv tsubst).
+Proof.
+intros.
+unfold tenv_subst in |- *.
+change
+  (TEnv.MapsTo x ((fun T0 : type => type_subst T0 tsubst0) T)
+     (TEnv.map (fun T0 : type => type_subst T0 tsubst0) tenv))
+ in |- *.
+apply TEnv.map_1.
+trivial.
+Qed.
+
+Theorem subst_preserve : forall t tenv T tsubst,
+  Typed t tenv T ->
+  Typed (term_subst t tsubst) (tenv_subst tenv tsubst) (type_subst T tsubst).
+(*
 Lemma MapsTo_In : forall (A : Type) (tsubst : TEnv.t A) x (T : A),
   TEnv.MapsTo x T tsubst -> TEnv.In x tsubst.
 Proof.
@@ -153,8 +172,7 @@ Qed.
 
 
 Theorem subst_preserve : forall tsubst s tenv2 S t tenv1 T,
-  Typed t tenv1 T -> (TEnvSubst tenv1 tenv2 tsubst -> TermSubst t s tsubst -> TypeSubst T S tsubst ->
-  Typed s tenv2 S).
+
 Proof.
 intros until T.
 intro.
@@ -248,3 +266,4 @@ apply Typed_ind.
 Qed.
 
 
+*)
