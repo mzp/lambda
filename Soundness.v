@@ -28,6 +28,26 @@ split.
   trivial.
 Qed.
 
+Lemma apply_intro : forall T1 T2 tsubst tenv t1 t2,
+  Solution tsubst (FunT T1 T2) tenv t1 ->
+  Solution tsubst T1 tenv t2 ->
+  Solution tsubst T2 tenv (Apply t1 t2).
+Proof.
+unfold Solution in |- *.
+intros.
+inversion H2.
+apply TApply with (a := T1).
+ apply H.
+  trivial.
+
+  trivial.
+
+ apply H0.
+  trivial.
+
+  trivial.
+Qed.
+
 Lemma lambda_intro : forall T1 T2 S1 tsubst tenv x t,
   TypeSubst T1 S1 tsubst ->
   Solution tsubst T2 (TEnv.add x T1 tenv) t ->
@@ -53,13 +73,10 @@ assert (S = S1).
   exact H9.
 Qed.
 
-
-Lemma apply_solution: forall tsubst tenv x S S1 S2 t1 t2 C,
-  Constraint.Solution tsubst S tenv (Apply t1 t2) (VarT x) C ->
-  exists C1, exists C2, exists T1, exists T2,
-  TypeSubst T1 S1 tsubst ->
-  TypeSubst T2 S2 tsubst ->
-  C = (AddConst (T1,FunT T2 (VarT x)) (UnionConst C1 C2)) /\
+Lemma apply_solution: forall tsubst tenv S T t1 t2 C,
+  Constraint.Solution tsubst S tenv (Apply t1 t2) T C ->
+  exists C1,exists C2, exists T1, exists T2,exists S1,exists S2,
+  C = (AddConst (T1,FunT T2 T) (UnionConst C1 C2)) /\
   Constraint.Solution tsubst S1 tenv t1 T1 C1 /\
   Constraint.Solution tsubst S2 tenv t2 T2 C2.
 Proof.
@@ -67,10 +84,11 @@ unfold Constraint.Solution in |- *.
 intros.
 decompose [ex] H.
 inversion H0.
-inversion H2.
 inversion H1.
 exists C1; exists C2; exists T1; exists T2.
-intros.
+decompose [ex] (subst_exists T1 tsubst).
+decompose [ex] (subst_exists T2 tsubst).
+exists x1; exists x2.
 split.
  trivial.
 
@@ -81,8 +99,9 @@ split.
 
    split.
     apply Unified_Union with (C2 := C2).
-    apply Unified_Add with (c := (T1, FunT T2 (VarT x))).
-    rewrite <- H18 in |- *.
+    apply Unified_Add with (c := (T1, FunT T2 (VarT x0))).
+    rewrite <- H16 in |- *.
+    inversion H2.
     trivial.
 
     trivial.
@@ -95,14 +114,15 @@ split.
     apply Unified_Union with (C2 := C1).
     unfold UnionConst in |- *.
     rewrite Union_sym in |- *.
-    apply Unified_Add with (c := (T1, FunT T2 (VarT x))).
+    apply Unified_Add with (c := (T1, FunT T2 (VarT x0))).
     unfold UnionConst in H16.
-    unfold UnionConst in H18.
-    rewrite <- H18 in |- *.
+    rewrite <- H16 in |- *.
+    inversion H2.
     trivial.
 
     trivial.
 Qed.
+
 
 Theorem soundness : forall tenv t T S X C tsubst,
   TypeConstraint t tenv S X C ->
@@ -112,11 +132,69 @@ Proof.
 intros until tsubst.
 intro.
 generalize T.
-generalize C.
 generalize S.
+generalize C.
 pattern t, tenv, S, X, C in |- *.
 apply TypeConstraint_ind.
+Focus 4.
  intros.
+ assert
+  (exists C1 : _,
+     exists C2 : _,
+       exists T1 : _,
+         exists T2 : _,
+           exists S1 : _,
+             exists S2 : _,
+               C3 = AddConst (T1, FunT T2 S0) (UnionConst C1 C2) /\
+               Constraint.Solution tsubst S1 tenv0 t1 T1 C1 /\
+               Constraint.Solution tsubst S2 tenv0 t2 T2 C2).
+  apply apply_solution with (S := T0).
+  trivial.
+
+  decompose [ex] H11.
+  inversion H13.
+  inversion H14.
+  apply H1 in H15.
+  apply H3 in H16.
+  inversion H14.
+  apply unfold_tsubst in H17.
+  apply unfold_tsubst in H18.
+  generalize H10; intro.
+  apply unfold_unified in H10.
+  apply unfold_tsubst in H19.
+  rewrite H12 in H10.
+  apply unified_add in H10.
+  inversion H10.
+  inversion H20.
+  inversion H22.
+  assert (S2 = T0).
+   apply subst_uniq with (tsubst := tsubst) (T := S0).
+    trivial.
+
+    trivial.
+
+   rewrite <- H29 in |- *.
+   apply apply_intro with (T1 := S1).
+    rewrite H26 in |- *.
+    assert (x6 = x4).
+     apply subst_uniq with (tsubst := tsubst) (T := x2).
+      trivial.
+
+      trivial.
+
+     rewrite H30 in |- *.
+     trivial.
+
+    assert (S1 = x5).
+     apply subst_uniq with (tsubst := tsubst) (T := x3).
+      trivial.
+
+      trivial.
+
+     rewrite H30 in |- *.
+     trivial.
+
+(* intros.
  unfold Constraint.Solution in H1.
  unfold Solution in |- *.
  intros.
@@ -175,3 +253,6 @@ apply TypeConstraint_ind.
   trivial.
 
  intros.
+
+*)
+

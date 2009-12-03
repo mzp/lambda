@@ -12,8 +12,8 @@ Definition InConst x xs     := Ensembles.In (type*type) xs x.
 Definition UnionConst xs ys := Ensembles.Union (type*type) xs ys.
 Definition AddConst x xs    := Ensembles.Add (type*type) xs x.
 
-Definition Unified (c : tconst) (t : tsubst) := forall S T U,
-  InConst (S,T) c -> TypeSubst S U t /\ TypeSubst T U t.
+Definition Unified (c : tconst) (t : tsubst) := forall S T,
+  InConst (S,T) c -> exists U, TypeSubst S U t /\ TypeSubst T U t.
 
 Definition tvars := Ensemble string.
 Definition InTVars x xs := Ensembles.In string xs x.
@@ -161,31 +161,43 @@ trivial.
 Qed.
 
 
-(*
-Lemma tvars_preserve: forall t tenv T X1 X2 X C,
-   TypeConstraint t tenv T X1 C ->
-   X = UnionTVars X1 X2 ->
-   DisjointTVars X1 X2 ->
-   DisjointFV X2 T ->
-   TypeConstraint t tenv T X C.
+Lemma unfold_tsubst : forall T S tsubst tenv t C,
+  Solution tsubst T tenv t S C -> TypeSubst S T tsubst.
+Proof.
+intros.
+unfold Solution in H.
+inversion H.
+inversion H0.
+inversion H2.
+trivial.
+Qed.
 
-induction t.
-Focus 4.
- intros.
- inversion H.
- apply
-  CTApply
-   with
-     (T1 := T1)
-     (T2 := T2)
-     (C1 := C1)
-     (C2 := C2)
-     (X1 := UnionTVars X0 X2)
-     (X2 := X3).
-  apply IHt1 with (X1 := X0) (X2 := X2).
-   trivial.
+Lemma unfold_unified : forall T S tsubst tenv t C,
+  Solution tsubst T tenv t S C -> Unified C tsubst.
+Proof.
+intros.
+unfold Solution in H.
+inversion H.
+inversion H0.
+inversion H2.
+trivial.
+Qed.
 
-   reflexivity.
+Lemma unified_add : forall S T C tsubst,
+  Unified (AddConst (T,S) C) tsubst ->
+  exists U, TypeSubst T U tsubst /\ TypeSubst S U tsubst.
+Proof.
+intros.
+unfold Unified in H.
+specialize (H T S).
+apply H.
+unfold InConst in |- *; unfold AddConst in |- *.
+unfold Add in |- *.
+apply Union_intror.
+apply In_singleton.
+Qed.
 
-
-*)
+(*Lemma Unified_equal : forall T1 T2 C tsubst,
+  Unified C tsubst ->
+  InConst (T1,T2) C ->
+  exists S, TypeSubst T1 S tsubst /\ TypeSubst T2 S tsubst.*)
