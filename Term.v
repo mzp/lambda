@@ -7,7 +7,6 @@ Require Import FSets.FMapInterface.
 Require Import FSets.FMapFacts.
 Require Import Logic.DecidableType.
 
-(* simple type *)
 Inductive type : Set :=
   | VarT  : string -> type
   | BoolT : type

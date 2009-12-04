@@ -4,15 +4,16 @@ Require Import String.
 Require Import Term.
 Require Import Eval.
 Require Import Typing.
+Require Import Tables.
 Require Import CannonicalForm.
 
-Theorem Progress : forall t r,
-    Typed t empty_env r -> Value t \/ (exists t', Eval t t').
+Theorem Progress : forall t (r : type),
+    Typed t Typing.empty r -> Value t \/ (exists t', Eval t t').
 Proof.
 induction t.
  intros.
  inversion H.
- apply TEnv.empty_1 in H1.
+ apply Table.empty_1 in H1.
  contradiction .
 
  intros.

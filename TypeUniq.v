@@ -3,6 +3,7 @@ Require Import String.
 
 Require Import Term.
 Require Import Typing.
+Require Import Tables.
 
 
 Theorem TypeUniq :
@@ -14,7 +15,7 @@ induction t.
  inversion H.
  inversion H0.
  generalize H2 H6.
- apply TEnvWF.MapsTo_fun.
+ apply TableWF.MapsTo_fun.
 
  intros.
  inversion H.
