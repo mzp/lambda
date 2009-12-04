@@ -4,7 +4,7 @@ Require Import String.
 Require Import Term.
 Require Import Alpha.
 Require Import Typing.
-Require Import TypingFact.
+Require Import Tables.
 
 Lemma alpha_fv : forall t x y,
   x <> y -> ~ FV x (alpha t x y).
@@ -76,19 +76,19 @@ induction t.
 Qed.
 
 Lemma alpha_preserve : forall t tenv x y T S,
-  Typed t tenv T -> ~FV y t -> ~BV y t -> TEnv.MapsTo x S tenv ->
-     Typed (alpha t x y) (TEnv.add y S tenv) T.
+  Typed t tenv T -> ~FV y t -> ~BV y t -> Table.MapsTo x S tenv ->
+     Typed (alpha t x y) (Table.add y S tenv) T.
 Proof.
+
 induction t.
- (* Var *)
  intros.
  simpl in |- *.
  destruct (string_dec s x).
   inversion H.
-  apply TEnvWF.MapsTo_fun with (e := T) in H2.
+  apply TableWF.MapsTo_fun with (e := T) in H2.
    rewrite <- H2 in |- *.
    apply TVar.
-   apply TEnv.add_1.
+   apply Table.add_1.
    reflexivity.
 
    rewrite <- e in |- *.
@@ -96,152 +96,93 @@ induction t.
 
   apply TVar.
   inversion H.
-  apply TEnv.add_2.
+  apply Table.add_2.
    intro; apply H0.
    rewrite H7 in |- *.
    apply FVVar.
 
    exact H4.
 
- (* Bool *)
  intros.
  simpl in |- *.
  inversion H.
  apply TBool.
 
- (* Lambda *)
  intros.
  simpl in |- *.
  destruct (string_dec s x).
   inversion H.
   apply TLambda.
-  apply permutation with (tenv1 := TEnv.add y S (TEnv.add s t tenv)).
-   apply Equal_add_2.
-   intro; apply H1.
-   rewrite H9 in |- *.
-   apply BVLambda1.
-
-   apply Typed_add_intro.
-    intro.
-    apply H0.
-    apply FVLambda.
-     intro; apply H1.
-     rewrite H10 in |- *.
-     apply BVLambda1.
-
-     exact H9.
-
-    intro; apply H1.
-    apply BVLambda2.
-    exact H9.
-
-    apply H8.
-
-  inversion H.
-  apply TLambda.
-  apply permutation with (tenv1 := TEnv.add y S (TEnv.add s t tenv)).
-   apply Equal_add_2.
+  assert (y <> s).
    intro.
    apply H1.
    rewrite H9 in |- *.
    apply BVLambda1.
 
+   generalize H9; intro.
+   apply (add_2 _ tenv y s S t) in H9.
+   rewrite <- H9 in |- *.
+   apply add_intro.
+    apply FV_Lambda_inv with (y := s) (T := t); trivial.
+    apply BV_Lambda_inv with (y := s) (T := t); trivial.
+    trivial.
+
+  inversion H.
+  apply TLambda.
+  assert (y <> s).
+   intro.
+   apply H1.
+   rewrite H9 in |- *.
+   apply BVLambda1.
+
+   generalize H9; intro.
+   apply (add_2 _ tenv y s S t) in H9.
+   rewrite <- H9 in |- *.
    apply IHt.
-    exact H8.
+    trivial.
+    apply FV_Lambda_inv with (y := s) (T := t); trivial.
+    apply BV_Lambda_inv with (y := s) (T := t).
+    trivial.
 
-    intro.
-    apply H0.
-    apply FVLambda.
-     intro; apply H1.
-     rewrite H10 in |- *.
-     apply BVLambda1.
+    apply Table.add_2; trivial.
 
-     exact H9.
-
-    intro.
-    apply H1.
-    apply BVLambda2.
-    exact H9.
-
-    apply TEnv.add_2.
-     exact n.
-
-     exact H2.
-
- (* Apply *)
  intros.
  inversion H.
  simpl in |- *.
  apply TApply with (a := a).
   apply IHt1.
-   exact H5.
-
-   intro; apply H0.
-   apply FVApply.
-   left; exact H9.
-
-   intro; apply H1.
-   apply BVApply.
-   left; exact H9.
-
-   exact H2.
+   trivial.
+   apply (FV_Apply_inv_1 y t1 t2); trivial.
+   apply (BV_Apply_inv_1 y t1 t2); trivial.
+   trivial.
 
   apply IHt2.
-   exact H8.
+   trivial.
+   apply (FV_Apply_inv_2 y t1 t2); trivial.
+   apply (BV_Apply_inv_2 y t1 t2); trivial.
+   trivial.
 
-   intro; apply H0.
-   apply FVApply.
-   right; exact H9.
-
-   intro; apply H1.
-   apply BVApply.
-   right; exact H9.
-
-   exact H2.
-
- (* If *)
  intros.
  simpl in |- *.
  inversion H.
  apply TIf.
   apply IHt1.
-   exact H6.
-
-   intro; apply H0.
-   apply FVIf.
-   left; exact H11.
-
-   intro; apply H1.
-   apply BVIf.
-   left; exact H11.
-
-   exact H2.
+   trivial.
+   apply (FV_If_inv_1 y t1 t2 t3); trivial.
+   apply (BV_If_inv_1 y t1 t2 t3); trivial.
+   trivial.
 
   apply IHt2.
-   exact H9.
-
-   intro; apply H0.
-   apply FVIf.
-   right; left; exact H11.
-
-   intro; apply H1.
-   apply BVIf.
-   right; left; exact H11.
-
-   exact H2.
+   trivial.
+   apply (FV_If_inv_2 y t1 t2 t3); trivial.
+   apply (BV_If_inv_2 y t1 t2 t3); trivial.
+   trivial.
 
   apply IHt3.
-   exact H10.
-
-   intro; apply H0.
-   apply FVIf.
-   right; right; exact H11.
-
-   intro; apply H1.
-   apply BVIf.
-   right; right; exact H11.
-
-   exact H2.
+   trivial.
+   apply (FV_If_inv_3 y t1 t2 t3); trivial.
+   apply (BV_If_inv_3 y t1 t2 t3); trivial.
+   trivial.
 Qed.
 
 Lemma alpha_id: forall t x,
@@ -278,3 +219,4 @@ induction t.
  rewrite IHt1,  IHt2,  IHt3 in |- *.
  reflexivity.
 Qed.
+

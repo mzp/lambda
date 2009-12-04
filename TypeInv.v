@@ -3,11 +3,12 @@ Require Import String.
 
 Require Import Term.
 Require Import Typing.
+Require Import Tables.
 
 (* For Var *)
 Lemma var_rel :
   forall (tenv : tenv) (r : type) (x : string),
-  Typed (Var x) tenv r -> TEnv.MapsTo x r tenv.
+  Typed (Var x) tenv r -> Table.MapsTo x r tenv.
 Proof.
 intros.
 inversion H.
@@ -37,7 +38,7 @@ Qed.
 Lemma lambda_rel :
   forall (tenv : tenv) (r a : type) (x : string) (body : term),
   Typed (Lambda x a body) tenv r ->
-      exists b : type, Typed body (TEnv.add x a tenv) b /\ r = FunT a b.
+      exists b : type, Typed body (Table.add x a tenv) b /\ r = FunT a b.
 Proof.
 intros.
 inversion H.

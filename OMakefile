@@ -19,14 +19,12 @@ FILES[] =
 	Term
 	Eval
 	Typing
-	TypingFact
+	Tables
 	TypeInv
 	TypeUniq
 	CannonicalForm
 	Progress
 	Subst
-	TypeSubst
-	Constraint
 
 .DEFAULT: $(Proof $(FILES))
 
