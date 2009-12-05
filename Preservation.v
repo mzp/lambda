@@ -1,7 +1,6 @@
 Require Import Term.
 Require Import Eval.
 Require Import Typing.
-Require Import TypingFact.
 Require Import Subst.
 
 Theorem preservation: forall t t' tenv T,

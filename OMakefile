@@ -24,6 +24,8 @@ FILES[] =
 	TypeUniq
 	CannonicalForm
 	Progress
+	Preservation
+	Soundness
 	Subst
 	TypeSubst
 	Constraint

@@ -6,7 +6,7 @@ Require Import Typing.
 Require Import Constraint.
 Require Import TypeSubst.
 
-Lemma lambda_solution: forall tsubst T S T1 T2 tenv x t C,
+(*Lemma lambda_solution: forall tsubst T S T1 T2 tenv x t C,
   Constraint.Solution tsubst T tenv (Lambda x T1 t) (FunT T1 T2) C ->
   TypeSubst T2 S tsubst ->
   Constraint.Solution tsubst S (TEnv.add x T1 tenv) t T2 C.
@@ -256,3 +256,4 @@ Focus 4.
 
 *)
 
+*)
