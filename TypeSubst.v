@@ -6,10 +6,10 @@ Require Import Tables.
 
 Definition tsubst := table type.
 
-Fixpoint type_subst t tsubst :=
+Fixpoint type_subst t (tsubst : tsubst) :=
   match t with
   | VarT x => match Table.find x tsubst with
-              | Some y => VarT y
+              | Some y => y
       	      | None   => VarT x
               end
   | BoolT =>  BoolT
