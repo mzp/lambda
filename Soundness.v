@@ -6,6 +6,39 @@ Require Import Typing.
 Require Import Constraint.
 Require Import TypeSubst.
 
+Theorem soundness : forall t tenv S X C T tsubst,
+  TypeConstraint t tenv S X C -> Constraint.Solution tsubst T tenv t S C -> TypeSubst.Solution tsubst T tenv t.
+Proof.
+intros until tsubst.
+intro.
+generalize tenv, T, tsubst, C.
+pattern t, tenv, S, X, C in |- *.
+apply TypeConstraint_ind; intros; unfold Solution; simpl.
+ apply var_solution_inv in H1.
+ apply TVar.
+ trivial.
+
+ apply lambda_solution_inv in H2.
+ inversion H2.
+ apply H1 in H4.
+ rewrite H3 in |- *.
+ apply TLambda.
+ unfold Solution in H4.
+ rewrite add_eq in |- *.
+ trivial.
+
+ apply bool_solution_inv in H0.
+ rewrite H0 in |- *.
+ apply TBool.
+
+(*gene
+pattern t, tenv, S, X, C in |- *.
+
+ apply var_solution_inv in H1.
+ apply TVar.
+ trivial.
+*)
+
 (*Lemma lambda_solution: forall tsubst T S T1 T2 tenv x t C,
   Constraint.Solution tsubst T tenv (Lambda x T1 t) (FunT T1 T2) C ->
   TypeSubst T2 S tsubst ->
@@ -124,10 +157,6 @@ split.
 Qed.
 
 
-Theorem soundness : forall tenv t T S X C tsubst,
-  TypeConstraint t tenv S X C ->
-  Constraint.Solution tsubst T tenv t S C ->
-  TypeSubst.Solution tsubst T tenv t.
 Proof.
 intros until tsubst.
 intro.
@@ -257,3 +286,4 @@ Focus 4.
 *)
 
 *)
+

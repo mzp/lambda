@@ -79,3 +79,95 @@ intros.
 apply Unified_Union with (C2 := Singleton (type * type) c).
 trivial.
 Qed.
+
+Lemma var_solution_inv : forall T S tenv tsubst x C,
+  Solution tsubst T tenv (Var x) S C ->
+  Table.MapsTo x T (tenv_subst tenv tsubst).
+Proof.
+intros.
+unfold Solution in H.
+inversion H.
+inversion H0.
+unfold tenv_subst in |- *.
+apply
+ (TableWF.map_mapsto_iff tenv x T (fun T0 : type => type_subst T0 tsubst)).
+inversion H1.
+exists S.
+inversion H2.
+split; trivial.
+Qed.
+
+Lemma lambda_solution_inv : forall tsubst T T1 T2 tenv x t C,
+  Solution tsubst T tenv (Lambda x T1 t) (FunT T1 T2) C ->
+  T = FunT (type_subst T1 tsubst) (type_subst T2 tsubst) /\
+  Solution tsubst (type_subst T2 tsubst) (Table.add x T1 tenv) t T2 C.
+Proof.
+unfold Solution in |- *.
+intros.
+inversion H.
+inversion H0.
+inversion H1; inversion H2.
+split.
+ simpl in H12.
+ trivial.
+
+ exists x0.
+ split; [ trivial | split; [ trivial | reflexivity ] ].
+Qed.
+
+Lemma bool_solution_inv : forall tsubst T tenv t C,
+  Solution tsubst T tenv t BoolT C ->
+  T = BoolT.
+Proof.
+unfold Solution in |- *.
+intros.
+inversion H.
+inversion H0.
+inversion H2.
+simpl in H4.
+trivial.
+Qed.
+
+Lemma apply_solution_inv: forall S tsubst tenv t1 t2 T C,
+ Solution tsubst S tenv (Apply t1 t2) T C ->
+ exists C1,exists C2, exists T1, exists T2,
+   C = Add (T1,FunT T2 T) (Union C1 C2) /\
+   Solution tsubst (type_subst T1 tsubst) tenv t1 T1 C1 /\
+   Solution tsubst (type_subst T2 tsubst) tenv t2 T2 C2.
+Proof.
+unfold Solution in |- *.
+intros.
+inversion H.
+inversion H0.
+inversion H1.
+inversion H2.
+exists C1; exists C2; exists T1; exists T2.
+split.
+ trivial.
+
+ split.
+  exists X1.
+  split.
+   trivial.
+
+   split.
+    apply (Unified_Union C1 C2 _).
+    apply Unified_Add with (c := (T1, FunT T2 (VarT x0))).
+    rewrite <- H16 in |- *.
+    trivial.
+
+    reflexivity.
+
+  exists X2.
+  split.
+   trivial.
+
+   split.
+    apply (Unified_Union C2 C1 _).
+    rewrite union_sym in |- *.
+    apply Unified_Add with (c := (T1, FunT T2 (VarT x0))).
+    rewrite <- H16 in |- *.
+    trivial.
+
+    reflexivity.
+Qed.
