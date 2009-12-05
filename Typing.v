@@ -98,8 +98,8 @@ induction t.
    trivial.
 
    trivial.
-
 Qed.
+
 
 Lemma add_intro: forall t S T tenv s,
     ~ FV s t -> ~ BV s t -> Typed t tenv T -> Typed t (Table.add s S tenv) T.
@@ -209,3 +209,4 @@ induction t.
 
    trivial.
 Qed.
+

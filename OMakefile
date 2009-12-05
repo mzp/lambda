@@ -25,6 +25,7 @@ FILES[] =
 	CannonicalForm
 	Progress
 	Subst
+	TypeSubst
 
 .DEFAULT: $(Proof $(FILES))
 

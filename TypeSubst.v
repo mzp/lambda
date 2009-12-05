@@ -2,13 +2,13 @@ Require Import String.
 
 Require Import Term.
 Require Import Typing.
+Require Import Tables.
 
-Definition tsubst := tenv.
-Module Tsubst := TEnv.
+Definition tsubst := table type.
 
 Fixpoint type_subst t tsubst :=
   match t with
-  | VarT x => match Tsubst.find x tsubst with
+  | VarT x => match Table.find x tsubst with
               | Some y => VarT y
       	      | None   => VarT x
               end
@@ -17,7 +17,7 @@ Fixpoint type_subst t tsubst :=
   end.
 
 Definition tenv_subst tenv tsubst :=
-  Tsubst.map (fun T => type_subst T tsubst) tenv.
+  Table.map (fun T => type_subst T tsubst) tenv.
 
 Fixpoint term_subst t tsubst :=
   match t with
@@ -34,11 +34,11 @@ Fixpoint term_subst t tsubst :=
 Definition Solution tsubst T tenv t :=
   Typed (term_subst t tsubst) (tenv_subst tenv tsubst) T.
 
-Lemma tenv_subst_add : forall x T tenv tsubst,
+(*Lemma tenv_subst_add : forall x T tenv tsubst,
   TEnv.Equal (TEnv.add x (type_subst T tsubst) (tenv_subst tenv tsubst))
-             (tenv_subst (TEnv.add x T tenv) tsubst).
+             (tenv_subst (TEnv.add x T tenv) tsubst).*)
 
-Lemma tenv_subst_MapsTo : forall tenv tsubst x T,
+(*Lemma tenv_subst_MapsTo : forall tenv tsubst x T,
   TEnv.MapsTo x T tenv ->
   TEnv.MapsTo x (type_subst T tsubst) (tenv_subst tenv tsubst).
 Proof.
@@ -51,6 +51,7 @@ change
 apply TEnv.map_1.
 trivial.
 Qed.
+*)
 
 Theorem subst_preserve : forall t tenv T tsubst,
   Typed t tenv T ->
