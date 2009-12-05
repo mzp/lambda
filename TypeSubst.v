@@ -34,39 +34,38 @@ Fixpoint term_subst t tsubst :=
 Definition Solution tsubst T tenv t :=
   Typed (term_subst t tsubst) (tenv_subst tenv tsubst) T.
 
-(*Lemma tenv_subst_add : forall x T tenv tsubst,
-  TEnv.Equal (TEnv.add x (type_subst T tsubst) (tenv_subst tenv tsubst))
-             (tenv_subst (TEnv.add x T tenv) tsubst).*)
+Lemma add_eq : forall x T tenv tsubst,
+  (Table.add x (type_subst T tsubst) (tenv_subst tenv tsubst)) = (tenv_subst (Table.add x T tenv) tsubst).
+Proof.
+intros.
+unfold tenv_subst in |- *.
+apply sym_eq.
+change
+  (Table.map (fun T0 : type => type_subst T0 tsubst0) (Table.add x T tenv) =
+   Table.add x ((fun T0 : type => type_subst T0 tsubst0) T)
+     (Table.map (fun T0 : type => type_subst T0 tsubst0) tenv))
+ in |- *.
+apply map_add.
+Qed.
 
-(*Lemma tenv_subst_MapsTo : forall tenv tsubst x T,
-  TEnv.MapsTo x T tenv ->
-  TEnv.MapsTo x (type_subst T tsubst) (tenv_subst tenv tsubst).
+Lemma subst_intro : forall tenv tsubst x T,
+  Table.MapsTo x T tenv ->
+  Table.MapsTo x (type_subst T tsubst) (tenv_subst tenv tsubst).
 Proof.
 intros.
 unfold tenv_subst in |- *.
 change
-  (TEnv.MapsTo x ((fun T0 : type => type_subst T0 tsubst0) T)
-     (TEnv.map (fun T0 : type => type_subst T0 tsubst0) tenv))
+  (Table.MapsTo x ((fun T0 : type => type_subst T0 tsubst0) T)
+     (Table.map (fun T0 : type => type_subst T0 tsubst0) tenv))
  in |- *.
-apply TEnv.map_1.
+apply Table.map_1.
 trivial.
 Qed.
-*)
 
 Theorem subst_preserve : forall t tenv T tsubst,
   Typed t tenv T ->
   Typed (term_subst t tsubst) (tenv_subst tenv tsubst) (type_subst T tsubst).
 (*
-Lemma MapsTo_In : forall (A : Type) (tsubst : TEnv.t A) x (T : A),
-  TEnv.MapsTo x T tsubst -> TEnv.In x tsubst.
-Proof.
-intros.
-unfold TEnv.In in |- *.
-unfold TEnv.Raw.PX.In in |- *.
-unfold TEnv.MapsTo in H.
-exists T.
-exact H.
-Qed.
 
 Lemma subst_uniq : forall tsubst T S U,
   TypeSubst T S tsubst -> TypeSubst T U tsubst -> S = U.
