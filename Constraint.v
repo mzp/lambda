@@ -49,7 +49,7 @@ Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
     TypeConstraint (Apply t1 t2) tenv (VarT x) X C
 | CTIf : forall t1 t2 t3 T1 T2 T3 tenv X1 X2 X3 X C1 C2 C3 C,
     TypeConstraint t1 tenv T1 X1 C1 ->
-    TypeConstraint t2 tenv T2 X2 C3 ->
+    TypeConstraint t2 tenv T2 X2 C2 ->
     TypeConstraint t3 tenv T3 X3 C3 ->
     X = Union X1 (Union X2 X3) ->
     Disjoint X1 X2 -> Disjoint X2 X3 -> Disjoint X3 X1 ->
@@ -128,22 +128,26 @@ simpl in H4.
 trivial.
 Qed.
 
-Lemma apply_solution_inv: forall S tsubst tenv t1 t2 T C,
- Solution tsubst S tenv (Apply t1 t2) T C ->
- exists C1,exists C2, exists T1, exists T2,
-   C = Add (T1,FunT T2 T) (Union C1 C2) /\
+Lemma apply_solution_inv: forall tsubst tenv t1 t2 T T1 T2 S C1 C2 X1 X2,
+ TypeConstraint t1 tenv T1 X1 C1 ->
+ TypeConstraint t2 tenv T2 X2 C2 ->
+ Solution tsubst S tenv (Apply t1 t2) T (Add (T1,FunT T2 T) (Union C1 C2)) ->
+   type_subst T1 tsubst = type_subst (FunT T2 T) tsubst /\
    Solution tsubst (type_subst T1 tsubst) tenv t1 T1 C1 /\
    Solution tsubst (type_subst T2 tsubst) tenv t2 T2 C2.
 Proof.
 unfold Solution in |- *.
 intros.
-inversion H.
-inversion H0.
 inversion H1.
 inversion H2.
-exists C1; exists C2; exists T1; exists T2.
+inversion H4.
 split.
- trivial.
+ unfold Unified in H5.
+ apply H5.
+ unfold In in |- *; unfold Add in |- *.
+ unfold Ensembles.Add in |- *.
+ apply Union_intror.
+ apply In_singleton.
 
  split.
   exists X1.
@@ -151,9 +155,8 @@ split.
    trivial.
 
    split.
-    apply (Unified_Union C1 C2 _).
-    apply Unified_Add with (c := (T1, FunT T2 (VarT x0))).
-    rewrite <- H16 in |- *.
+    apply (Unified_Union C1 C2 tsubst).
+    apply Unified_Add with (c := (T1, FunT T2 T)).
     trivial.
 
     reflexivity.
@@ -163,11 +166,85 @@ split.
    trivial.
 
    split.
-    apply (Unified_Union C2 C1 _).
+    apply (Unified_Union C2 C1 tsubst).
     rewrite union_sym in |- *.
-    apply Unified_Add with (c := (T1, FunT T2 (VarT x0))).
-    rewrite <- H16 in |- *.
+    apply Unified_Add with (c := (T1, FunT T2 T)).
     trivial.
 
     reflexivity.
+Qed.
+
+Lemma if_solution_inv : forall t1 t2 t3 S T1 T2 T3 X1 X2 X3 C1 C2 C3 tenv tsubst,
+  TypeConstraint t1 tenv T1 X1 C1 ->
+  TypeConstraint t2 tenv T2 X2 C2 ->
+  TypeConstraint t3 tenv T3 X3 C3 ->
+  Solution tsubst S tenv (If t1 t2 t3) T2
+                  (Sets.Add (T1, BoolT)
+                            (Sets.Add (T2, T3)
+                                      (Sets.Union C1 (Sets.Union C2 C3)))) ->
+  Solution tsubst BoolT tenv t1 T1 C1 /\
+  Solution tsubst S tenv t2 T2 C2 /\
+  Solution tsubst S tenv t3 T3 C3.
+Proof.
+unfold Solution in |- *.
+intros.
+inversion H2.
+inversion H3.
+inversion H5.
+split.
+ exists X1.
+ split.
+  trivial.
+
+  split.
+   apply (Unified_Union C1 (Union C2 C3) tsubst).
+   apply Unified_Add with (c := (T2, T3)).
+   apply Unified_Add with (c := (T1, BoolT)).
+   trivial.
+
+   unfold Unified in H6.
+   change BoolT with (type_subst BoolT tsubst) in |- *.
+   apply sym_eq.
+   apply H6.
+   unfold In in |- *; unfold Add in |- *; unfold Union in |- *.
+   unfold Ensembles.Add in |- *.
+   apply Union_intror.
+   apply In_singleton.
+
+ split.
+  exists X2.
+  split.
+   trivial.
+
+   split.
+    apply (Unified_Union C2 C3 tsubst).
+    apply (Unified_Union (Union C2 C3) C1 tsubst).
+    rewrite union_sym in |- *.
+    apply Unified_Add with (c := (T2, T3));
+     apply Unified_Add with (c := (T1, BoolT)).
+    trivial.
+
+    trivial.
+
+  exists X3.
+  split.
+   trivial.
+
+   split.
+    apply (Unified_Union C3 C2).
+    rewrite union_sym in |- *.
+    apply (Unified_Union _ C1).
+    rewrite union_sym in |- *.
+    apply Unified_Add with (c := (T2, T3));
+     apply Unified_Add with (c := (T1, BoolT)).
+    trivial.
+
+    rewrite H7 in |- *.
+    unfold Unified in H6.
+    apply H6.
+    unfold In in |- *; unfold Add in |- *; unfold Union in |- *.
+    unfold Ensembles.Add in |- *.
+    apply Union_introl.
+    apply Union_intror.
+    apply In_singleton.
 Qed.
