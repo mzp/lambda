@@ -7,7 +7,9 @@ Require Import Constraint.
 Require Import TypeSubst.
 
 Theorem soundness : forall t tenv S X C T tsubst,
-  TypeConstraint t tenv S X C -> Constraint.Solution tsubst T tenv t S C -> TypeSubst.Solution tsubst T tenv t.
+  TypeConstraint t tenv S X C ->
+  Constraint.Solution tsubst T tenv t S C ->
+  TypeSubst.Solution tsubst T tenv t.
 Proof.
 intros until tsubst.
 intro.
