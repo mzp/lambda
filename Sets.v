@@ -1,11 +1,6 @@
 Require Import Ensembles.
 Require Import String.
 
-Require Import Typing.
-Require Import Tables.
-Require Import Term.
-Require Import TypeSubst.
-
 Definition set A := Ensemble A.
 Definition In    {A : Type} x xs     := Ensembles.In    A xs x.
 Definition Union {A : Type} xs ys    := Ensembles.Union A xs ys.
