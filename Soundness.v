@@ -23,7 +23,6 @@ apply TypeConstraint_ind; intros; unfold Solution; simpl.
  apply H1 in H4.
  rewrite H3 in |- *.
  apply TLambda.
- unfold Solution in H4.
  rewrite add_eq in |- *.
  trivial.
 
@@ -70,15 +69,7 @@ apply TypeConstraint_ind; intros; unfold Solution; simpl.
   in H4.
   inversion H4.
   inversion H13.
-  apply TIf.
-   apply H1.
-   trivial.
-
-   apply H3.
-   trivial.
-
-   apply H5.
-   trivial.
+  apply TIf; [apply H1 | apply H3 | apply H5]; trivial.
 
   trivial.
 
