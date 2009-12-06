@@ -11,7 +11,7 @@ Theorem soundness : forall t tenv S X C T tsubst,
 Proof.
 intros until tsubst.
 intro.
-generalize T, tsubst.
+generalize T.
 pattern t, tenv, S, X, C in |- *.
 apply TypeConstraint_ind; intros; unfold Solution; simpl.
  apply var_solution_inv in H1.
@@ -34,7 +34,7 @@ apply TypeConstraint_ind; intros; unfold Solution; simpl.
  apply
   apply_solution_inv
    with
-     (tsubst := tsubst0)
+     (tsubst := tsubst)
      (T := VarT x)
      (t1 := t1)
      (T1 := T1)
@@ -43,8 +43,8 @@ apply TypeConstraint_ind; intros; unfold Solution; simpl.
      (X1 := X1) in H2.
   inversion H2.
   inversion H12.
-  apply TApply with (a := type_subst T2 tsubst0).
-   assert (T0 = type_subst (VarT x) tsubst0).
+  apply TApply with (a := type_subst T2 tsubst).
+   assert (T0 = type_subst (VarT x) tsubst).
     unfold Constraint.Solution in H10.
     inversion H10.
     inversion H15.
@@ -66,7 +66,7 @@ apply TypeConstraint_ind; intros; unfold Solution; simpl.
   rewrite <- H9 in |- *.
   trivial.
 
- apply (if_solution_inv t1 t2 t3 T0 T1 T2 T3 X1 X2 X3 C1 C2 C3 tenv0 tsubst0)
+ apply (if_solution_inv t1 t2 t3 T0 T1 T2 T3 X1 X2 X3 C1 C2 C3 tenv0 tsubst)
   in H4.
   inversion H4.
   inversion H13.
