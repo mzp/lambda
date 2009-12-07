@@ -2,34 +2,7 @@ Require Import String.
 Require Import FMapWeakList.
 Require Import FMapInterface.
 Require Import FMapFacts.
-Require Import DecidableType.
-
-Module StrDec : DecidableType
-    with Definition t := string
-    with Definition eq := fun (x y : string) => x = y.
-  Definition t := string.
-  Definition eq_dec := string_dec.
-  Definition eq (x y : string) := x = y.
-
-  Theorem eq_refl : forall x : t, eq x x.
-  Proof.
-    unfold eq.
-    intros.
-    reflexivity.
-  Qed.
-
-  Theorem eq_sym : forall x y : t, eq x y -> eq y x.
-  Proof.
-    unfold eq.
-    apply sym_eq.
-  Qed.
-
-  Theorem eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
-  Proof.
-    unfold eq.
-    apply trans_eq.
-  Qed.
-End StrDec.
+Require Import Dec.
 
 Module Table := FMapWeakList.Make StrDec.
 Module TableWF := FMapFacts.WFacts_fun StrDec Table.
