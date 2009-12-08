@@ -12,6 +12,7 @@ Module Make(Dec : DecidableType).
     FSet.Equal A B -> A = B.
 
   Definition t := FSet.t.
+  Definition empty := FSet.empty.
   Definition In x xs := FSet.In x xs.
   Definition union xs ys := FSet.union xs ys.
   Definition add   x xs     := FSet.add x xs.
