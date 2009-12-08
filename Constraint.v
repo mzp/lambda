@@ -7,24 +7,29 @@ Require Import Tables.
 Require Import Sets.
 Require Import Term.
 Require Import TypeSubst.
+Require Import Dec.
 
-Definition tconst := set (type * type).
-Definition tvars := set string.
+Module TVars  := Sets.Make StrDec.
+Module TypePairDec := PairDec TypeDec TypeDec.
+Module TConst := Sets.Make TypePairDec.
 
-Definition Unified (c : tconst) (t : tsubst) := forall S T,
-  In (S,T) c -> type_subst S t = type_subst T t.
+Definition tvars  := TVars.t.
+Definition tconst := TConst.t.
+
+Definition Unified (c : tconst) (t : tsubst) := forall (S T : type),
+  TConst.In (S,T) c -> type_subst S t = type_subst T t.
 
 Definition FvTConst x c := forall S T,
-  In (S,T) c -> FvT x S \/ FvT x T.
+  TConst.In (S,T) c -> FvT x S \/ FvT x T.
 
 Definition FvTable x tenv := forall y T,
   Table.MapsTo y T tenv -> FvT x T.
 
 Definition DisjointFV xs T := forall x,
-  (FvT x T -> ~ In x xs) /\ (In x xs -> ~ FvT x T).
+  (FvT x T -> ~ TVars.In x xs) /\ (TVars.In x xs -> ~ FvT x T).
 
 Definition Fresh x X1 X2 T1 T2 C1 C2 tenv t1 t2 :=
-  ~ In x X1  /\ ~ In x X2 /\
+  ~ TVars.In x X1  /\ ~ TVars.In x X2 /\
   ~ FvT x T1 /\ ~ FvT x T2 /\
   ~ FvTConst x C1 /\ ~ FvTConst x C2 /\
   ~ FvTable x tenv /\
@@ -42,42 +47,41 @@ Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
 | CTApply : forall x t1 t2 T1 T2 tenv X1 X2 X C1 C2 C,
     TypeConstraint t1 tenv T1 X1 C1 ->
     TypeConstraint t2 tenv T2 X2 C2 ->
-    Disjoint X1 X2 -> DisjointFV X2 T1 -> DisjointFV X1 T2 ->
-    X = Add x (Union X1 X2) ->
+    TVars.Disjoint X1 X2 -> DisjointFV X2 T1 -> DisjointFV X1 T2 ->
+    X = TVars.add x (TVars.union X1 X2) ->
     Fresh x X1 X2 T1 T2 C1 C2 tenv t1 t2 ->
-    C = Add (T1,FunT T2 (VarT x)) (Union C1 C2) ->
+    C = TConst.add (T1,FunT T2 (VarT x)) (TConst.union C1 C2) ->
     TypeConstraint (Apply t1 t2) tenv (VarT x) X C
 | CTIf : forall t1 t2 t3 T1 T2 T3 tenv X1 X2 X3 X C1 C2 C3 C,
     TypeConstraint t1 tenv T1 X1 C1 ->
     TypeConstraint t2 tenv T2 X2 C2 ->
     TypeConstraint t3 tenv T3 X3 C3 ->
-    X = Union X1 (Union X2 X3) ->
-    Disjoint X1 X2 -> Disjoint X2 X3 -> Disjoint X3 X1 ->
-    C = Add (T1,BoolT) (Add (T2,T3) (Union C1 (Union C2 C3))) ->
+    X = TVars.union X1 (TVars.union X2 X3) ->
+    TVars.Disjoint X1 X2 -> TVars.Disjoint X2 X3 -> TVars.Disjoint X3 X1 ->
+    C = TConst.add (T1,BoolT) (TConst.add (T2,T3) (TConst.union C1 (TConst.union C2 C3))) ->
     TypeConstraint (If t1 t2 t3) tenv T2 X C.
 
 Definition Solution tsubst T tenv t S C := exists X,
   TypeConstraint t tenv S X C /\ Unified C tsubst /\ T = type_subst S tsubst.
 
 Lemma Unified_Union : forall C1 C2 tsubst,
-  Unified (Union C1 C2) tsubst -> Unified C1 tsubst.
+  Unified (TConst.union C1 C2) tsubst -> Unified C1 tsubst.
 Proof.
 unfold Unified in |- *.
-unfold In in |- *.
 intros.
 apply H.
-unfold Union in |- *.
-apply Union_introl.
-trivial.
+apply (TConst.WFact.union_iff C1 C2 _).
+left; trivial.
 Qed.
 
 Lemma Unified_Add : forall c C tsubst,
-  Unified (Add c C) tsubst -> Unified C tsubst.
+  Unified (TConst.add c C) tsubst -> Unified C tsubst.
 Proof.
-unfold Add in |- *.
+unfold Unified in |- *.
 intros.
-apply Unified_Union with (C2 := Singleton (type * type) c).
-trivial.
+apply H.
+apply (TConst.WFact.add_iff C c _).
+right; trivial.
 Qed.
 
 Lemma var_solution_inv : forall T S tenv tsubst x C,
@@ -131,7 +135,7 @@ Qed.
 Lemma apply_solution_inv: forall tsubst tenv t1 t2 T T1 T2 S C1 C2 X1 X2,
  TypeConstraint t1 tenv T1 X1 C1 ->
  TypeConstraint t2 tenv T2 X2 C2 ->
- Solution tsubst S tenv (Apply t1 t2) T (Add (T1,FunT T2 T) (Union C1 C2)) ->
+ Solution tsubst S tenv (Apply t1 t2) T (TConst.add (T1,FunT T2 T) (TConst.union C1 C2)) ->
    type_subst T1 tsubst = type_subst (FunT T2 T) tsubst /\
    Solution tsubst (type_subst T1 tsubst) tenv t1 T1 C1 /\
    Solution tsubst (type_subst T2 tsubst) tenv t2 T2 C2.
@@ -144,10 +148,10 @@ inversion H4.
 split.
  unfold Unified in H5.
  apply H5.
- unfold In in |- *; unfold Add in |- *.
- unfold Ensembles.Add in |- *.
- apply Union_intror.
- apply In_singleton.
+ apply (TConst.WFact.add_iff (TConst.union C1 C2) _ _).
+ left.
+ simpl in |- *.
+ split; reflexivity.
 
  split.
   exists X1.
@@ -167,7 +171,7 @@ split.
 
    split.
     apply (Unified_Union C2 C1 tsubst).
-    rewrite union_sym in |- *.
+    rewrite TConst.union_sym in |- *.
     apply Unified_Add with (c := (T1, FunT T2 T)).
     trivial.
 
@@ -179,9 +183,9 @@ Lemma if_solution_inv : forall t1 t2 t3 S T1 T2 T3 X1 X2 X3 C1 C2 C3 tenv tsubst
   TypeConstraint t2 tenv T2 X2 C2 ->
   TypeConstraint t3 tenv T3 X3 C3 ->
   Solution tsubst S tenv (If t1 t2 t3) T2
-                  (Sets.Add (T1, BoolT)
-                            (Sets.Add (T2, T3)
-                                      (Sets.Union C1 (Sets.Union C2 C3)))) ->
+                  (TConst.add (T1, BoolT)
+                            (TConst.add (T2, T3)
+                                      (TConst.union C1 (TConst.union C2 C3)))) ->
   Solution tsubst BoolT tenv t1 T1 C1 /\
   Solution tsubst S tenv t2 T2 C2 /\
   Solution tsubst S tenv t3 T3 C3.
@@ -197,7 +201,7 @@ split.
   trivial.
 
   split.
-   apply (Unified_Union C1 (Union C2 C3) tsubst).
+   apply (Unified_Union C1 (TConst.union C2 C3) tsubst).
    apply Unified_Add with (c := (T2, T3)).
    apply Unified_Add with (c := (T1, BoolT)).
    trivial.
@@ -206,10 +210,11 @@ split.
    change BoolT with (type_subst BoolT tsubst) in |- *.
    apply sym_eq.
    apply H6.
-   unfold In in |- *; unfold Add in |- *; unfold Union in |- *.
-   unfold Ensembles.Add in |- *.
-   apply Union_intror.
-   apply In_singleton.
+   apply
+    (TConst.WFact.add_iff
+       (TConst.add (T2, T3) (TConst.union C1 (TConst.union C2 C3))) _ _).
+   left.
+   split; reflexivity.
 
  split.
   exists X2.
@@ -218,8 +223,8 @@ split.
 
    split.
     apply (Unified_Union C2 C3 tsubst).
-    apply (Unified_Union (Union C2 C3) C1 tsubst).
-    rewrite union_sym in |- *.
+    apply (Unified_Union (TConst.union C2 C3) C1 tsubst).
+    rewrite TConst.union_sym in |- *.
     apply Unified_Add with (c := (T2, T3));
      apply Unified_Add with (c := (T1, BoolT)).
     trivial.
@@ -232,9 +237,9 @@ split.
 
    split.
     apply (Unified_Union C3 C2).
-    rewrite union_sym in |- *.
+    rewrite TConst.union_sym in |- *.
     apply (Unified_Union _ C1).
-    rewrite union_sym in |- *.
+    rewrite TConst.union_sym in |- *.
     apply Unified_Add with (c := (T2, T3));
      apply Unified_Add with (c := (T1, BoolT)).
     trivial.
@@ -242,9 +247,10 @@ split.
     rewrite H7 in |- *.
     unfold Unified in H6.
     apply H6.
-    unfold In in |- *; unfold Add in |- *; unfold Union in |- *.
-    unfold Ensembles.Add in |- *.
-    apply Union_introl.
-    apply Union_intror.
-    apply In_singleton.
+    apply
+     (TConst.WFact.add_iff
+        (TConst.add (T2, T3) (TConst.union C1 (TConst.union C2 C3))) _ _).
+    right.
+    apply (TConst.WFact.add_iff (TConst.union C1 (TConst.union C2 C3)) _ _).
+    left; split; reflexivity.
 Qed.

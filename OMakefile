@@ -26,11 +26,11 @@ FILES[] =
 	Progress
 	Preservation
 	Soundness
-	Completeness
 	Subst
 	TypeSubst
 	Constraint
 	Sets
+#	Completeness
 
 .DEFAULT: $(Proof $(FILES))
 

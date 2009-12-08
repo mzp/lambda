@@ -31,7 +31,7 @@ Module StrDec : DecidableType
   Qed.
 End StrDec.
 
-Module typeDec : DecidableType
+Module TypeDec : DecidableType
     with Definition t := type
     with Definition eq := fun (x y : type) => x = y.
   Definition t := type.
@@ -70,7 +70,7 @@ Module typeDec : DecidableType
   unfold eq.
   apply trans_eq.
   Qed.
-End typeDec.
+End TypeDec.
 
 Module PairDec (A B : DecidableType) : DecidableType
     with Definition t := A.t * B.t
