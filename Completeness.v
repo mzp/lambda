@@ -22,6 +22,48 @@ intro tubst.
 reflexivity.
 Qed.
 
+(* inversion *)
+Lemma var_inv : forall s T S tenv tsubst ,
+  Table.MapsTo s S tenv ->
+  Solution tsubst T tenv (Var s) ->
+  T = type_subst S tsubst.
+Proof.
+unfold Solution in |- *.
+simpl in |- *.
+intros.
+inversion H0.
+unfold tenv_subst in H2.
+apply (TableWF.map_mapsto_iff tenv s T (fun T : type => type_subst T tsubst))
+ in H2.
+inversion H2.
+inversion H5.
+rewrite H6 in |- *.
+assert (x = S).
+ apply TableWF.MapsTo_fun with (m := tenv) (x := s); trivial.
+
+ rewrite H8 in |- *.
+ reflexivity.
+Qed.
+
+Lemma lambda_inv : forall T tenv tsubst x T1 t,
+  Solution tsubst T tenv (Lambda x T1 t) ->
+  exists T2,
+  Solution tsubst T2 (Table.add x T1 tenv) t /\
+  T = FunT (type_subst T1 tsubst) T2.
+Proof.
+unfold Solution in |- *; simpl in |- *.
+intros.
+inversion H.
+exists b.
+split.
+ unfold tenv_subst in |- *.
+ rewrite map_add in |- *.
+ trivial.
+
+ reflexivity.
+Qed.
+
+(* main theorem *)
 Theorem completeness: forall t tenv S T X C tsubst1 tsubst2,
   TypeConstraint t tenv S X C ->
   TypeSubst.Solution tsubst1 T tenv t ->
@@ -33,8 +75,7 @@ intros until tsubst2.
 intro.
 generalize T.
 pattern t, tenv, S, X, C in |- *.
-apply TypeConstraint_ind; unfold Solution; unfold Constraint.Solution; simpl; intros.
- intros.
+apply TypeConstraint_ind; unfold Constraint.Solution; simpl; intros.
  exists TVars.empty.
  split.
   apply CTVar.
@@ -43,7 +84,14 @@ apply TypeConstraint_ind; unfold Solution; unfold Constraint.Solution; simpl; in
   split.
    apply Unified_empty.
 
-   rewrite <- sub_empty in H3.
+   apply var_inv with (S := T0) in H1.
+    rewrite <- sub_empty in H3.
+    rewrite <- H3 in |- *.
+    trivial.
+
+    trivial.
+
+(*
    rewrite <- H3 in |- *.
    inversion H1.
    unfold tenv_subst in H5.
@@ -57,3 +105,4 @@ apply TypeConstraint_ind; unfold Solution; unfold Constraint.Solution; simpl; in
 
     trivial.
 
+*)
