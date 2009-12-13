@@ -22,8 +22,8 @@ Definition Unified (c : tconst) (t : tsubst) := forall (S T : type),
 Definition FvTConst x c := forall S T,
   TConst.In (S,T) c -> FvT x S \/ FvT x T.
 
-Definition FvTable x tenv := forall y T,
-  Table.MapsTo y T tenv -> FvT x T.
+Definition FvTable x tenv := exists y, exists T,
+  Table.MapsTo y T tenv /\ FvT x T.
 
 Definition DisjointFV xs T := forall x,
   (FvT x T -> ~ TVars.In x xs) /\ (TVars.In x xs -> ~ FvT x T).
@@ -274,16 +274,19 @@ destruct s; intros; simpl.
  destruct (TVars.WProp.Dec.F.eq_dec x e); intro; inversion H.
 Qed.
 
-Lemma tvars_free : forall t X x tenv S C,
+(*Lemma tvars_free : forall t X x tenv S C,
   TypeConstraint t tenv S X C ->
-  (FvTable x tenv \/ FvTt x t) ->
-  ~ TVars.In x X.
+  (FvTable x tenv -> ~ TVars.In x X) /\
+  (FvTt x t -> ~ TVars.In x X).
 Proof.
 intros until C.
 intro.
 pattern t, tenv, S, X, C in |- *.
 apply TypeConstraint_ind; intros.
- intro.
- inversion H2.
+ split; intro; intro; inversion H2.
 
- apply H1.
+ inversion H1.
+ split.
+  intro.
+  unfold FvTable in H4.
+*)
