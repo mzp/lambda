@@ -262,20 +262,28 @@ split.
     left; split; reflexivity.
 Qed.
 
-Lemma tvars_free : forall X x t tenv S C,
-  TypeConstraint t tenv S X C ->
-  FvTable x tenv -> ~ TVars.In x X.
+Lemma empty_add : forall x s,
+  TVars.FSet.Raw.empty <> TVars.FSet.Raw.add x s.
 Proof.
-intro.
-pattern X in |- *.
-apply TVars.WProp.set_induction_bis; intros.
- apply TVars.Extensionality_Set in H.
- rewrite <- H in |- *.
- rewrite <- H in H1.
- apply (H0 x t tenv S C); trivial.
-
+intros.
+unfold TVars.FSet.Raw.empty in |- *.
+destruct s; intros; simpl.
  intro.
- inversion H1.
+ inversion H.
 
- induction t.
-  inversion H1.
+ destruct (TVars.WProp.Dec.F.eq_dec x e); intro; inversion H.
+Qed.
+
+Lemma tvars_free : forall t X x tenv S C,
+  TypeConstraint t tenv S X C ->
+  (FvTable x tenv \/ FvTt x t) ->
+  ~ TVars.In x X.
+Proof.
+intros until C.
+intro.
+pattern t, tenv, S, X, C in |- *.
+apply TypeConstraint_ind; intros.
+ intro.
+ inversion H2.
+
+ apply H1.
