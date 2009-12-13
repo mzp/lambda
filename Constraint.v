@@ -44,14 +44,13 @@ Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
     TypeConstraint (Lambda x T1 t) tenv (FunT T1 T2) X C
 | CTBool : forall b tenv,
     TypeConstraint (Bool b) tenv BoolT  TVars.empty TConst.empty
-| CTApply : forall x t1 t2 T1 T2 tenv X1 X2 X C1 C2 C,
+| CTApply : forall x t1 t2 T1 T2 tenv X1 X2 C1 C2 C,
     TypeConstraint t1 tenv T1 X1 C1 ->
     TypeConstraint t2 tenv T2 X2 C2 ->
     TVars.Disjoint X1 X2 -> DisjointFV X2 T1 -> DisjointFV X1 T2 ->
-    X = TVars.add x (TVars.union X1 X2) ->
     Fresh x X1 X2 T1 T2 C1 C2 tenv t1 t2 ->
     C = TConst.add (T1,FunT T2 (VarT x)) (TConst.union C1 C2) ->
-    TypeConstraint (Apply t1 t2) tenv (VarT x) X C
+    TypeConstraint (Apply t1 t2) tenv (VarT x) (TVars.add x (TVars.union X1 X2)) C
 | CTIf : forall t1 t2 t3 T1 T2 T3 tenv X1 X2 X3 X C1 C2 C3 C,
     TypeConstraint t1 tenv T1 X1 C1 ->
     TypeConstraint t2 tenv T2 X2 C2 ->
@@ -262,3 +261,21 @@ split.
     apply (TConst.WFact.add_iff (TConst.union C1 (TConst.union C2 C3)) _ _).
     left; split; reflexivity.
 Qed.
+
+Lemma tvars_free : forall X x t tenv S C,
+  TypeConstraint t tenv S X C ->
+  FvTable x tenv -> ~ TVars.In x X.
+Proof.
+intro.
+pattern X in |- *.
+apply TVars.WProp.set_induction_bis; intros.
+ apply TVars.Extensionality_Set in H.
+ rewrite <- H in |- *.
+ rewrite <- H in H1.
+ apply (H0 x t tenv S C); trivial.
+
+ intro.
+ inversion H1.
+
+ induction t.
+  inversion H1.

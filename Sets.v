@@ -3,10 +3,12 @@ Require Import String.
 Require Import DecidableType.
 Require Import FSetWeakList.
 Require Import FSetFacts.
+Require Import FSetProperties.
 
 Module Make(Dec : DecidableType).
   Module FSet  := FSetWeakList.Make Dec.
   Module WFact := FSetFacts.WFacts_fun Dec FSet.
+  Module WProp := FSetProperties.WProperties_fun Dec FSet.
 
   Axiom Extensionality_Set : forall A B,
     FSet.Equal A B -> A = B.
