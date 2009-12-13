@@ -36,7 +36,7 @@ Inductive FvT : string -> type -> Prop :=
   | FvFunT : forall s T1 T2, FvT s T1 \/ FvT s T2 -> FvT s (FunT T1 T2).
 
 Inductive FvTt : string -> term -> Prop :=
-  | FvTLambda : forall s T x t, FvT s T -> FvTt s (Lambda x T t)
+  | FvTLambda : forall s T x t, FvT s T \/ FvTt s t -> FvTt s (Lambda x T t)
   | FvTApply  : forall s t1 t2, FvTt s t1 \/ FvTt s t2 -> FvTt s (Apply t1 t2)
   | FvTIf     : forall s t1 t2 t3, FvTt s t1 \/ FvTt s t2 \/ FvTt s t3 -> FvTt s (If t1 t2 t3).
 
