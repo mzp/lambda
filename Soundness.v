@@ -43,20 +43,20 @@ apply TypeConstraint_ind; intros; unfold Solution; simpl.
      (C1 := C1)
      (X1 := X1) in H2.
   inversion H2.
-  inversion H12.
+  inversion H11.
   apply TApply with (a := type_subst T2 tsubst).
    assert (T0 = type_subst (VarT x) tsubst).
-    unfold Constraint.Solution in H10.
-    inversion H10.
-    inversion H15.
-    inversion H17.
+    unfold Constraint.Solution in H9.
+    inversion H9.
+    inversion H14.
+    inversion H16.
     trivial.
 
-    rewrite H15 in |- *.
+    rewrite H14 in |- *.
     apply H1.
     simpl in |- *.
-    simpl in H11.
-    rewrite <- H11 in |- *.
+    simpl in H10.
+    rewrite <- H10 in |- *.
     trivial.
 
    apply H3.
@@ -64,7 +64,7 @@ apply TypeConstraint_ind; intros; unfold Solution; simpl.
 
   trivial.
 
-  rewrite <- H9 in |- *.
+  rewrite <- H8 in |- *.
   trivial.
 
  apply (if_solution_inv t1 t2 t3 T0 T1 T2 T3 X1 X2 X3 C1 C2 C3 tenv0 tsubst)
@@ -82,3 +82,4 @@ apply TypeConstraint_ind; intros; unfold Solution; simpl.
 
  trivial.
 Qed.
+
