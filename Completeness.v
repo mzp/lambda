@@ -107,18 +107,3 @@ apply TypeConstraint_ind; unfold Constraint.Solution; simpl; intros.
     trivial.
 
     rewrite H12 in H7.
-(*
-   rewrite <- H3 in |- *.
-   inversion H1.
-   unfold tenv_subst in H5.
-   apply
-    (TableWF.map_mapsto_iff tenv0 s T1 (fun T : type => type_subst T tsubst1))
-    in H5.
-   inversion H5.
-   inversion H8.
-   assert (x = T0).
-    apply TableWF.MapsTo_fun with (m := tenv0) (x := s); trivial.
-
-    trivial.
-
-*)
