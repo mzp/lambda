@@ -91,6 +91,22 @@ apply TypeConstraint_ind; unfold Constraint.Solution; simpl; intros.
 
     trivial.
 
+ exists X0.
+ split.
+  apply CTLambda.
+  trivial.
+
+  apply lambda_inv in H2.
+  decompose [ex] H2.
+  inversion H5.
+  apply H1 in H6.
+   inversion H6.
+   inversion H8.
+   inversion H10.
+   split.
+    trivial.
+
+    rewrite H12 in H7.
 (*
    rewrite <- H3 in |- *.
    inversion H1.
