@@ -19,21 +19,34 @@ Definition tconst := TConst.t.
 Definition Unified (c : tconst) (t : tsubst) := forall (S T : type),
   TConst.In (S,T) c -> type_subst S t = type_subst T t.
 
-Definition FvTConst x c := forall S T,
-  TConst.In (S,T) c -> FvT x S \/ FvT x T.
+Inductive FV : string -> type -> Prop :=
+  | FVVarT : forall x, FV x (VarT x)
+  | FVFunT : forall x T1 T2, FV x T1 \/ FV x T2 -> FV x (FunT T1 T2).
 
-Definition FvTable x tenv := exists y, exists T,
-  Table.MapsTo y T tenv /\ FvT x T.
+Inductive FreshT : string -> type -> Prop :=
+  | FVarT : forall x y, x <> y -> FreshT x (VarT y)
+  | FFunT : forall x T1 T2, FreshT x T1 /\ FreshT x T2 -> FreshT x (FunT T1 T2).
 
-Definition DisjointFV xs T := forall x,
-  (FvT x T -> ~ TVars.In x xs) /\ (TVars.In x xs -> ~ FvT x T).
+Inductive FreshTerm : string -> term -> Prop :=
+  | FLambda : forall x y T t, FreshT x T /\ FreshTerm x t -> FreshTerm x (Lambda y T t)
+  | FApply  : forall x t1 t2, FreshTerm x t1 /\ FreshTerm x t2 -> FreshTerm x (Apply t1 t2)
+  | FIf     : forall x t1 t2 t3, FreshTerm x t1 /\ FreshTerm x t2 \/ FreshTerm x t3 -> FreshTerm x (If t1 t2 t3).
+
+Definition FreshC x c := forall S T,
+  TConst.In (S,T) c -> FreshT x S \/ FreshT x T.
+
+Definition FreshE x tenv := forall y T,
+  Table.MapsTo y T tenv -> FreshT x T.
+
+Definition DisjointT xs T := forall x,
+  TVars.In x xs -> FreshT x T.
 
 Definition Fresh x X1 X2 T1 T2 C1 C2 tenv t1 t2 :=
   ~ TVars.In x X1  /\ ~ TVars.In x X2 /\
-  ~ FvT x T1 /\ ~ FvT x T2 /\
-  ~ FvTConst x C1 /\ ~ FvTConst x C2 /\
-  ~ FvTable x tenv /\
-  ~ FvTt x t1 /\ ~ FvTt x t2.
+  FreshT x T1 /\ FreshT x T2 /\
+  FreshC x C1 /\ FreshC x C2 /\
+  FreshE x tenv /\
+  FreshTerm x t1 /\ FreshTerm x t2.
 
 Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
   CTVar : forall s tenv T,
@@ -47,7 +60,7 @@ Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
 | CTApply : forall x t1 t2 T1 T2 tenv X1 X2 C1 C2 C,
     TypeConstraint t1 tenv T1 X1 C1 ->
     TypeConstraint t2 tenv T2 X2 C2 ->
-    TVars.Disjoint X1 X2 -> DisjointFV X2 T1 -> DisjointFV X1 T2 ->
+    TVars.Disjoint X1 X2 -> DisjointT X2 T1 -> DisjointT X1 T2 ->
     Fresh x X1 X2 T1 T2 C1 C2 tenv t1 t2 ->
     C = TConst.add (T1,FunT T2 (VarT x)) (TConst.union C1 C2) ->
     TypeConstraint (Apply t1 t2) tenv (VarT x) (TVars.add x (TVars.union X1 X2)) C

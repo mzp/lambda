@@ -31,15 +31,6 @@ Fixpoint term_length (t : term) :=
     1 + term_length t1 + term_length t2 + term_length t3
   end.
 
-Inductive FvT : string -> type -> Prop :=
-  | FvVarT : forall s, FvT s (VarT s)
-  | FvFunT : forall s T1 T2, FvT s T1 \/ FvT s T2 -> FvT s (FunT T1 T2).
-
-Inductive FvTt : string -> term -> Prop :=
-  | FvTLambda : forall s T x t, FvT s T \/ FvTt s t -> FvTt s (Lambda x T t)
-  | FvTApply  : forall s t1 t2, FvTt s t1 \/ FvTt s t2 -> FvTt s (Apply t1 t2)
-  | FvTIf     : forall s t1 t2 t3, FvTt s t1 \/ FvTt s t2 \/ FvTt s t3 -> FvTt s (If t1 t2 t3).
-
 Inductive FV : string -> term -> Prop :=
   | FVVar    : forall s, FV s (Var s)
   | FVLambda : forall x y t T, x <> y -> FV x t -> FV x (Lambda y T t)
