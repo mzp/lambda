@@ -19,10 +19,6 @@ Definition tconst := TConst.t.
 Definition Unified (c : tconst) (t : tsubst) := forall (S T : type),
   TConst.In (S,T) c -> type_subst S t = type_subst T t.
 
-Inductive FV : string -> type -> Prop :=
-  | FVVarT : forall x, FV x (VarT x)
-  | FVFunT : forall x T1 T2, FV x T1 \/ FV x T2 -> FV x (FunT T1 T2).
-
 Inductive FreshT : string -> type -> Prop :=
   | FVarT : forall x y, x <> y -> FreshT x (VarT y)
   | FFunT : forall x T1 T2, FreshT x T1 /\ FreshT x T2 -> FreshT x (FunT T1 T2).
