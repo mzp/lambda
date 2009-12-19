@@ -286,3 +286,68 @@ destruct s; intros; simpl.
  destruct (TVars.WProp.Dec.F.eq_dec x e); intro; inversion H.
 Qed.
 
+Lemma fv_types_cons: forall x T Ts,
+  FvT x T -> FvTypes x (T :: Ts).
+Proof.
+intros.
+unfold FvTypes in |- *.
+exists T.
+split.
+ apply in_eq.
+
+ trivial.
+Qed.
+
+Lemma fv_types_intro: forall x T Ts,
+  FvTypes x Ts -> FvTypes x (T :: Ts).
+Proof.
+unfold FvTypes in |- *.
+intros.
+decompose [ex] H.
+decompose [and] H0.
+exists x0.
+split; [ apply in_cons; trivial | trivial ].
+Qed.
+
+Lemma fresh_ts : forall x X1 X2 T1 T2 C1 C2 tenv Ts t1 t2,
+  Fresh x X1 X2 T1 T2 C1 C2 tenv Ts t1 t2 -> ~ FvTypes x Ts.
+Proof.
+unfold Fresh in |- *.
+intros.
+decompose [and] H.
+trivial.
+Qed.
+
+Lemma tvars_free : forall t X x tenv Ts S C,
+  TypeConstraint t tenv Ts S X C ->
+  (FvTypes x Ts -> ~ TVars.In x X) /\
+  (FvTt x t -> ~ TVars.In x X).
+Proof.
+intros until C.
+intro.
+pattern t, tenv, Ts, S, X, C in |- *.
+apply TypeConstraint_ind; intros.
+ split; intros; intro; inversion H2.
+
+
+ inversion H1.
+ split; intro.
+  apply H2.
+  apply fv_types_intro.
+  trivial.
+
+  inversion H4.
+  decompose [or] H7.
+   apply fv_types_cons with (Ts := Ts0) in H10.
+   apply H2 in H10.
+   trivial.
+
+   apply H3.
+   trivial.
+
+ split; intros; intro; inversion H1.
+
+ split; intros.
+  intro.
+  apply TVars.WFact.add_iff in H10.
+  inversion H10.
