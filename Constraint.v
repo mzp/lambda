@@ -37,40 +37,43 @@ Definition FreshE x tenv := forall y T,
 Definition DisjointT xs T := forall x,
   TVars.In x xs -> FreshT x T.
 
-Definition Fresh x X1 X2 T1 T2 C1 C2 tenv t1 t2 :=
+Definition FreshTs x Ts := forall T,
+  List.In T Ts -> FreshT x T.
+
+Definition Fresh x X1 X2 T1 T2 C1 C2 tenv ts t1 t2 :=
   ~ TVars.In x X1  /\ ~ TVars.In x X2 /\
   FreshT x T1 /\ FreshT x T2 /\
   FreshC x C1 /\ FreshC x C2 /\
-  FreshE x tenv /\
+  FreshE x tenv /\ FreshTs x ts /\
   FreshTerm x t1 /\ FreshTerm x t2.
 
-Inductive TypeConstraint : term -> tenv -> type -> tvars -> tconst -> Prop :=
-  CTVar : forall s tenv T,
+Inductive TypeConstraint : term -> tenv -> list type -> type -> tvars -> tconst -> Prop :=
+  CTVar : forall s tenv Ts T,
     Table.MapsTo s T tenv ->
-    TypeConstraint (Var s) tenv T TVars.empty TConst.empty
-| CTLambda : forall x T1 T2 t tenv X C,
-    TypeConstraint t (Table.add x T1 tenv) T2 X C ->
-    TypeConstraint (Lambda x T1 t) tenv (FunT T1 T2) X C
-| CTBool : forall b tenv,
-    TypeConstraint (Bool b) tenv BoolT  TVars.empty TConst.empty
-| CTApply : forall x t1 t2 T1 T2 tenv X1 X2 C1 C2 C,
-    TypeConstraint t1 tenv T1 X1 C1 ->
-    TypeConstraint t2 tenv T2 X2 C2 ->
+    TypeConstraint (Var s) tenv Ts T TVars.empty TConst.empty
+| CTLambda : forall x T1 T2 t tenv Ts X C,
+    TypeConstraint t (Table.add x T1 tenv) (T1::Ts) T2 X C ->
+    TypeConstraint (Lambda x T1 t) tenv Ts (FunT T1 T2) X C
+| CTBool : forall b tenv Ts,
+    TypeConstraint (Bool b) tenv Ts BoolT TVars.empty TConst.empty
+| CTApply : forall x t1 t2 T1 T2 tenv Ts X1 X2 C1 C2 C,
+    TypeConstraint t1 tenv Ts T1 X1 C1 ->
+    TypeConstraint t2 tenv Ts T2 X2 C2 ->
     TVars.Disjoint X1 X2 -> DisjointT X2 T1 -> DisjointT X1 T2 ->
-    Fresh x X1 X2 T1 T2 C1 C2 tenv t1 t2 ->
+    Fresh x X1 X2 T1 T2 C1 C2 tenv Ts t1 t2 ->
     C = TConst.add (T1,FunT T2 (VarT x)) (TConst.union C1 C2) ->
-    TypeConstraint (Apply t1 t2) tenv (VarT x) (TVars.add x (TVars.union X1 X2)) C
-| CTIf : forall t1 t2 t3 T1 T2 T3 tenv X1 X2 X3 X C1 C2 C3 C,
-    TypeConstraint t1 tenv T1 X1 C1 ->
-    TypeConstraint t2 tenv T2 X2 C2 ->
-    TypeConstraint t3 tenv T3 X3 C3 ->
+    TypeConstraint (Apply t1 t2) tenv Ts (VarT x) (TVars.add x (TVars.union X1 X2)) C
+| CTIf : forall t1 t2 t3 T1 T2 T3 tenv Ts X1 X2 X3 X C1 C2 C3 C,
+    TypeConstraint t1 tenv Ts T1 X1 C1 ->
+    TypeConstraint t2 tenv Ts T2 X2 C2 ->
+    TypeConstraint t3 tenv Ts T3 X3 C3 ->
     X = TVars.union X1 (TVars.union X2 X3) ->
     TVars.Disjoint X1 X2 -> TVars.Disjoint X2 X3 -> TVars.Disjoint X3 X1 ->
     C = TConst.add (T1,BoolT) (TConst.add (T2,T3) (TConst.union C1 (TConst.union C2 C3))) ->
-    TypeConstraint (If t1 t2 t3) tenv T2 X C.
+    TypeConstraint (If t1 t2 t3) tenv Ts T2 X C.
 
-Definition Solution tsubst T tenv t S C := exists X,
-  TypeConstraint t tenv S X C /\ Unified C tsubst /\ T = type_subst S tsubst.
+Definition Solution tsubst T tenv Ts t S C := exists X,
+  TypeConstraint t tenv Ts S X C /\ Unified C tsubst /\ T = type_subst S tsubst.
 
 Lemma Unified_Union : forall C1 C2 tsubst,
   Unified (TConst.union C1 C2) tsubst -> Unified C1 tsubst.
@@ -100,8 +103,8 @@ apply (TConst.WFact.add_iff C c _).
 right; trivial.
 Qed.
 
-Lemma var_solution_inv : forall T S tenv tsubst x C,
-  Solution tsubst T tenv (Var x) S C ->
+Lemma var_solution_inv : forall T S tenv Ts tsubst x C,
+  Solution tsubst T tenv Ts (Var x) S C ->
   Table.MapsTo x T (tenv_subst tenv tsubst).
 Proof.
 intros.
@@ -117,10 +120,10 @@ inversion H2.
 split; trivial.
 Qed.
 
-Lemma lambda_solution_inv : forall tsubst T T1 T2 tenv x t C,
-  Solution tsubst T tenv (Lambda x T1 t) (FunT T1 T2) C ->
+Lemma lambda_solution_inv : forall tsubst T T1 T2 tenv Ts x t C,
+  Solution tsubst T tenv Ts (Lambda x T1 t) (FunT T1 T2) C ->
   T = FunT (type_subst T1 tsubst) (type_subst T2 tsubst) /\
-  Solution tsubst (type_subst T2 tsubst) (Table.add x T1 tenv) t T2 C.
+  Solution tsubst (type_subst T2 tsubst) (Table.add x T1 tenv) (T1::Ts) t T2 C.
 Proof.
 unfold Solution in |- *.
 intros.
@@ -128,15 +131,15 @@ inversion H.
 inversion H0.
 inversion H1; inversion H2.
 split.
- simpl in H12.
+ simpl in H13.
  trivial.
 
  exists x0.
  split; [ trivial | split; [ trivial | reflexivity ] ].
 Qed.
 
-Lemma bool_solution_inv : forall tsubst T tenv t C,
-  Solution tsubst T tenv t BoolT C ->
+Lemma bool_solution_inv : forall tsubst T tenv Ts t C,
+  Solution tsubst T tenv Ts t BoolT C ->
   T = BoolT.
 Proof.
 unfold Solution in |- *.
@@ -148,13 +151,13 @@ simpl in H4.
 trivial.
 Qed.
 
-Lemma apply_solution_inv: forall tsubst tenv t1 t2 T T1 T2 S C1 C2 X1 X2,
- TypeConstraint t1 tenv T1 X1 C1 ->
- TypeConstraint t2 tenv T2 X2 C2 ->
- Solution tsubst S tenv (Apply t1 t2) T (TConst.add (T1,FunT T2 T) (TConst.union C1 C2)) ->
+Lemma apply_solution_inv: forall tsubst tenv Ts t1 t2 T T1 T2 S C1 C2 X1 X2,
+ TypeConstraint t1 tenv Ts T1 X1 C1 ->
+ TypeConstraint t2 tenv Ts T2 X2 C2 ->
+ Solution tsubst S tenv Ts (Apply t1 t2) T (TConst.add (T1,FunT T2 T) (TConst.union C1 C2)) ->
    type_subst T1 tsubst = type_subst (FunT T2 T) tsubst /\
-   Solution tsubst (type_subst T1 tsubst) tenv t1 T1 C1 /\
-   Solution tsubst (type_subst T2 tsubst) tenv t2 T2 C2.
+   Solution tsubst (type_subst T1 tsubst) tenv Ts t1 T1 C1 /\
+   Solution tsubst (type_subst T2 tsubst) tenv Ts t2 T2 C2.
 Proof.
 unfold Solution in |- *.
 intros.
@@ -194,17 +197,17 @@ split.
     reflexivity.
 Qed.
 
-Lemma if_solution_inv : forall t1 t2 t3 S T1 T2 T3 X1 X2 X3 C1 C2 C3 tenv tsubst,
-  TypeConstraint t1 tenv T1 X1 C1 ->
-  TypeConstraint t2 tenv T2 X2 C2 ->
-  TypeConstraint t3 tenv T3 X3 C3 ->
-  Solution tsubst S tenv (If t1 t2 t3) T2
+Lemma if_solution_inv : forall t1 t2 t3 S T1 T2 T3 X1 X2 X3 C1 C2 C3 tenv Ts tsubst,
+  TypeConstraint t1 tenv Ts T1 X1 C1 ->
+  TypeConstraint t2 tenv Ts T2 X2 C2 ->
+  TypeConstraint t3 tenv Ts T3 X3 C3 ->
+  Solution tsubst S tenv Ts (If t1 t2 t3) T2
                   (TConst.add (T1, BoolT)
                             (TConst.add (T2, T3)
                                       (TConst.union C1 (TConst.union C2 C3)))) ->
-  Solution tsubst BoolT tenv t1 T1 C1 /\
-  Solution tsubst S tenv t2 T2 C2 /\
-  Solution tsubst S tenv t3 T3 C3.
+  Solution tsubst BoolT tenv Ts t1 T1 C1 /\
+  Solution tsubst S tenv Ts t2 T2 C2 /\
+  Solution tsubst S tenv Ts t3 T3 C3.
 Proof.
 unfold Solution in |- *.
 intros.
@@ -283,19 +286,3 @@ destruct s; intros; simpl.
  destruct (TVars.WProp.Dec.F.eq_dec x e); intro; inversion H.
 Qed.
 
-(*Lemma tvars_free : forall t X x tenv S C,
-  TypeConstraint t tenv S X C ->
-  (FvTable x tenv -> ~ TVars.In x X) /\
-  (FvTt x t -> ~ TVars.In x X).
-Proof.
-intros until C.
-intro.
-pattern t, tenv, S, X, C in |- *.
-apply TypeConstraint_ind; intros.
- split; intro; intro; inversion H2.
-
- inversion H1.
- split.
-  intro.
-  unfold FvTable in H4.
-*)
