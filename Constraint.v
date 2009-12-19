@@ -24,9 +24,14 @@ Inductive FreshT : string -> type -> Prop :=
   | FFunT : forall x T1 T2, FreshT x T1 /\ FreshT x T2 -> FreshT x (FunT T1 T2).
 
 Inductive FreshTerm : string -> term -> Prop :=
-  | FLambda : forall x y T t, FreshT x T /\ FreshTerm x t -> FreshTerm x (Lambda y T t)
-  | FApply  : forall x t1 t2, FreshTerm x t1 /\ FreshTerm x t2 -> FreshTerm x (Apply t1 t2)
-  | FIf     : forall x t1 t2 t3, FreshTerm x t1 /\ FreshTerm x t2 \/ FreshTerm x t3 -> FreshTerm x (If t1 t2 t3).
+  | FVar    : forall x s, FreshTerm x (Var s)
+  | FBool   : forall x b, FreshTerm x (Bool b)
+  | FLambda : forall x y T t,
+      FreshT x T /\ FreshTerm x t -> FreshTerm x (Lambda y T t)
+  | FApply  : forall x t1 t2,
+      FreshTerm x t1 /\ FreshTerm x t2 -> FreshTerm x (Apply t1 t2)
+  | FIf     : forall x t1 t2 t3,
+      FreshTerm x t1 /\ FreshTerm x t2 /\ FreshTerm x t3 -> FreshTerm x (If t1 t2 t3).
 
 Definition FreshC x c := forall S T,
   TConst.In (S,T) c -> FreshT x S \/ FreshT x T.
@@ -286,6 +291,23 @@ destruct s; intros; simpl.
  destruct (TVars.WProp.Dec.F.eq_dec x e); intro; inversion H.
 Qed.
 
+Lemma fresh_type_term: forall x t tenv Ts T X C,
+  TypeConstraint t tenv Ts T X C ->  FreshT x T -> FreshTerm x t.
+Proof.
+intros until C.
+intro.
+pattern t, tenv, Ts, T, X, C in |- *.
+apply TypeConstraint_ind; intros.
+ apply FVar.
+
+ apply FLambda.
+ inversion H2.
+ decompose [and] H5.
+ apply H1 in H8.
+ split; trivial.
+
+ apply FBool.
+
 Lemma tvars_free : forall t X x tenv Ts S C,
   TypeConstraint t tenv Ts S X C ->
   TVars.In x X ->
@@ -316,27 +338,22 @@ apply TypeConstraint_ind; intros.
 
  inversion H0.
 
+ apply TVars.WFact.add_iff in H9.
+ decompose [or] H9.
+  rewrite <- H10 in |- *.
+  unfold Fresh in H7.
+  decompose [and] H7.
+  split; [ trivial | apply FApply; split; trivial ].
 
-(*
- inversion H1.
- split; intro.
-  apply H2.
-  apply fv_types_intro.
-  trivial.
+  apply TVars.WFact.union_iff in H10.
+  decompose [or] H10.
+   apply H1 in H11.
+   decompose [and] H11.
+   split.
+    trivial.
 
-  inversion H4.
-  decompose [or] H7.
-   apply fv_types_cons with (Ts := Ts0) in H10.
-   apply H2 in H10.
-   trivial.
+    apply FApply.
+    split.
+     trivial.
 
-   apply H3.
-   trivial.
-
- split; intros; intro; inversion H1.
-
- split; intros.
-  intro.
-  apply TVars.WFact.add_iff in H10.
-  inversion H10.
-*)
+     unfold DisjointT in H6.
