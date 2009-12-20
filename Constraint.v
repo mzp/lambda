@@ -42,6 +42,9 @@ Definition FreshE x tenv := forall y T,
 Definition DisjointT xs T := forall x,
   TVars.In x xs -> FreshT x T.
 
+Definition DisjointTerm xs t := forall x,
+  TVars.In x xs -> FreshTerm x t.
+
 Definition FreshTs x Ts := forall T,
   List.In T Ts -> FreshT x T.
 
@@ -65,17 +68,20 @@ Inductive TypeConstraint : term -> tenv -> list type -> type -> tvars -> tconst 
     TypeConstraint t1 tenv Ts T1 X1 C1 ->
     TypeConstraint t2 tenv Ts T2 X2 C2 ->
     TVars.Disjoint X1 X2 -> DisjointT X2 T1 -> DisjointT X1 T2 ->
+    DisjointTerm X1 t2 -> DisjointTerm X2 t1 ->
     Fresh x X1 X2 T1 T2 C1 C2 tenv Ts t1 t2 ->
     C = TConst.add (T1,FunT T2 (VarT x)) (TConst.union C1 C2) ->
     TypeConstraint (Apply t1 t2) tenv Ts (VarT x) (TVars.add x (TVars.union X1 X2)) C
-| CTIf : forall t1 t2 t3 T1 T2 T3 tenv Ts X1 X2 X3 X C1 C2 C3 C,
+| CTIf : forall t1 t2 t3 T1 T2 T3 tenv Ts X1 X2 X3 C1 C2 C3 C,
     TypeConstraint t1 tenv Ts T1 X1 C1 ->
     TypeConstraint t2 tenv Ts T2 X2 C2 ->
     TypeConstraint t3 tenv Ts T3 X3 C3 ->
-    X = TVars.union X1 (TVars.union X2 X3) ->
     TVars.Disjoint X1 X2 -> TVars.Disjoint X2 X3 -> TVars.Disjoint X3 X1 ->
+    DisjointTerm X1 t2 -> DisjointTerm X1 t3 ->
+    DisjointTerm X2 t1 -> DisjointTerm X2 t3 ->
+    DisjointTerm X3 t1 -> DisjointTerm X3 t2 ->
     C = TConst.add (T1,BoolT) (TConst.add (T2,T3) (TConst.union C1 (TConst.union C2 C3))) ->
-    TypeConstraint (If t1 t2 t3) tenv Ts T2 X C.
+    TypeConstraint (If t1 t2 t3) tenv Ts T2 (TVars.union X1 (TVars.union X2 X3)) C.
 
 Definition Solution tsubst T tenv Ts t S C := exists X,
   TypeConstraint t tenv Ts S X C /\ Unified C tsubst /\ T = type_subst S tsubst.
@@ -291,23 +297,6 @@ destruct s; intros; simpl.
  destruct (TVars.WProp.Dec.F.eq_dec x e); intro; inversion H.
 Qed.
 
-Lemma fresh_type_term: forall x t tenv Ts T X C,
-  TypeConstraint t tenv Ts T X C ->  FreshT x T -> FreshTerm x t.
-Proof.
-intros until C.
-intro.
-pattern t, tenv, Ts, T, X, C in |- *.
-apply TypeConstraint_ind; intros.
- apply FVar.
-
- apply FLambda.
- inversion H2.
- decompose [and] H5.
- apply H1 in H8.
- split; trivial.
-
- apply FBool.
-
 Lemma tvars_free : forall t X x tenv Ts S C,
   TypeConstraint t tenv Ts S X C ->
   TVars.In x X ->
@@ -338,22 +327,82 @@ apply TypeConstraint_ind; intros.
 
  inversion H0.
 
- apply TVars.WFact.add_iff in H9.
- decompose [or] H9.
-  rewrite <- H10 in |- *.
-  unfold Fresh in H7.
-  decompose [and] H7.
+ apply TVars.WFact.add_iff in H11.
+ decompose [or] H11.
+  rewrite <- H12 in |- *.
+  unfold Fresh in H9.
+  decompose [and] H9.
   split; [ trivial | apply FApply; split; trivial ].
 
-  apply TVars.WFact.union_iff in H10.
-  decompose [or] H10.
-   apply H1 in H11.
-   decompose [and] H11.
+  apply TVars.WFact.union_iff in H12.
+  decompose [or] H12.
    split.
-    trivial.
+    apply H1 in H13.
+    tauto.
+
+    apply FApply; split.
+     apply H1 in H13; tauto.
+
+     apply H7.
+     trivial.
+
+   split.
+    apply H3 in H13.
+    tauto.
 
     apply FApply.
     split.
+     apply H8.
      trivial.
 
-     unfold DisjointT in H6.
+     apply H3 in H13.
+     tauto.
+
+ apply TVars.WFact.union_iff in H16.
+ decompose [or] H16.
+  split.
+   apply H1 in H17.
+   tauto.
+
+   apply FIf.
+   split.
+    apply H1 in H17.
+    tauto.
+
+    split.
+     apply H9.
+     trivial.
+
+     apply H10; trivial.
+
+  apply TVars.WFact.union_iff in H17.
+  decompose [or] H17.
+   split.
+    apply H3 in H18.
+    tauto.
+
+    apply FIf.
+    split.
+     apply H11; trivial.
+
+     split.
+      apply H3 in H18; tauto.
+
+      apply H12.
+      trivial.
+
+   split.
+    apply H5 in H18.
+    tauto.
+
+    apply FIf.
+    split.
+     apply H13; trivial.
+
+     split.
+      apply H14; trivial.
+
+      apply H5 in H18; tauto.
+
+ trivial.
+Qed.
