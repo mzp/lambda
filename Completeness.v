@@ -7,9 +7,65 @@ Require Import Term.
 Require Import Constraint.
 Require Import TypeSubst.
 
-
 Definition sub tsubst tvars :=
   TVars.FSet.fold (fun x (table : table type) => Table.remove x table) tvars tsubst.
+
+Lemma sub_not_in : forall X tsubst x,
+  Table.In x tsubst -> TVars.In x X -> ~ Table.In x (sub tsubst X).
+Proof.
+intros until x.
+intro.
+unfold sub in |- *.
+pattern X,
+ (TVars.FSet.fold
+    (fun (x0 : TVars.FSet.elt) (table : table type) =>
+     Table.remove (elt:=type) x0 table) X tsubst) in |- *.
+apply TVars.WProp.fold_rec_bis; intros.
+ apply H1.
+ unfold TVars.FSet.Equal in H0.
+ apply (H0 x).
+ trivial.
+
+ inversion H0.
+
+ intro.
+ apply (TableWF.remove_in_iff a x0 x) in H4.
+ decompose [and] H4.
+ apply TVars.WFact.add_iff in H3.
+ decompose [or] H3.
+  contradiction .
+
+  apply H2 in H7.
+  contradiction .
+Qed.
+
+Lemma sub_in : forall tsubst x X,
+  Table.In x tsubst -> ~ TVars.In x X -> Table.In x (sub tsubst X).
+Proof.
+intros.
+unfold sub in |- *.
+pattern X,
+ (TVars.FSet.fold
+    (fun (x0 : TVars.FSet.elt) (table : table type) =>
+     Table.remove (elt:=type) x0 table) X tsubst) in |- *.
+apply TVars.WProp.fold_rec; intros.
+ trivial.
+
+ apply (TableWF.remove_in_iff a x0 x).
+ split.
+  intro.
+  apply H0.
+  rewrite <- H5 in |- *.
+  trivial.
+
+  trivial.
+Qed.
+
+Lemma subst_eq : forall T X tsubst1 tsubst2,
+  (forall x,TVars.In x X -> FreshT x T) ->
+  tsubst1 = sub tsubst2 X ->
+  type_subst T tsubst1 = type_subst T tsubst2.
+
 
 Definition Disjoint (tsubst : tsubst) tvars := forall x,
   Table.In x tsubst -> ~ TVars.In x tvars /\
@@ -64,7 +120,7 @@ split.
 Qed.
 
 (* main theorem *)
-Theorem completeness: forall t tenv S T X C tsubst1 tsubst2,
+(*Theorem completeness: forall t tenv S T X C tsubst1 tsubst2,
   TypeConstraint t tenv S X C ->
   TypeSubst.Solution tsubst1 T tenv t ->
   Disjoint tsubst1 X ->
@@ -107,3 +163,4 @@ apply TypeConstraint_ind; unfold Constraint.Solution; simpl; intros.
     trivial.
 
     rewrite H12 in H7.
+*)
