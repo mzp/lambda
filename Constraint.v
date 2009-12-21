@@ -306,8 +306,10 @@ intros until C.
 intro.
 pattern t, tenv, Ts, S, X, C in |- *.
 apply TypeConstraint_ind; intros.
+ (* Var *)
  inversion H1.
 
+ (* Lambda *)
  apply H1 in H2.
  decompose [and] H2.
  split.
@@ -325,8 +327,10 @@ apply TypeConstraint_ind; intros.
 
    trivial.
 
+ (* Bool *)
  inversion H0.
 
+ (* Apply *)
  apply TVars.WFact.add_iff in H11.
  decompose [or] H11.
   rewrite <- H12 in |- *.
@@ -340,24 +344,15 @@ apply TypeConstraint_ind; intros.
     apply H1 in H13.
     tauto.
 
-    apply FApply; split.
-     apply H1 in H13; tauto.
-
-     apply H7.
-     trivial.
+    apply FApply; split; [ apply H1 in H13 | apply H7]; tauto.
 
    split.
     apply H3 in H13.
     tauto.
 
-    apply FApply.
-    split.
-     apply H8.
-     trivial.
+    apply FApply; split; [ apply H8 | apply H3 in H13]; tauto.
 
-     apply H3 in H13.
-     tauto.
-
+ (* If *)
  apply TVars.WFact.union_iff in H16.
  decompose [or] H16.
   split.
@@ -369,11 +364,7 @@ apply TypeConstraint_ind; intros.
     apply H1 in H17.
     tauto.
 
-    split.
-     apply H9.
-     trivial.
-
-     apply H10; trivial.
+    split; [apply H9 | apply H10]; trivial.
 
   apply TVars.WFact.union_iff in H17.
   decompose [or] H17.
@@ -385,11 +376,7 @@ apply TypeConstraint_ind; intros.
     split.
      apply H11; trivial.
 
-     split.
-      apply H3 in H18; tauto.
-
-      apply H12.
-      trivial.
+     split; [apply H3 in H18 | apply H12]; tauto.
 
    split.
     apply H5 in H18.
@@ -399,10 +386,7 @@ apply TypeConstraint_ind; intros.
     split.
      apply H13; trivial.
 
-     split.
-      apply H14; trivial.
-
-      apply H5 in H18; tauto.
+     split; [apply H14 | apply H5 in H18]; tauto.
 
  trivial.
 Qed.
