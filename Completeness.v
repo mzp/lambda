@@ -128,6 +128,17 @@ split.
  reflexivity.
 Qed.
 
+Lemma apply_inv: forall T tenv tsubst t1 t2,
+  Solution tsubst T tenv (Apply t1 t2) ->
+  exists T1,
+  Solution tsubst (FunT T1 T) tenv t1 /\ Solution tsubst T1 tenv t2.
+Proof.
+intros.
+inversion H.
+exists a.
+split; trivial.
+Qed.
+
 (* main theorem *)
 Theorem completeness: forall t tenv Ts S T X C tsubst1 tsubst2,
   TypeConstraint t tenv Ts S X C ->
