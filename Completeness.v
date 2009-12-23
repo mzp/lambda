@@ -215,16 +215,14 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
    inversion H0.
    reflexivity.
 
- apply apply_inv in H11.
- decompose [ex] H11.
- decompose [and] H14.
- apply H1 in H15.
-  apply H3 in H16.
-   decompose [ex] H15; decompose [ex] H16.
-   decompose [and] H17; decompose [and] H18.
-   exists (TVars.add x (TVars.union X1 X2)).
+ exists (TVars.add x (TVars.union X1 X2)).
+ split.
+  apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
 
-   split.
-    apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
-
-
+  apply apply_inv in H11.
+  decompose [ex] H11.
+  decompose [and] H14.
+  apply H1 in H15.
+   apply H3 in H16.
+    decompose [ex] H15; decompose [ex] H16.
+    decompose [and] H17; decompose [and] H18.
