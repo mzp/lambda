@@ -226,3 +226,8 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
    apply H3 in H16.
     decompose [ex] H15; decompose [ex] H16.
     decompose [and] H17; decompose [and] H18.
+    split.
+     rewrite H10 in |- *.
+     apply Unified_Add_intro.
+      apply Unified_Union_intro; trvial.
+
