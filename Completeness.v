@@ -222,10 +222,9 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
   apply H3 in H16.
    decompose [ex] H15; decompose [ex] H16.
    decompose [and] H17; decompose [and] H18.
-   exists (TVars.add x (TVars.union x1 x2)).
-   split.
-    apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2).
-     trivial.
+   exists (TVars.add x (TVars.union X1 X2)).
 
-     trivial.
+   split.
+    apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
+
 
