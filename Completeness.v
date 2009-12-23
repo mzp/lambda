@@ -129,47 +129,9 @@ split.
 Qed.
 
 (* main theorem *)
-(*Theorem completeness: forall t tenv S T X C tsubst1 tsubst2,
-  TypeConstraint t tenv S X C ->
+Theorem completeness: forall t tenv Ts S T X C tsubst1 tsubst2,
+  TypeConstraint t tenv Ts S X C ->
   TypeSubst.Solution tsubst1 T tenv t ->
   Disjoint tsubst1 X ->
   tsubst1 = sub tsubst2 X ->
-  Constraint.Solution tsubst2 T tenv t S C.
-Proof.
-intros until tsubst2.
-intro.
-generalize T.
-pattern t, tenv, S, X, C in |- *.
-apply TypeConstraint_ind; unfold Constraint.Solution; simpl; intros.
- exists TVars.empty.
- split.
-  apply CTVar.
-  trivial.
-
-  split.
-   apply Unified_empty.
-
-   apply var_inv with (S := T0) in H1.
-    rewrite <- sub_empty in H3.
-    rewrite <- H3 in |- *.
-    trivial.
-
-    trivial.
-
- exists X0.
- split.
-  apply CTLambda.
-  trivial.
-
-  apply lambda_inv in H2.
-  decompose [ex] H2.
-  inversion H5.
-  apply H1 in H6.
-   inversion H6.
-   inversion H8.
-   inversion H10.
-   split.
-    trivial.
-
-    rewrite H12 in H7.
-*)
+  Constraint.Solution tsubst2 T tenv Ts t S C.
