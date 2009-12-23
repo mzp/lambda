@@ -10,37 +10,9 @@ Require Import TypeSubst.
 Definition sub tsubst tvars :=
   TVars.FSet.fold (fun x (table : table type) => Table.remove x table) tvars tsubst.
 
-Lemma sub_not_in : forall X tsubst x,
-  Table.In x tsubst -> TVars.In x X -> ~ Table.In x (sub tsubst X).
-Proof.
-intros until x.
-intro.
-unfold sub in |- *.
-pattern X,
- (TVars.FSet.fold
-    (fun (x0 : TVars.FSet.elt) (table : table type) =>
-     Table.remove (elt:=type) x0 table) X tsubst) in |- *.
-apply TVars.WProp.fold_rec_bis; intros.
- apply H1.
- unfold TVars.FSet.Equal in H0.
- apply (H0 x).
- trivial.
-
- inversion H0.
-
- intro.
- apply (TableWF.remove_in_iff a x0 x) in H4.
- decompose [and] H4.
- apply TVars.WFact.add_iff in H3.
- decompose [or] H3.
-  contradiction .
-
-  apply H2 in H7.
-  contradiction .
-Qed.
-
-Lemma sub_in : forall tsubst x X,
-  Table.In x tsubst -> ~ TVars.In x X -> Table.In x (sub tsubst X).
+Lemma sub_find : forall tsubst x X,
+  ~ TVars.In x X ->
+  Table.find x (sub tsubst X) = Table.find x tsubst.
 Proof.
 intros.
 unfold sub in |- *.
@@ -49,23 +21,60 @@ pattern X,
     (fun (x0 : TVars.FSet.elt) (table : table type) =>
      Table.remove (elt:=type) x0 table) X tsubst) in |- *.
 apply TVars.WProp.fold_rec; intros.
- trivial.
+ reflexivity.
 
- apply (TableWF.remove_in_iff a x0 x).
- split.
-  intro.
-  apply H0.
-  rewrite <- H5 in |- *.
-  trivial.
+ rewrite TableWF.remove_o in |- *.
+ destruct (TVars.WProp.Dec.F.eq_dec x0 x).
+  unfold Dec.StrDec.eq in e.
+  rewrite e in H0.
+  contradiction .
 
-  trivial.
+  rewrite H3 in |- *.
+  reflexivity.
+Qed.
+
+Lemma fun_fresh_inv : forall (X : TVars.t) T1 T2,
+  (forall x, TVars.In x X -> FreshT x (FunT T1 T2)) ->
+  (forall x, TVars.In x X -> FreshT x T1) /\
+  (forall x, TVars.In x X -> FreshT x T2).
+Proof.
+intros.
+split; intros;
+ apply H in H0;
+ inversion H0;
+ tauto.
 Qed.
 
 Lemma subst_eq : forall T X tsubst1 tsubst2,
   (forall x,TVars.In x X -> FreshT x T) ->
   tsubst1 = sub tsubst2 X ->
   type_subst T tsubst1 = type_subst T tsubst2.
+Proof.
+induction T; intros; simpl in |- *.
+ destruct (TVars.WProp.In_dec s X).
+  apply H in i.
+  inversion i.
+  tauto.
 
+  apply (sub_find tsubst2 _ _) in n.
+  rewrite <- n in |- *.
+  rewrite H0 in |- *.
+  reflexivity.
+
+ reflexivity.
+
+ apply fun_fresh_inv in H.
+ decompose [and] H.
+ apply (IHT1 _ tsubst1 tsubst2) in H1.
+  apply (IHT2 _ tsubst1 tsubst2) in H2.
+   rewrite H1 in |- *.
+   rewrite H2 in |- *.
+   reflexivity.
+
+   trivial.
+
+  trivial.
+Qed.
 
 Definition Disjoint (tsubst : tsubst) tvars := forall x,
   Table.In x tsubst -> ~ TVars.In x tvars /\
