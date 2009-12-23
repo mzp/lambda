@@ -135,3 +135,73 @@ Theorem completeness: forall t tenv Ts S T X C tsubst1 tsubst2,
   Disjoint tsubst1 X ->
   tsubst1 = sub tsubst2 X ->
   Constraint.Solution tsubst2 T tenv Ts t S C.
+Proof.
+intros until tsubst2.
+intro.
+generalize T.
+pattern t, tenv, Ts, S, X, C in |- *.
+apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
+ intros.
+ exists TVars.empty.
+ split.
+  apply CTVar.
+  trivial.
+
+  split.
+   apply Unified_empty.
+
+   apply var_inv with (S := T0) in H1.
+    rewrite <- sub_empty in H3.
+    rewrite <- H3 in |- *.
+    trivial.
+
+    trivial.
+
+ exists X0.
+ split.
+  apply CTLambda.
+  trivial.
+
+  apply lambda_inv in H2.
+  decompose [ex] H2.
+  inversion H5.
+  apply H1 in H6.
+   inversion H6.
+   inversion H8.
+   inversion H10.
+   split.
+    trivial.
+
+    rewrite H12 in H7.
+    rewrite H7 in |- *.
+    assert (type_subst T1 tsubst1 = type_subst T1 tsubst2).
+     apply subst_eq with (X := X0).
+      intros.
+      apply tvars_free with (x := x2) in H0.
+       decompose [and] H0.
+       unfold FreshTs in H14.
+       apply H14.
+       apply in_eq.
+
+       trivial.
+
+      trivial.
+
+     rewrite H13 in |- *.
+     reflexivity.
+
+   trivial.
+
+   trivial.
+
+ exists TVars.empty.
+ split.
+  apply CTBool.
+
+  split.
+   apply Unified_empty.
+
+   inversion H0.
+   reflexivity.
+
+
