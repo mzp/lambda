@@ -229,5 +229,8 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
     split.
      rewrite H10 in |- *.
      apply Unified_Add_intro.
-      apply Unified_Union_intro; trvial.
+      apply Unified_Union_intro; trivial.
 
+      unfold Unified in |- *.
+      intros.
+      apply TConst.WFact.singleton_iff in H23.
