@@ -140,85 +140,94 @@ split; trivial.
 Qed.
 
 (* main theorem *)
-Theorem completeness: forall t tenv Ts S T X C tsubst1 tsubst2,
+Theorem completeness: forall t tenv Ts S T X C tsubst1,
   TypeConstraint t tenv Ts S X C ->
   TypeSubst.Solution tsubst1 T tenv t ->
   Disjoint tsubst1 X ->
-  tsubst1 = sub tsubst2 X ->
-  Constraint.Solution tsubst2 T tenv Ts t S C.
+  exists tsubst2,
+    tsubst1 = sub tsubst2 X /\
+    Constraint.Solution tsubst2 T tenv Ts t S C.
 Proof.
-intros until tsubst2.
+intros until tsubst1.
 intro.
 generalize T.
 pattern t, tenv, Ts, S, X, C in |- *.
 apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
  intros.
- exists TVars.empty.
+ exists tsubst1.
  split.
-  apply CTVar.
-  trivial.
+  apply sub_empty.
 
+  exists TVars.empty.
   split.
-   apply Unified_empty.
+   apply CTVar.
+   trivial.
 
-   apply var_inv with (S := T0) in H1.
-    rewrite <- sub_empty in H3.
-    rewrite <- H3 in |- *.
-    trivial.
-
-    trivial.
-
- exists X0.
- split.
-  apply CTLambda.
-  trivial.
-
-  apply lambda_inv in H2.
-  decompose [ex] H2.
-  inversion H5.
-  apply H1 in H6.
-   inversion H6.
-   inversion H8.
-   inversion H10.
    split.
+    apply Unified_empty.
+
+    apply var_inv with (S := T0) in H1.
+     trivial.
+
+     trivial.
+
+ apply lambda_inv in H2.
+ decompose [ex] H2.
+ decompose [and] H4.
+ apply H1 in H5.
+  decompose [ex] H5.
+  decompose [and] H7.
+  exists x1.
+  split.
+   trivial.
+
+   exists X0.
+   split.
+    apply CTLambda.
     trivial.
 
-    rewrite H12 in H7.
-    rewrite H7 in |- *.
-    assert (type_subst T1 tsubst1 = type_subst T1 tsubst2).
-     apply subst_eq with (X := X0).
-      intros.
-      apply tvars_free with (x := x2) in H0.
-       decompose [and] H0.
-       unfold FreshTs in H14.
-       apply H14.
-       apply in_eq.
+    split.
+     decompose [ex] H9.
+     tauto.
+
+     assert (type_subst T1 tsubst1 = type_subst T1 x1).
+      apply subst_eq with (X := X0).
+       intros.
+       apply tvars_free with (x := x2) in H0.
+        decompose [and] H0.
+        unfold FreshTs in H11.
+        apply H11.
+        apply in_eq.
+
+        trivial.
 
        trivial.
 
+      rewrite H6 in |- *.
+      rewrite H10 in |- *.
+      decompose [ex] H9.
+      decompose [and] H11.
+      rewrite H15 in |- *.
       trivial.
 
-     rewrite H13 in |- *.
-     reflexivity.
+  trivial.
 
-   trivial.
-
-   trivial.
-
- exists TVars.empty.
+ exists tsubst1.
  split.
-  apply CTBool.
+  apply sub_empty.
 
+  exists TVars.empty.
   split.
-   apply Unified_empty.
+   apply CTBool.
 
-   inversion H0.
-   reflexivity.
+   split.
+    apply Unified_empty.
 
- exists (TVars.add x (TVars.union X1 X2)).
- split.
-  apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
+    inversion H0.
+    reflexivity.
 
+
+(*
   apply apply_inv in H11.
   decompose [ex] H11.
   decompose [and] H14.
@@ -234,3 +243,4 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
       unfold Unified in |- *.
       intros.
       apply TConst.WFact.singleton_iff in H23.
+*)
