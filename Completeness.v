@@ -1,5 +1,7 @@
 Require Import List.
 Require Import String.
+Require Import Sumbool.
+Require Import Classical.
 
 Require Import Tables.
 Require Import Sets.
@@ -139,6 +141,43 @@ exists a.
 split; trivial.
 Qed.
 
+Definition app {A B : Type} (f : A -> B) (x : A) := f x.
+Infix "$" := app (at level 51, right associativity).
+
+Definition union {A : Type} {P : string -> Prop} (dec : forall x,{P x} + {~ P x}) (tsubst1 tsubst2 : table A) :=
+  Table.fold
+    (fun Y U tsubst =>
+       if dec Y then Table.add Y U tsubst else tsubst)
+    tsubst1 tsubst2.
+
+Definition Not_dec {P : Prop} : {P} + {~ P} -> {~ P} + {~ ~ P}.
+Proof.
+intros.
+apply sumbool_not.
+inversion H.
+ left.
+ intro.
+ contradiction .
+
+ right.
+ trivial.
+Qed.
+
+Definition make_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T :=
+  union (fun x => Not_dec $ TVars.WProp.In_dec x X) tsubst $
+  union (fun x => TVars.WProp.In_dec x X1) tsubst1 $
+  union (fun x => TVars.WProp.In_dec x X2) tsubst2 $
+  Table.add x T (Table.empty type).
+
+Lemma tsubst_prop : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T,
+  TVars.Disjoint X1 X2 ->
+  X = TVars.add x (TVars.union X1 X2) ->
+  tsubst' = make_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T ->
+  (forall Y U, ~ TVars.In Y X -> Table.MapsTo Y U tsubst -> Table.MapsTo Y U tsubst') /\
+  (forall Y U, TVars.In Y X1 -> Table.MapsTo Y U tsubst -> Table.MapsTo Y U tsubst') /\
+  (forall Y U, TVars.In Y X2 -> Table.MapsTo Y U tsubst -> Table.MapsTo Y U tsubst') /\
+  Table.MapsTo x T tsubst'.
+
 (* main theorem *)
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
   TypeConstraint t tenv Ts S X C ->
@@ -225,6 +264,15 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
 
     inversion H0.
     reflexivity.
+
+ apply apply_inv in H11.
+ decompose [ex] H11.
+ decompose [and] H13.
+ apply H1 in H14.
+  apply H3 in H15.
+   decompose [ex] H14; decompose [ex] H15.
+   decompose [and] H16; decompose [and] H17.
+
 
 
 (*
