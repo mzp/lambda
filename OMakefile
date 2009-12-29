@@ -28,6 +28,7 @@ FILES[] =
 	Soundness
 	Subst
 	TypeSubst
+	TypeSubstFact
 	Constraint
 	Sets
 #	Completeness
