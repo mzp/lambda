@@ -1,4 +1,4 @@
-Require Import Sumbool.
+Require Import String.
 
 Require Import Constraint.
 Require Import Tables.
@@ -9,9 +9,9 @@ Infix "$" := app (at level 51, right associativity).
 Definition union {A : Type} (tsubst1 tsubst2 : table A) :=
   Table.fold (fun key e m => Table.add key e m) tsubst1 tsubst2.
 
-Definition sub {A : Type} (tsubst : table A) X :=
+Definition remove {A : Type} {P : string -> Prop} (dec : forall x, {P x} + {~ P x}) (tsubst : table A) :=
   TableProp.filter
-    (fun key _ => if TVars.WProp.In_dec key X then true else false)
+    (fun key _ => if dec key then true else false)
     tsubst.
 
 Lemma union_iff: forall A x (T : A) (X Y : table A),
@@ -114,10 +114,10 @@ apply TableProp.fold_rec_bis; intros.
      trivial.
 Qed.
 
-Lemma sub_iff : forall A x X (T : A) (m : table A),
-  Table.MapsTo x T (sub m X) <-> Table.MapsTo x T m /\ (TVars.In x X).
+Lemma remove_iff : forall A x P (dec : forall x, {P x} + {~ P x}) (T : A) (m : table A),
+  Table.MapsTo x T (remove dec m) <-> Table.MapsTo x T m /\ (P x).
 Proof.
-unfold sub in |- *.
+unfold remove in |- *.
 intros; split; intros.
  apply TableProp.filter_iff in H.
   intro.
@@ -130,7 +130,7 @@ intros; split; intros.
   split.
    trivial.
 
-   destruct (TVars.WProp.In_dec x X).
+   destruct (dec x).
     trivial.
 
     discriminate.
@@ -140,7 +140,7 @@ intros; split; intros.
   split.
    trivial.
 
-   destruct (TVars.WProp.In_dec x X).
+   destruct (dec x).
     reflexivity.
 
     contradiction .
