@@ -9,7 +9,7 @@ Infix "$" := app (at level 51, right associativity).
 Definition union {A : Type} (tsubst1 tsubst2 : table A) :=
   Table.fold (fun key e m => Table.add key e m) tsubst1 tsubst2.
 
-Definition filter {A : Type} X (tsubst : table A) :=
+Definition sub {A : Type} (tsubst : table A) X :=
   TableProp.filter
     (fun key _ => if TVars.WProp.In_dec key X then true else false)
     tsubst.
@@ -114,10 +114,10 @@ apply TableProp.fold_rec_bis; intros.
      trivial.
 Qed.
 
-Lemma filter_iff : forall A x X (T : A) (m : table A),
-  Table.MapsTo x T (filter X m) <-> Table.MapsTo x T m /\ (TVars.In x X).
+Lemma sub_iff : forall A x X (T : A) (m : table A),
+  Table.MapsTo x T (sub m X) <-> Table.MapsTo x T m /\ (TVars.In x X).
 Proof.
-unfold filter in |- *.
+unfold sub in |- *.
 intros; split; intros.
  apply TableProp.filter_iff in H.
   intro.
