@@ -246,7 +246,7 @@ Definition new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T :=
   union (fun x => TVars.WProp.In_dec x X2) tsubst2 $
   Table.add x T (Table.empty type).
 
-Lemma new_tsust : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T Y U,
+Lemma new_tsubst_tsubst : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T Y U,
   tsubst' = new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T ->
   ~ TVars.In Y X ->
   Table.MapsTo Y U tsubst ->
