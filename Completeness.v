@@ -163,7 +163,7 @@ inversion H.
  trivial.
 Qed.
 
-Lemma union_intro : forall (A : Type) (P : string -> Prop) x (dec : forall x,{ P x } + {~ P x }) (T : A) tsubst1 tsubst2,
+Lemma union_left : forall (A : Type) (P : string -> Prop) x (dec : forall x,{ P x } + {~ P x }) (T : A) tsubst1 tsubst2,
   ~ P x ->
   Table.MapsTo x T tsubst2 ->
   Table.MapsTo x T (union dec tsubst1 tsubst2).
@@ -196,6 +196,50 @@ apply TableProp.fold_rec_bis; intros.
   trivial.
 Qed.
 
+Lemma union_right : forall (A : Type) (P : string -> Prop) x (dec : forall x,{ P x } + {~ P x }) (T : A) tsubst1 tsubst2,
+  P x ->
+  Table.MapsTo x T tsubst1 ->
+  Table.MapsTo x T (union dec tsubst1 tsubst2).
+Proof.
+intros.
+generalize H0.
+unfold union in |- *.
+pattern tsubst1,
+ (Table.fold
+    (fun (Y : Table.key) (U : A) (tsubst : Table.t A) =>
+     if dec Y then Table.add Y U tsubst else tsubst) tsubst1 tsubst2)
+ in |- *.
+apply TableProp.fold_rec_bis; intros.
+ apply H2.
+ apply Extensionality_Table in H1.
+ rewrite H1 in |- *.
+ trivial.
+
+ inversion H1.
+
+ destruct (dec k).
+  apply <- TableWF.add_mapsto_iff (* Generic printer *).
+  apply TableWF.add_mapsto_iff in H4.
+  decompose [or] H4.
+   left; trivial.
+
+   right.
+   split.
+    tauto.
+
+    apply H3.
+    tauto.
+
+  apply TableWF.add_mapsto_iff in H4.
+  decompose [or] H4.
+   decompose [and] H5.
+   rewrite H6 in n.
+   contradiction .
+
+   apply H3.
+   tauto.
+Qed.
+
 Definition new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T :=
   union (fun x => Not_dec $ TVars.WProp.In_dec x X) tsubst $
   union (fun x => TVars.WProp.In_dec x X1) tsubst1 $
@@ -212,58 +256,7 @@ intros.
 rewrite H in |- *.
 unfold new_tsubst in |- *.
 unfold app in |- *.
-unfold union at 1 in |- *.
-generalize H1.
-pattern tsubst,
- (Table.fold
-    (fun (Y0 : Table.key) (U0 : type) (tsubst0 : Table.t type) =>
-     if Not_dec (TVars.WProp.In_dec Y0 X)
-     then Table.add Y0 U0 tsubst0
-     else tsubst0) tsubst
-    (union (fun x0 : string => TVars.WProp.In_dec x0 X1) tsubst1
-       (union (fun x0 : string => TVars.WProp.In_dec x0 X2) tsubst2
-          (Table.add x T (Table.empty type))))) in |- *.
-apply TableProp.fold_rec_bis; intros.
- apply H3.
- apply Extensionality_Table in H2.
- rewrite H2 in |- *.
- trivial.
-
- inversion H2.
-
- destruct (Not_dec (TVars.WProp.In_dec k X)).
-  apply <- TableWF.add_mapsto_iff (* Generic printer *).
-  destruct (string_dec k Y).
-   left.
-   split.
-    trivial.
-
-    apply TableWF.MapsTo_fun with (m := tsubst) (x := k).
-     trivial.
-
-     rewrite e0 in |- *.
-     trivial.
-
-   right.
-   split.
-    trivial.
-
-    apply H4.
-    apply TableWF.add_mapsto_iff in H5.
-    decompose [or] H5.
-     decompose [and] H6.
-     contradiction .
-
-     tauto.
-
-  apply H4.
-  apply TableWF.add_mapsto_iff in H5.
-  decompose [or] H5.
-   decompose [and] H6.
-   rewrite H7 in n.
-   contradiction .
-
-   tauto.
+apply union_right; trivial.
 Qed.
 
 Lemma new_tsust1 : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T Y U,
@@ -275,7 +268,7 @@ intros.
 rewrite H0 in |- *.
 unfold new_tsubst in |- *.
 unfold app in |- *.
-apply union_intro.
+apply union_left.
  intro.
  apply H3.
  rewrite H in |- *.
@@ -284,52 +277,64 @@ apply union_intro.
  apply <- TVars.WFact.union_iff (* Generic printer *).
  tauto.
 
- unfold union at 1 in |- *.
- generalize H2.
- pattern tsubst1,
-  (Table.fold
-     (fun (Y0 : Table.key) (U0 : type) (tsubst0 : Table.t type) =>
-      if TVars.WProp.In_dec Y0 X1 then Table.add Y0 U0 tsubst0 else tsubst0)
-     tsubst1
-     (union (fun x0 : string => TVars.WProp.In_dec x0 X2) tsubst2
-        (Table.add x T (Table.empty type)))) in |- *.
- apply TableProp.fold_rec_bis; intros.
-  apply H4.
-  apply Extensionality_Table in H3.
-  rewrite H3 in |- *.
-  trivial.
-
-  inversion H3.
-
-  destruct (TVars.WProp.In_dec k X1).
-   apply TableWF.add_mapsto_iff in H6.
-   decompose [or] H6.
-    apply <- TableWF.add_mapsto_iff (* Generic printer *).
-    left.
-    tauto.
-
-    apply <- TableWF.add_mapsto_iff (* Generic printer *).
-    right.
-    split.
-     tauto.
-
-     apply H5.
-     tauto.
-
-   apply H5.
-   apply TableWF.add_mapsto_iff in H6.
-   decompose [or] H6.
-    decompose [and] H7.
-    rewrite H8 in n.
-    contradiction .
-
-    tauto.
+ apply union_right; trivial.
 Qed.
 
-(* /\
-  (forall Y U,
-  (forall Y U, TVars.In Y X2 -> Table.MapsTo Y U tsubst -> Table.MapsTo Y U tsubst') /\
-  Table.MapsTo x T tsubst'.*)
+Lemma new_tsust2 : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T Y U,
+  X = TVars.add x (TVars.union X1 X2) ->
+  TVars.Disjoint X1 X2 ->
+  tsubst' = new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T ->
+  TVars.In Y X2 -> Table.MapsTo Y U tsubst2 -> Table.MapsTo Y U tsubst'.
+Proof.
+intros.
+rewrite H1 in |- *.
+unfold new_tsubst in |- *.
+unfold app in |- *.
+apply union_left.
+ intro.
+ apply H4.
+ rewrite H in |- *.
+ apply <- TVars.WFact.add_iff (* Generic printer *).
+ right.
+ apply <- TVars.WFact.union_iff (* Generic printer *).
+ tauto.
+
+ apply union_left.
+  apply TVars.disjoint_left with (X := X2).
+   apply TVars.disjoint_sym.
+   trivial.
+
+   trivial.
+
+  apply union_right; trivial.
+Qed.
+
+Lemma new_tsubst_x : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T,
+  ~ TVars.In x X1 -> ~ TVars.In x X2 ->
+  X = TVars.add x (TVars.union X1 X2) ->
+  tsubst' = new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T ->
+  Table.MapsTo x T tsubst'.
+Proof.
+intros.
+rewrite H2 in |- *; unfold new_tsubst in |- *; unfold app in |- *.
+apply union_left.
+ intro.
+ apply H3.
+ rewrite H1 in |- *.
+ apply <- TVars.WFact.add_iff (* Generic printer *).
+ left; reflexivity.
+
+ apply union_left.
+  trivial.
+
+  apply union_left.
+   trivial.
+
+   apply <- TableWF.add_mapsto_iff (* Generic printer *).
+   left.
+   split; reflexivity.
+Qed.
+
 
 (* main theorem *)
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
@@ -439,7 +444,7 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
     split.
      rewrite H10 in |- *.
      apply Unified_Add_intro.
-      apply Unified_Union_intro; trivial.
+      apply Unified_union_left; trivial.
 
       unfold Unified in |- *.
       intros.
