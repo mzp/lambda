@@ -70,6 +70,7 @@ Module Make(Dec : DecidableType).
   split; trivial.
   Qed.
 
+
   Lemma union_sym : forall X Y,
     union X Y = union Y X.
   Proof.
@@ -92,5 +93,16 @@ Module Make(Dec : DecidableType).
     right; trivial.
 
     left; trivial.
+  Qed.
+
+  Lemma disjoint_left : forall x X Y,
+    Disjoint X Y -> In x X -> ~ In x Y.
+  Proof.
+  unfold Disjoint in |- *.
+  intros.
+  specialize (H x).
+  intro; apply H.
+  apply <- WFact.inter_iff (* Generic printer *).
+  tauto.
   Qed.
 End Make.
