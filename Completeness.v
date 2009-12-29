@@ -335,7 +335,6 @@ apply union_left.
    split; reflexivity.
 Qed.
 
-
 (* main theorem *)
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
   TypeConstraint t tenv Ts S X C ->
@@ -430,6 +429,10 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
   apply H3 in H15.
    decompose [ex] H14; decompose [ex] H15.
    decompose [and] H16; decompose [and] H17.
+   exists
+    (new_tsubst (TVars.add x (TVars.union X1 X2)) tsubst1 X1 x1 X2 x2 x x0).
+   split.
+
 
 
 
