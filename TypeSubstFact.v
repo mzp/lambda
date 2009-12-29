@@ -1,5 +1,7 @@
 Require Import String.
+Require Import Sumbool.
 
+Require Import Term.
 Require Import Constraint.
 Require Import Tables.
 
@@ -151,3 +153,31 @@ intros; split; intros.
   rewrite H0 in |- *.
   reflexivity.
 Qed.
+
+Definition not_sumbool {P : Prop} : {P} + {~ P} -> {~ P} + {~ ~ P}.
+Proof.
+intros.
+apply sumbool_not.
+inversion H.
+ left.
+ intro.
+ contradiction .
+
+ right.
+ trivial.
+Qed.
+
+Definition ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T :=
+  union (remove (fun x => not_sumbool $ TVars.WProp.In_dec x X) tsubst) $
+  union (remove (fun x => TVars.WProp.In_dec x X1) tsubst1) $
+  union (remove (fun x => TVars.WProp.In_dec x X2) tsubst2) $
+  Table.add x T (Table.empty type).
+
+Definition sub {A : Type} (tsubst : table A) X :=
+  remove (fun x => TVars.WProp.In_dec x X) tsubst.
+
+Lemma ApplyTSubst_tsubst : forall tsubst tsubst' tsubst1 tsubst2 X X1 X2 x T,
+  tsubst' = ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T ->
+  tsubst = sub tsubst' X.
+Proof.
+
