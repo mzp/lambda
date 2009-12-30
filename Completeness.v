@@ -141,14 +141,6 @@ exists a.
 split; trivial.
 Qed.
 
-Definition app {A B : Type} (f : A -> B) (x : A) := f x.
-Infix "$" := app (at level 51, right associativity).
-
-Definition union {A : Type} {P : string -> Prop} (dec : forall x,{P x} + {~ P x}) (tsubst1 tsubst2 : table A) :=
-  Table.fold
-    (fun Y U tsubst =>
-       if dec Y then Table.add Y U tsubst else tsubst)
-    tsubst1 tsubst2.
 
 Definition Not_dec {P : Prop} : {P} + {~ P} -> {~ P} + {~ ~ P}.
 Proof.
@@ -162,6 +154,32 @@ inversion H.
  right.
  trivial.
 Qed.
+
+
+(*Lemma fold_empty : forall A B (f: string->A->B->B) (xs : B),
+ Table.fold f (Table.empty A) xs = xs.
+intros.
+pattern (Table.empty A), (Table.fold f (Table.empty A) xs) in |- *.
+apply TableProp.fold_rec; intros.
+ reflexivity.
+
+ inversion H.
+Qed.
+
+Lemma union_split : forall (A : Type) (P : string -> Prop) x (dec : forall x,{ P x } + {~ P x }) (T : A) tsubst1 tsubst2,
+  Table.MapsTo x T (union dec tsubst1 tsubst2) ->
+  (P x /\ Table.MapsTo x T tsubst1) \/ Table.MapsTo x T tsubst2.
+Proof.
+intros until tsubst2.
+pattern tsubst1 in |- *.
+apply TableProp.map_induction_bis; intros.
+ apply Extensionality_Table in H.
+ rewrite H in H0.
+ apply H0.
+ trivial.
+
+ unfold union in H.
+ rewrite fold_empty in H.
 
 Lemma union_left : forall (A : Type) (P : string -> Prop) x (dec : forall x,{ P x } + {~ P x }) (T : A) tsubst1 tsubst2,
   ~ P x ->
@@ -335,6 +353,10 @@ apply union_left.
    split; reflexivity.
 Qed.
 
+(*Lemma subst_not_in : forall tsubst1 tsubst2 X,
+ (forall Y U, ~ TVars.In Y X -> Table.MapsTo Y U tsubst1 -> Table.MapsTo Y U tsubst2) ->
+ tsubst1 = sub tsubst2 X.*)
+
 (* main theorem *)
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
   TypeConstraint t tenv Ts S X C ->
@@ -452,4 +474,5 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
       unfold Unified in |- *.
       intros.
       apply TConst.WFact.singleton_iff in H23.
+*)
 *)

@@ -74,4 +74,3 @@ apply Typed_ind; simpl in |- *; intros.
 
  trivial.
 Qed.
-

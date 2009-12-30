@@ -11,7 +11,7 @@ Infix "$" := app (at level 51, right associativity).
 Definition union {A : Type} (tsubst1 tsubst2 : table A) :=
   Table.fold (fun key e m => Table.add key e m) tsubst1 tsubst2.
 
-Definition remove {A : Type} {P : string -> Prop} (dec : forall x, {P x} + {~ P x}) (tsubst : table A) :=
+Definition filter {A : Type} {P : string -> Prop} (dec : forall x, {P x} + {~ P x}) (tsubst : table A) :=
   TableProp.filter
     (fun key _ => if dec key then true else false)
     tsubst.
@@ -116,10 +116,10 @@ apply TableProp.fold_rec_bis; intros.
      trivial.
 Qed.
 
-Lemma remove_iff : forall A x P (dec : forall x, {P x} + {~ P x}) (T : A) (m : table A),
-  Table.MapsTo x T (remove dec m) <-> Table.MapsTo x T m /\ (P x).
+Lemma filter_iff : forall A x P (dec : forall x, {P x} + {~ P x}) (T : A) (m : table A),
+  Table.MapsTo x T (filter dec m) <-> Table.MapsTo x T m /\ (P x).
 Proof.
-unfold remove in |- *.
+unfold filter in |- *.
 intros; split; intros.
  apply TableProp.filter_iff in H.
   intro.
@@ -168,16 +168,61 @@ inversion H.
 Qed.
 
 Definition ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T :=
-  union (remove (fun x => not_sumbool $ TVars.WProp.In_dec x X) tsubst) $
-  union (remove (fun x => TVars.WProp.In_dec x X1) tsubst1) $
-  union (remove (fun x => TVars.WProp.In_dec x X2) tsubst2) $
+  union (filter (fun x => not_sumbool $ TVars.WProp.In_dec x X) tsubst) $
+  union (filter (fun x => TVars.WProp.In_dec x X1) tsubst1) $
+  union (filter (fun x => TVars.WProp.In_dec x X2) tsubst2) $
   Table.add x T (Table.empty type).
 
 Definition sub {A : Type} (tsubst : table A) X :=
-  remove (fun x => TVars.WProp.In_dec x X) tsubst.
+  filter (fun x => not_sumbool (TVars.WProp.In_dec x X)) tsubst.
+
+Definition Disjoint {A : Type} (tsubst : table A) tvars := forall x,
+  (Table.In x tsubst -> ~ TVars.In x tvars) /\
+  (TVars.In x tvars  -> ~ Table.In x tsubst).
 
 Lemma ApplyTSubst_tsubst : forall tsubst tsubst' tsubst1 tsubst2 X X1 X2 x T,
+  Disjoint tsubst X ->
   tsubst' = ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T ->
   tsubst = sub tsubst' X.
 Proof.
+intros.
+apply Extensionality_Table.
+apply <- TableWF.Equal_mapsto_iff (* Generic printer *).
+split; intros.
+ unfold sub in |- *.
+ apply <- filter_iff (* Generic printer *).
+ destruct (TVars.WProp.In_dec k X).
+  unfold Disjoint in H.
+  specialize (H k).
+  decompose [and] H.
+  apply H3 in i.
+  unfold Table.In in i.
+  unfold Table.Raw.PX.In in i.
+  assert False.
+   apply i.
+   exists e.
+   trivial.
+
+   contradiction .
+
+  split.
+   rewrite H0 in |- *.
+   unfold ApplyTSubst in |- *.
+   apply <- union_iff (* Generic printer *).
+   left.
+   apply <- filter_iff (* Generic printer *).
+   split; trivial.
+
+   trivial.
+
+ unfold sub in H1.
+ apply filter_iff in H1.
+ decompose [and] H1.
+ rewrite H0 in H2.
+ unfold ApplyTSubst in H2.
+ unfold app in H2.
+ apply union_iff in H2.
+ decompose [or] H2.
+  apply filter_iff in H4.
+  tauto.
 
