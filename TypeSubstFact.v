@@ -167,20 +167,6 @@ inversion H.
  trivial.
 Qed.
 
-Lemma union_elim : forall (A : Type) (P : string -> Prop) x (dec : forall x,{ P x } + {~ P x }) (T : A) tsubst1 tsubst2,
-  ~ P x -> Table.MapsTo x T (union (filter dec tsubst1) tsubst2) ->
-  Table.MapsTo x T tsubst2.
-Proof.
-intros.
-apply union_iff in H0.
-decompose [or] H0.
- apply filter_iff in H1.
- decompose [and] H1.
- contradiction .
-
- tauto.
-Qed.
-
 Definition sub {A : Type} (tsubst : table A) X :=
   filter (fun x => not_sumbool (TVars.WProp.In_dec x X)) tsubst.
 
