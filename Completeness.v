@@ -319,7 +319,7 @@ split; [ idtac | split; [ idtac | split ] ]; intros.
     split; reflexivity.
 Qed.
 
-(*Lemma ApplyTSubst_sub : forall A (tsubst' tsubst tsubst1 tsubst2 : table A)X X1 X2 x T,
+Lemma ApplyTSubst_sub : forall A (tsubst' tsubst tsubst1 tsubst2 : table A)X X1 X2 x T,
   ~ TVars.In x X1 -> ~ TVars.In x X2 ->   Disjoint tsubst X ->
   X = TVars.add x (TVars.union X1 X2) ->
   ApplyTSubst tsubst' X X1 X2 tsubst tsubst1 tsubst2 x T ->
@@ -329,7 +329,37 @@ intros.
 apply Extensionality_Table.
 apply <- TableWF.Equal_mapsto_iff (* Generic printer *).
 split; intros.
-*)
+ destruct (TVars.WProp.In_dec k X).
+  unfold Disjoint in H1.
+  specialize (H1 k).
+  inversion H1.
+  apply H6 in i.
+  assert False.
+   apply i.
+   unfold Table.In in |- *.
+   unfold Table.Raw.PX.In in |- *.
+   exists e.
+   trivial.
+
+   contradiction .
+
+  unfold sub in |- *.
+  apply <- filter_iff (* Generic printer *); auto.
+  split; auto.
+  unfold ApplyTSubst in H3.
+  decompose [and] H3.
+  apply H5 with (U := e) in n; auto.
+  apply n; trivial.
+
+ unfold sub in H4.
+ apply filter_iff in H4.
+ inversion H4.
+ unfold ApplyTSubst in H3.
+ decompose [and] H3.
+ apply H7 with (U := e) in H6.
+ apply H6; trivial.
+Qed.
+
 
 (* main theorem *)
 (*Theorem completeness: forall t tenv Ts S T X C tsubst1,
