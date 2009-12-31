@@ -290,4 +290,17 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
   apply H3 in H15.
    decompose [ex] H14; decompose [ex] H15.
    decompose [and] H16; decompose [and] H17.
+   exists
+    (ApplyTSubst (TVars.add x (TVars.union X1 X2)) X1 X2 tsubst1 x1 x2 x T0).
+   split.
+    apply ApplyTSubst_sub.
+     unfold Fresh in H9.
+     tauto.
+
+     unfold Fresh in H9.
+     tauto.
+
+     trivial.
+
+     reflexivity.
 
