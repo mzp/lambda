@@ -304,3 +304,8 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
 
      reflexivity.
 
+    exists (TVars.add x (TVars.union X1 X2)).
+    split.
+     apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
+
+     split.
