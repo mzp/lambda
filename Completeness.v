@@ -110,12 +110,15 @@ split; trivial.
 Qed.
 
 Definition ApplyTSubst {A : Type} tsubst' X X1 X2 (tsubst tsubst1 tsubst2 : table A) x T :=
-  (forall Y U, ~ TVars.In Y X  -> Table.MapsTo Y U tsubst -> Table.MapsTo Y U tsubst') /\
-  (forall Y U,   TVars.In Y X1 -> Table.MapsTo Y U tsubst1 -> Table.MapsTo Y U tsubst') /\
-  (forall Y U,   TVars.In Y X2 -> Table.MapsTo Y U tsubst2 -> Table.MapsTo Y U tsubst') /\
+  (forall Y U, ~ TVars.In Y X  ->
+    (Table.MapsTo Y U tsubst <-> Table.MapsTo Y U tsubst')) /\
+  (forall Y U,   TVars.In Y X1 ->
+    (Table.MapsTo Y U tsubst1 <-> Table.MapsTo Y U tsubst')) /\
+  (forall Y U,   TVars.In Y X2 ->
+    (Table.MapsTo Y U tsubst2 <-> Table.MapsTo Y U tsubst')) /\
   Table.MapsTo x T tsubst'.
 
-Lemma union_filter_left : forall A (P : string-> Prop) (dec : forall x, {P x} + {~ P x}) k e (X Y : table A),
+Lemma union_filter_intro_1 : forall A (P : string-> Prop) (dec : forall x, {P x} + {~ P x}) k e (X Y : table A),
    P k -> Table.MapsTo k e X ->
    Table.MapsTo k e (union (filter dec X) Y).
 Proof.
@@ -126,8 +129,7 @@ apply <- filter_iff (* Generic printer *).
 split; trivial.
 Qed.
 
-Lemma union_filter_right
-: forall A (P : string-> Prop) (dec : forall x, {P x} + {~ P x}) k e (X Y : table A),
+Lemma union_filter_intro_2 : forall A (P : string-> Prop) (dec : forall x, {P x} + {~ P x}) k e (X Y : table A),
    ~ P k -> Table.MapsTo k e Y ->
    Table.MapsTo k e (union (filter dec X) Y).
 Proof.
@@ -146,6 +148,40 @@ split.
  trivial.
 Qed.
 
+Lemma x_in_X: forall x y X X1 X2,
+  X = TVars.add x (TVars.union X1 X2) ->
+  (y = x \/ TVars.In y X1 \/ TVars.In y X2) ->
+  TVars.FSet.In y X.
+Proof.
+intros.
+rewrite H in |- *.
+decompose [or] H0.
+ rewrite H1 in |- *.
+ apply <- TVars.WFact.add_iff (* Generic printer *); left; reflexivity.
+
+ apply <- TVars.WFact.add_iff (* Generic printer *); right; apply <-
+  TVars.WFact.union_iff (* Generic printer *); left;
+  trivial.
+
+ apply <- TVars.WFact.add_iff (* Generic printer *); right; apply <-
+  TVars.WFact.union_iff (* Generic printer *); right;
+  trivial.
+Qed.
+
+Lemma union_filter_elim_2 : forall (A : Type) (P : string -> Prop) (dec : forall x,{ P x } + {~ P x }) k e (X Y : table A),
+  ~ P k -> Table.MapsTo k e (union (filter dec X) Y) ->
+  Table.MapsTo k e Y.
+Proof.
+intros.
+apply union_iff in H0.
+decompose [or] H0.
+ apply filter_iff in H1.
+ decompose [and] H1.
+ contradiction .
+
+ tauto.
+Qed.
+
 Lemma ex_ApplyTSubst : forall A X X1 X2 (tsubst tsubst1 tsubst2 : table A) x T ,
   ~ TVars.In x X1 -> ~ TVars.In x X2 -> Disjoint tsubst X ->
   TVars.Disjoint X1 X2 ->
@@ -161,133 +197,139 @@ exists
 unfold app in |- *.
 unfold ApplyTSubst in |- *.
 split; [ idtac | split; [ idtac | split ] ]; intros.
- apply union_filter_left; trivial.
+ split; intros.
+  apply union_filter_intro_1; trivial.
 
- apply union_filter_right.
-  intro.
-  apply H6.
-  rewrite H3 in |- *.
-  apply <- TVars.WFact.add_iff (* Generic printer *); right; apply <-
-   TVars.WFact.union_iff (* Generic printer *); left;
-   trivial.
+  apply union_iff in H5.
+  inversion H5.
+   apply filter_iff in H6.
+   tauto.
 
-  apply union_filter_left; trivial.
+   inversion H6.
+   apply union_filter_elim_2 in H8.
+    apply union_filter_elim_2 in H8.
+     apply TableWF.add_mapsto_iff in H8.
+     inversion H8.
+      inversion H9.
+      assert False.
+       apply H4.
+       apply (x_in_X x Y X X1 X2); [ | rewrite H10 ]; tauto.
 
- apply union_filter_right.
-  intro.
-  apply H6.
-  rewrite H3 in |- *.
-  apply <- TVars.WFact.add_iff (* Generic printer *); right; apply <-
-   TVars.WFact.union_iff (* Generic printer *); right;
-   trivial.
+       contradiction .
 
-  apply union_filter_right.
-   apply TVars.disjoint_sym in H2.
-   apply TVars.disjoint_left with (x := Y) in H2.
-    trivial.
+      inversion H9.
+      inversion H11.
 
-    trivial.
+     intro.
+     apply H4.
+     apply (x_in_X x Y X X1 X2); tauto.
 
-   apply union_filter_left; trivial.
+    intro.
+    apply H4.
+    apply (x_in_X x Y X X1 X2); tauto.
 
- apply union_filter_right.
+ split; intros.
+  apply union_filter_intro_2.
+   intro.
+   apply H6.
+   apply (x_in_X x Y X X1 X2); tauto.
+
+   apply union_filter_intro_1; trivial.
+
+  apply union_filter_elim_2 in H5.
+   apply union_iff in H5.
+   inversion H5.
+    apply filter_iff in H6; tauto.
+
+    inversion H6.
+    apply union_filter_elim_2 in H8.
+     apply TableWF.add_mapsto_iff in H8.
+     inversion H8.
+      inversion H9.
+      rewrite <- H10 in H4.
+      contradiction.
+
+      inversion H9.
+      inversion H11.
+
+     apply TVars.disjoint_left with (X := X1).
+      trivial.
+
+      trivial.
+
+   intro.
+   apply H6.
+   apply (x_in_X x Y X X1 X2); tauto.
+
+ split; intros.
+  apply union_filter_intro_2.
+   intro.
+   apply H6.
+   apply (x_in_X x Y X X1 X2); tauto.
+
+   apply union_filter_intro_2.
+    apply TVars.disjoint_left with (X := X2).
+     apply TVars.disjoint_sym.
+     trivial.
+
+     trivial.
+
+    apply union_filter_intro_1; tauto.
+
+  apply union_filter_elim_2 in H5.
+   apply union_filter_elim_2 in H5.
+    apply union_iff in H5.
+    inversion H5.
+     apply filter_iff in H6.
+     tauto.
+
+     inversion H6.
+     apply TableWF.add_mapsto_iff in H8.
+     inversion H8.
+      inversion H9.
+      rewrite <- H10 in H4.
+      contradiction.
+
+      inversion H9.
+      inversion H11.
+
+    apply TVars.disjoint_left with (X := X2).
+     apply TVars.disjoint_sym.
+     trivial.
+
+     trivial.
+
+   intro.
+   apply H6.
+   apply (x_in_X x Y X X1 X2); tauto.
+
+ apply union_filter_intro_2.
   intro.
   apply H4.
-  rewrite H3 in |- *.
-  apply <- TVars.WFact.add_iff (* Generic printer *); left; reflexivity.
+  apply (x_in_X x x X X1 X2); tauto.
 
-  apply union_filter_right.
+  apply union_filter_intro_2.
    trivial.
 
-   apply union_filter_right.
+   apply union_filter_intro_2.
     trivial.
 
     apply <- TableWF.add_mapsto_iff (* Generic printer *).
-    left; split; reflexivity.
+    left.
+    split; reflexivity.
 Qed.
 
-
-
-(*Lemma ApplyTSubst_sub : forall tsubst tsubst1 tsubst2 X X1 X2 x T,
+(*Lemma ApplyTSubst_sub : forall A (tsubst' tsubst tsubst1 tsubst2 : table A)X X1 X2 x T,
   ~ TVars.In x X1 -> ~ TVars.In x X2 ->   Disjoint tsubst X ->
   X = TVars.add x (TVars.union X1 X2) ->
-  tsubst = sub (ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T) X.
+  ApplyTSubst tsubst' X X1 X2 tsubst tsubst1 tsubst2 x T ->
+  tsubst = sub tsubst' X.
 Proof.
 intros.
 apply Extensionality_Table.
 apply <- TableWF.Equal_mapsto_iff (* Generic printer *).
-unfold sub in |- *; unfold ApplyTSubst in |- *; unfold app in |- *.
 split; intros.
- apply <- filter_iff (* Generic printer *).
- unfold Disjoint in H1.
- specialize (H1 k).
- decompose [and] H1.
- destruct (TVars.WProp.In_dec k X).
-  apply H5 in i.
-  unfold Table.In in i.
-  unfold Table.Raw.PX.In in i.
-  assert False.
-   apply i.
-   exists e.
-   trivial.
-
-   contradiction .
-
-  split.
-   apply <- union_iff (* Generic printer *).
-   left.
-   apply <- filter_iff (* Generic printer *).
-   split; trivial.
-
-   trivial.
-
- apply filter_iff in H3.
- decompose [and] H3.
- apply union_iff in H4.
- decompose [or] H4.
-  apply filter_iff in H6.
-  tauto.
-
-  decompose [and] H6.
-  apply union_elim in H8.
-   apply union_elim in H8.
-    assert False.
-     apply H7.
-     apply TableWF.add_mapsto_iff in H8.
-     decompose [or] H8.
-      inversion H9.
-      assert False.
-       apply H5.
-       rewrite <- H10 in |- *.
-       rewrite H2 in |- *.
-       apply <- TVars.WFact.add_iff (* Generic printer *).
-       left; reflexivity.
-
-       contradiction .
-
-      decompose [and] H9.
-      inversion H11.
-
-     contradiction .
-
-    intro.
-    apply H5.
-    rewrite H2 in |- *.
-    apply <- TVars.WFact.add_iff (* Generic printer *).
-    right.
-    apply <- TVars.WFact.union_iff (* Generic printer *).
-    right.
-    trivial.
-
-   intro.
-   apply H5.
-   rewrite H2 in |- *.
-   apply <- TVars.WFact.add_iff (* Generic printer *).
-   right.
-   apply <- TVars.WFact.union_iff (* Generic printer *).
-   left.
-   trivial.
-Qed.*)
+*)
 
 (* main theorem *)
 (*Theorem completeness: forall t tenv Ts S T X C tsubst1,
