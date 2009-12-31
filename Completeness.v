@@ -362,7 +362,7 @@ Qed.
 
 
 (* main theorem *)
-(*Theorem completeness: forall t tenv Ts S T X C tsubst1,
+Theorem completeness: forall t tenv Ts S T X C tsubst1,
   TypeConstraint t tenv Ts S X C ->
   TypeSubst.Solution tsubst1 T tenv t ->
   Disjoint tsubst1 X ->
@@ -455,23 +455,32 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
   apply H3 in H15.
    decompose [ex] H14; decompose [ex] H15.
    decompose [and] H16; decompose [and] H17.
-   exists
-    (ApplyTSubst (TVars.add x (TVars.union X1 X2)) X1 X2 tsubst1 x1 x2 x T0).
-   split.
-    apply ApplyTSubst_sub.
-     unfold Fresh in H9.
-     tauto.
+   assert
+    (exists s : _,
+       ApplyTSubst s (TVars.add x (TVars.union X1 X2)) X1 X2 tsubst1 x1 x2 x
+         T0).
+    unfold Fresh in H9.
+    decompose [and] H9.
+    apply ex_ApplyTSubst; trivial.
 
-     unfold Fresh in H9.
-     tauto.
-
-     trivial.
-
-     reflexivity.
-
-    exists (TVars.add x (TVars.union X1 X2)).
+    decompose [ex] H22.
+    exists x3.
     split.
-     apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
+     unfold Fresh in H9.
+     decompose [and] H9.
+     apply
+      ApplyTSubst_sub
+       with
+         (tsubst1 := x1)
+         (tsubst2 := x2)
+         (X1 := X1)
+         (X2 := X2)
+         (x := x)
+         (T := T0); trivial.
 
+     exists (TVars.add x (TVars.union X1 X2)).
      split.
-*)
+      apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
+
+      split.
+
