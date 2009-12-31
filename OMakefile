@@ -31,7 +31,7 @@ FILES[] =
 	TypeSubstFact
 	Constraint
 	Sets
-#	Completeness
+	Completeness
 
 .DEFAULT: $(Proof $(FILES))
 
