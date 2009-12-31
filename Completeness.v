@@ -8,31 +8,50 @@ Require Import Sets.
 Require Import Term.
 Require Import Constraint.
 Require Import TypeSubst.
+Require Import TypeSubstFact.
 
-Definition sub tsubst tvars :=
-  TVars.FSet.fold (fun x (table : table type) => Table.remove x table) tvars tsubst.
+(* Lemma *)
 
-Lemma sub_find : forall tsubst x X,
-  ~ TVars.In x X ->
-  Table.find x (sub tsubst X) = Table.find x tsubst.
+(* for var *)
+Lemma var_inv : forall s T S tenv tsubst ,
+  Table.MapsTo s S tenv ->
+  Solution tsubst T tenv (Var s) ->
+  T = type_subst S tsubst.
 Proof.
+unfold Solution in |- *.
+simpl in |- *.
 intros.
-unfold sub in |- *.
-pattern X,
- (TVars.FSet.fold
-    (fun (x0 : TVars.FSet.elt) (table : table type) =>
-     Table.remove (elt:=type) x0 table) X tsubst) in |- *.
-apply TVars.WProp.fold_rec; intros.
+inversion H0.
+unfold tenv_subst in H2.
+apply (TableWF.map_mapsto_iff tenv s T (fun T : type => type_subst T tsubst))
+ in H2.
+inversion H2.
+inversion H5.
+rewrite H6 in |- *.
+assert (x = S).
+ apply TableWF.MapsTo_fun with (m := tenv) (x := s); trivial.
+
+ rewrite H8 in |- *.
  reflexivity.
+Qed.
 
- rewrite TableWF.remove_o in |- *.
- destruct (TVars.WProp.Dec.F.eq_dec x0 x).
-  unfold Dec.StrDec.eq in e.
-  rewrite e in H0.
-  contradiction .
+(* for lambda *)
+Lemma lambda_inv : forall T tenv tsubst x T1 t,
+  Solution tsubst T tenv (Lambda x T1 t) ->
+  exists T2,
+  Solution tsubst T2 (Table.add x T1 tenv) t /\
+  T = FunT (type_subst T1 tsubst) T2.
+Proof.
+unfold Solution in |- *; simpl in |- *.
+intros.
+inversion H.
+exists b.
+split.
+ unfold tenv_subst in |- *.
+ rewrite map_add in |- *.
+ trivial.
 
-  rewrite H3 in |- *.
-  reflexivity.
+ reflexivity.
 Qed.
 
 Lemma fun_fresh_inv : forall (X : TVars.t) T1 T2,
@@ -58,7 +77,7 @@ induction T; intros; simpl in |- *.
   inversion i.
   tauto.
 
-  apply (sub_find tsubst2 _ _) in n.
+  apply sub_find with (A:=type) (tsubst:=tsubst2) in n.
   rewrite <- n in |- *.
   rewrite H0 in |- *.
   reflexivity.
@@ -78,58 +97,7 @@ induction T; intros; simpl in |- *.
   trivial.
 Qed.
 
-Definition Disjoint (tsubst : tsubst) tvars := forall x,
-  Table.In x tsubst -> ~ TVars.In x tvars /\
-  TVars.In x tvars  -> ~ Table.In x tsubst.
-
-Lemma sub_empty : forall tsubst,
-  tsubst = sub tsubst TVars.empty.
-Proof.
-intro tubst.
-reflexivity.
-Qed.
-
-(* inversion *)
-Lemma var_inv : forall s T S tenv tsubst ,
-  Table.MapsTo s S tenv ->
-  Solution tsubst T tenv (Var s) ->
-  T = type_subst S tsubst.
-Proof.
-unfold Solution in |- *.
-simpl in |- *.
-intros.
-inversion H0.
-unfold tenv_subst in H2.
-apply (TableWF.map_mapsto_iff tenv s T (fun T : type => type_subst T tsubst))
- in H2.
-inversion H2.
-inversion H5.
-rewrite H6 in |- *.
-assert (x = S).
- apply TableWF.MapsTo_fun with (m := tenv) (x := s); trivial.
-
- rewrite H8 in |- *.
- reflexivity.
-Qed.
-
-Lemma lambda_inv : forall T tenv tsubst x T1 t,
-  Solution tsubst T tenv (Lambda x T1 t) ->
-  exists T2,
-  Solution tsubst T2 (Table.add x T1 tenv) t /\
-  T = FunT (type_subst T1 tsubst) T2.
-Proof.
-unfold Solution in |- *; simpl in |- *.
-intros.
-inversion H.
-exists b.
-split.
- unfold tenv_subst in |- *.
- rewrite map_add in |- *.
- trivial.
-
- reflexivity.
-Qed.
-
+(* for apply *)
 Lemma apply_inv: forall T tenv tsubst t1 t2,
   Solution tsubst T tenv (Apply t1 t2) ->
   exists T1,
@@ -141,221 +109,92 @@ exists a.
 split; trivial.
 Qed.
 
-
-Definition Not_dec {P : Prop} : {P} + {~ P} -> {~ P} + {~ ~ P}.
-Proof.
-intros.
-apply sumbool_not.
-inversion H.
- left.
- intro.
- contradiction .
-
- right.
- trivial.
-Qed.
-
-
-(*Lemma fold_empty : forall A B (f: string->A->B->B) (xs : B),
- Table.fold f (Table.empty A) xs = xs.
-intros.
-pattern (Table.empty A), (Table.fold f (Table.empty A) xs) in |- *.
-apply TableProp.fold_rec; intros.
- reflexivity.
-
- inversion H.
-Qed.
-
-Lemma union_split : forall (A : Type) (P : string -> Prop) x (dec : forall x,{ P x } + {~ P x }) (T : A) tsubst1 tsubst2,
-  Table.MapsTo x T (union dec tsubst1 tsubst2) ->
-  (P x /\ Table.MapsTo x T tsubst1) \/ Table.MapsTo x T tsubst2.
-Proof.
-intros until tsubst2.
-pattern tsubst1 in |- *.
-apply TableProp.map_induction_bis; intros.
- apply Extensionality_Table in H.
- rewrite H in H0.
- apply H0.
- trivial.
-
- unfold union in H.
- rewrite fold_empty in H.
-
-Lemma union_left : forall (A : Type) (P : string -> Prop) x (dec : forall x,{ P x } + {~ P x }) (T : A) tsubst1 tsubst2,
-  ~ P x ->
-  Table.MapsTo x T tsubst2 ->
-  Table.MapsTo x T (union dec tsubst1 tsubst2).
-Proof.
-intros.
-unfold union in |- *.
-pattern tsubst1,
- (Table.fold
-    (fun (Y : Table.key) (U : A) (tsubst : Table.t A) =>
-     if dec Y then Table.add Y U tsubst else tsubst) tsubst1 tsubst2)
- in |- *.
-apply TableProp.fold_rec_bis; intros.
- trivial.
-
- trivial.
-
- destruct (dec k).
-  destruct (string_dec x k).
-   rewrite e0 in H.
-   contradiction .
-
-   apply <- TableWF.add_mapsto_iff (* Generic printer *).
-   right.
-   split.
-    apply sym_not_eq.
-    trivial.
-
-    trivial.
-
-  trivial.
-Qed.
-
-Lemma union_right : forall (A : Type) (P : string -> Prop) x (dec : forall x,{ P x } + {~ P x }) (T : A) tsubst1 tsubst2,
-  P x ->
-  Table.MapsTo x T tsubst1 ->
-  Table.MapsTo x T (union dec tsubst1 tsubst2).
-Proof.
-intros.
-generalize H0.
-unfold union in |- *.
-pattern tsubst1,
- (Table.fold
-    (fun (Y : Table.key) (U : A) (tsubst : Table.t A) =>
-     if dec Y then Table.add Y U tsubst else tsubst) tsubst1 tsubst2)
- in |- *.
-apply TableProp.fold_rec_bis; intros.
- apply H2.
- apply Extensionality_Table in H1.
- rewrite H1 in |- *.
- trivial.
-
- inversion H1.
-
- destruct (dec k).
-  apply <- TableWF.add_mapsto_iff (* Generic printer *).
-  apply TableWF.add_mapsto_iff in H4.
-  decompose [or] H4.
-   left; trivial.
-
-   right.
-   split.
-    tauto.
-
-    apply H3.
-    tauto.
-
-  apply TableWF.add_mapsto_iff in H4.
-  decompose [or] H4.
-   decompose [and] H5.
-   rewrite H6 in n.
-   contradiction .
-
-   apply H3.
-   tauto.
-Qed.
-
-Definition new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T :=
-  union (fun x => Not_dec $ TVars.WProp.In_dec x X) tsubst $
-  union (fun x => TVars.WProp.In_dec x X1) tsubst1 $
-  union (fun x => TVars.WProp.In_dec x X2) tsubst2 $
+Definition ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T :=
+  union (filter (fun x => not_sumbool $ TVars.WProp.In_dec x X) tsubst) $
+  union (filter (fun x => TVars.WProp.In_dec x X1) tsubst1) $
+  union (filter (fun x => TVars.WProp.In_dec x X2) tsubst2) $
   Table.add x T (Table.empty type).
 
-Lemma new_tsubst_tsubst : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T Y U,
-  tsubst' = new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T ->
-  ~ TVars.In Y X ->
-  Table.MapsTo Y U tsubst ->
-  Table.MapsTo Y U tsubst'.
-Proof.
-intros.
-rewrite H in |- *.
-unfold new_tsubst in |- *.
-unfold app in |- *.
-apply union_right; trivial.
-Qed.
-
-Lemma new_tsust1 : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T Y U,
+Lemma ApplyTSubst_sub : forall tsubst tsubst1 tsubst2 X X1 X2 x T,
+  ~ TVars.In x X1 -> ~ TVars.In x X2 ->   Disjoint tsubst X ->
   X = TVars.add x (TVars.union X1 X2) ->
-  tsubst' = new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T ->
-  TVars.In Y X1 -> Table.MapsTo Y U tsubst1 -> Table.MapsTo Y U tsubst'.
+  tsubst = sub (ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T) X.
 Proof.
 intros.
-rewrite H0 in |- *.
-unfold new_tsubst in |- *.
-unfold app in |- *.
-apply union_left.
- intro.
- apply H3.
- rewrite H in |- *.
- apply <- TVars.WFact.add_iff (* Generic printer *).
- right.
- apply <- TVars.WFact.union_iff (* Generic printer *).
- tauto.
-
- apply union_right; trivial.
-Qed.
-
-Lemma new_tsust2 : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T Y U,
-  X = TVars.add x (TVars.union X1 X2) ->
-  TVars.Disjoint X1 X2 ->
-  tsubst' = new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T ->
-  TVars.In Y X2 -> Table.MapsTo Y U tsubst2 -> Table.MapsTo Y U tsubst'.
-Proof.
-intros.
-rewrite H1 in |- *.
-unfold new_tsubst in |- *.
-unfold app in |- *.
-apply union_left.
- intro.
- apply H4.
- rewrite H in |- *.
- apply <- TVars.WFact.add_iff (* Generic printer *).
- right.
- apply <- TVars.WFact.union_iff (* Generic printer *).
- tauto.
-
- apply union_left.
-  apply TVars.disjoint_left with (X := X2).
-   apply TVars.disjoint_sym.
+apply Extensionality_Table.
+apply <- TableWF.Equal_mapsto_iff (* Generic printer *).
+unfold sub in |- *; unfold ApplyTSubst in |- *; unfold app in |- *.
+split; intros.
+ apply <- filter_iff (* Generic printer *).
+ unfold Disjoint in H1.
+ specialize (H1 k).
+ decompose [and] H1.
+ destruct (TVars.WProp.In_dec k X).
+  apply H5 in i.
+  unfold Table.In in i.
+  unfold Table.Raw.PX.In in i.
+  assert False.
+   apply i.
+   exists e.
    trivial.
 
-   trivial.
+   contradiction .
 
-  apply union_right; trivial.
-Qed.
-
-Lemma new_tsubst_x : forall X tsubst tsubst' X1 tsubst1 X2 tsubst2 x T,
-  ~ TVars.In x X1 -> ~ TVars.In x X2 ->
-  X = TVars.add x (TVars.union X1 X2) ->
-  tsubst' = new_tsubst X tsubst X1 tsubst1 X2 tsubst2 x T ->
-  Table.MapsTo x T tsubst'.
-Proof.
-intros.
-rewrite H2 in |- *; unfold new_tsubst in |- *; unfold app in |- *.
-apply union_left.
- intro.
- apply H3.
- rewrite H1 in |- *.
- apply <- TVars.WFact.add_iff (* Generic printer *).
- left; reflexivity.
-
- apply union_left.
-  trivial.
-
-  apply union_left.
-   trivial.
-
-   apply <- TableWF.add_mapsto_iff (* Generic printer *).
+  split.
+   apply <- union_iff (* Generic printer *).
    left.
-   split; reflexivity.
-Qed.
+   apply <- filter_iff (* Generic printer *).
+   split; trivial.
 
-(*Lemma subst_not_in : forall tsubst1 tsubst2 X,
- (forall Y U, ~ TVars.In Y X -> Table.MapsTo Y U tsubst1 -> Table.MapsTo Y U tsubst2) ->
- tsubst1 = sub tsubst2 X.*)
+   trivial.
+
+ apply filter_iff in H3.
+ decompose [and] H3.
+ apply union_iff in H4.
+ decompose [or] H4.
+  apply filter_iff in H6.
+  tauto.
+
+  decompose [and] H6.
+  apply union_elim in H8.
+   apply union_elim in H8.
+    assert False.
+     apply H7.
+     apply TableWF.add_mapsto_iff in H8.
+     decompose [or] H8.
+      inversion H9.
+      assert False.
+       apply H5.
+       rewrite <- H10 in |- *.
+       rewrite H2 in |- *.
+       apply <- TVars.WFact.add_iff (* Generic printer *).
+       left; reflexivity.
+
+       contradiction .
+
+      decompose [and] H9.
+      inversion H11.
+
+     contradiction .
+
+    intro.
+    apply H5.
+    rewrite H2 in |- *.
+    apply <- TVars.WFact.add_iff (* Generic printer *).
+    right.
+    apply <- TVars.WFact.union_iff (* Generic printer *).
+    right.
+    trivial.
+
+   intro.
+   apply H5.
+   rewrite H2 in |- *.
+   apply <- TVars.WFact.add_iff (* Generic printer *).
+   right.
+   apply <- TVars.WFact.union_iff (* Generic printer *).
+   left.
+   trivial.
+Qed.
 
 (* main theorem *)
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
@@ -451,28 +290,4 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
   apply H3 in H15.
    decompose [ex] H14; decompose [ex] H15.
    decompose [and] H16; decompose [and] H17.
-   exists
-    (new_tsubst (TVars.add x (TVars.union X1 X2)) tsubst1 X1 x1 X2 x2 x x0).
-   split.
 
-
-
-
-(*
-  apply apply_inv in H11.
-  decompose [ex] H11.
-  decompose [and] H14.
-  apply H1 in H15.
-   apply H3 in H16.
-    decompose [ex] H15; decompose [ex] H16.
-    decompose [and] H17; decompose [and] H18.
-    split.
-     rewrite H10 in |- *.
-     apply Unified_Add_intro.
-      apply Unified_union_left; trivial.
-
-      unfold Unified in |- *.
-      intros.
-      apply TConst.WFact.singleton_iff in H23.
-*)
-*)

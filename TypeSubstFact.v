@@ -181,12 +181,6 @@ decompose [or] H0.
  tauto.
 Qed.
 
-Definition ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T :=
-  union (filter (fun x => not_sumbool $ TVars.WProp.In_dec x X) tsubst) $
-  union (filter (fun x => TVars.WProp.In_dec x X1) tsubst1) $
-  union (filter (fun x => TVars.WProp.In_dec x X2) tsubst2) $
-  Table.add x T (Table.empty type).
-
 Definition sub {A : Type} (tsubst : table A) X :=
   filter (fun x => not_sumbool (TVars.WProp.In_dec x X)) tsubst.
 
@@ -194,83 +188,61 @@ Definition Disjoint {A : Type} (tsubst : table A) tvars := forall x,
   (Table.In x tsubst -> ~ TVars.In x tvars) /\
   (TVars.In x tvars  -> ~ Table.In x tsubst).
 
-Lemma ApplyTSubst_tsubst : forall tsubst tsubst1 tsubst2 X X1 X2 x T,
-  ~ TVars.In x X1 -> ~ TVars.In x X2 ->   Disjoint tsubst X ->
-  X = TVars.add x (TVars.union X1 X2) ->
-  tsubst = sub (ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T) X.
+
+Lemma sub_empty : forall A (tsubst : table A),
+  tsubst = sub tsubst TVars.empty.
 Proof.
 intros.
 apply Extensionality_Table.
 apply <- TableWF.Equal_mapsto_iff (* Generic printer *).
-unfold sub in |- *; unfold ApplyTSubst in |- *; unfold app in |- *.
 split; intros.
+ unfold sub in |- *.
  apply <- filter_iff (* Generic printer *).
- unfold Disjoint in H1.
- specialize (H1 k).
- decompose [and] H1.
- destruct (TVars.WProp.In_dec k X).
-  apply H5 in i.
-  unfold Table.In in i.
-  unfold Table.Raw.PX.In in i.
-  assert False.
-   apply i.
-   exists e.
-   trivial.
+ split.
+  trivial.
 
-   contradiction .
+  intro.
+  inversion H0.
 
+ unfold sub in H.
+ apply filter_iff in H.
+ tauto.
+Qed.
+
+Lemma sub_find : forall A (tsubst : table A) x X,
+  ~ TVars.In x X ->
+  Table.find x (sub tsubst X) = Table.find x tsubst.
+Proof.
+intros.
+destruct (TableWF.In_dec tsubst x).
+ assert (exists a : _, Table.find (elt:=A) x tsubst = Some a).
+  apply TableWF.in_find_iff in i.
+  destruct (Table.find (elt:=A) x tsubst).
+   exists a; reflexivity.
+
+   tauto.
+
+  inversion H0.
+  rewrite H1 in |- *.
+  apply (TableWF.find_mapsto_iff (sub tsubst X) _ _).
+  unfold sub in |- *.
+  apply <- filter_iff (* Generic printer *).
   split.
-   apply <- union_iff (* Generic printer *).
-   left.
-   apply <- filter_iff (* Generic printer *).
-   split; trivial.
+   apply TableWF.find_mapsto_iff in H1.
+   trivial.
 
    trivial.
 
- apply filter_iff in H3.
- decompose [and] H3.
- apply union_iff in H4.
- decompose [or] H4.
-  apply filter_iff in H6.
-  tauto.
-
-  decompose [and] H6.
-  apply union_elim in H8.
-   apply union_elim in H8.
-    assert False.
-     apply H7.
-     apply TableWF.add_mapsto_iff in H8.
-     decompose [or] H8.
-      inversion H9.
-      assert False.
-       apply H5.
-       rewrite <- H10 in |- *.
-       rewrite H2 in |- *.
-       apply <- TVars.WFact.add_iff (* Generic printer *).
-       left; reflexivity.
-
-       contradiction .
-
-      decompose [and] H9.
-      inversion H11.
-
-     contradiction .
-
-    intro.
-    apply H5.
-    rewrite H2 in |- *.
-    apply <- TVars.WFact.add_iff (* Generic printer *).
-    right.
-    apply <- TVars.WFact.union_iff (* Generic printer *).
-    right.
-    trivial.
-
-   intro.
-   apply H5.
-   rewrite H2 in |- *.
-   apply <- TVars.WFact.add_iff (* Generic printer *).
-   right.
-   apply <- TVars.WFact.union_iff (* Generic printer *).
-   left.
-   trivial.
+ apply TableWF.not_find_mapsto_iff in n.
+ rewrite n in |- *.
+ apply (TableWF.not_find_mapsto_iff (sub tsubst X) x).
+ unfold Table.In in |- *; unfold sub in |- *.
+ unfold Table.Raw.PX.In in |- *.
+ intro.
+ inversion H0.
+ apply filter_iff in H1.
+ inversion H1.
+ apply TableWF.find_mapsto_iff in H2.
+ rewrite n in H2.
+ discriminate.
 Qed.
