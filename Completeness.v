@@ -109,13 +109,106 @@ exists a.
 split; trivial.
 Qed.
 
-Definition ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T :=
-  union (filter (fun x => not_sumbool $ TVars.WProp.In_dec x X) tsubst) $
+Definition ApplyTSubst {A : Type} tsubst' X X1 X2 (tsubst tsubst1 tsubst2 : table A) x T :=
+  (forall Y U, ~ TVars.In Y X  -> Table.MapsTo Y U tsubst -> Table.MapsTo Y U tsubst') /\
+  (forall Y U,   TVars.In Y X1 -> Table.MapsTo Y U tsubst1 -> Table.MapsTo Y U tsubst') /\
+  (forall Y U,   TVars.In Y X2 -> Table.MapsTo Y U tsubst2 -> Table.MapsTo Y U tsubst') /\
+  Table.MapsTo x T tsubst'.
+
+Lemma union_filter_left : forall A (P : string-> Prop) (dec : forall x, {P x} + {~ P x}) k e (X Y : table A),
+   P k -> Table.MapsTo k e X ->
+   Table.MapsTo k e (union (filter dec X) Y).
+Proof.
+intros.
+apply <- union_iff (* Generic printer *).
+left.
+apply <- filter_iff (* Generic printer *).
+split; trivial.
+Qed.
+
+Lemma union_filter_right
+: forall A (P : string-> Prop) (dec : forall x, {P x} + {~ P x}) k e (X Y : table A),
+   ~ P k -> Table.MapsTo k e Y ->
+   Table.MapsTo k e (union (filter dec X) Y).
+Proof.
+intros.
+apply <- union_iff (* Generic printer *).
+right.
+split.
+ unfold Table.In in |- *.
+ unfold Table.Raw.PX.In in |- *.
+ intro.
+ inversion H1.
+ apply filter_iff in H2.
+ inversion H2.
+ contradiction .
+
+ trivial.
+Qed.
+
+Lemma ex_ApplyTSubst : forall A X X1 X2 (tsubst tsubst1 tsubst2 : table A) x T ,
+  ~ TVars.In x X1 -> ~ TVars.In x X2 -> Disjoint tsubst X ->
+  TVars.Disjoint X1 X2 ->
+  X = TVars.add x (TVars.union X1 X2) ->
+  exists s : table A, ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x T.
+Proof.
+intros.
+exists
+ (union (filter (fun x => not_sumbool $ TVars.WProp.In_dec x X) tsubst) $
   union (filter (fun x => TVars.WProp.In_dec x X1) tsubst1) $
   union (filter (fun x => TVars.WProp.In_dec x X2) tsubst2) $
-  Table.add x T (Table.empty type).
+  Table.add x T (Table.empty A)).
+unfold app in |- *.
+unfold ApplyTSubst in |- *.
+split; [ idtac | split; [ idtac | split ] ]; intros.
+ apply union_filter_left; trivial.
 
-Lemma ApplyTSubst_sub : forall tsubst tsubst1 tsubst2 X X1 X2 x T,
+ apply union_filter_right.
+  intro.
+  apply H6.
+  rewrite H3 in |- *.
+  apply <- TVars.WFact.add_iff (* Generic printer *); right; apply <-
+   TVars.WFact.union_iff (* Generic printer *); left;
+   trivial.
+
+  apply union_filter_left; trivial.
+
+ apply union_filter_right.
+  intro.
+  apply H6.
+  rewrite H3 in |- *.
+  apply <- TVars.WFact.add_iff (* Generic printer *); right; apply <-
+   TVars.WFact.union_iff (* Generic printer *); right;
+   trivial.
+
+  apply union_filter_right.
+   apply TVars.disjoint_sym in H2.
+   apply TVars.disjoint_left with (x := Y) in H2.
+    trivial.
+
+    trivial.
+
+   apply union_filter_left; trivial.
+
+ apply union_filter_right.
+  intro.
+  apply H4.
+  rewrite H3 in |- *.
+  apply <- TVars.WFact.add_iff (* Generic printer *); left; reflexivity.
+
+  apply union_filter_right.
+   trivial.
+
+   apply union_filter_right.
+    trivial.
+
+    apply <- TableWF.add_mapsto_iff (* Generic printer *).
+    left; split; reflexivity.
+Qed.
+
+
+
+(*Lemma ApplyTSubst_sub : forall tsubst tsubst1 tsubst2 X X1 X2 x T,
   ~ TVars.In x X1 -> ~ TVars.In x X2 ->   Disjoint tsubst X ->
   X = TVars.add x (TVars.union X1 X2) ->
   tsubst = sub (ApplyTSubst X X1 X2 tsubst tsubst1 tsubst2 x T) X.
@@ -194,10 +287,10 @@ split; intros.
    apply <- TVars.WFact.union_iff (* Generic printer *).
    left.
    trivial.
-Qed.
+Qed.*)
 
 (* main theorem *)
-Theorem completeness: forall t tenv Ts S T X C tsubst1,
+(*Theorem completeness: forall t tenv Ts S T X C tsubst1,
   TypeConstraint t tenv Ts S X C ->
   TypeSubst.Solution tsubst1 T tenv t ->
   Disjoint tsubst1 X ->
@@ -309,3 +402,4 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
      apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
 
      split.
+*)
