@@ -496,3 +496,24 @@ Lemma constraint_use_t: forall t tenv Ts S X C x,
   TypeConstraint t tenv Ts S X C ->
   UseC x C ->
   UseTerm x t \/ TVars.In x X.
+Proof.
+intros until x.
+intro.
+unfold UseC.
+pattern t, tenv, Ts, S, X, C in |- *.
+apply TypeConstraint_ind; intros; auto.
+ decompose [ex] H1.
+ decompose [and] H3.
+ inversion H2.
+
+ apply H1 in H2.
+ decompose [or] H2.
+  left.
+  apply ULambda.
+  tauto.
+
+  tauto.
+
+ decompose [ex] H0.
+ decompose [and] H2.
+ inversion H1.
