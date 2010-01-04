@@ -4,6 +4,7 @@ Require Import Sumbool.
 Require Import Term.
 Require Import Constraint.
 Require Import Tables.
+Require Import TypeSubst.
 
 Definition app {A B : Type} (f : A -> B) (x : A) := f x.
 Infix "$" := app (at level 51, right associativity).
@@ -15,6 +16,41 @@ Definition filter {A : Type} {P : string -> Prop} (dec : forall x, {P x} + {~ P 
   TableProp.filter
     (fun key _ => if dec key then true else false)
     tsubst.
+
+Lemma mapsto_type_subst: forall x tsubst1 tsubst2,
+ (forall U,Table.MapsTo x U tsubst1 <-> Table.MapsTo x U tsubst2) ->
+ type_subst (VarT x) tsubst1 = type_subst (VarT x) tsubst2.
+Proof.
+intros.
+simpl in |- *.
+destruct (TableWF.In_dec tsubst1 x).
+ unfold Table.In in i.
+ unfold Table.Raw.PX.In in i.
+ decompose [ex] i.
+ generalize H0.
+ intro.
+ apply H in H1.
+ apply TableWF.find_mapsto_iff in H0.
+ apply TableWF.find_mapsto_iff in H1.
+ rewrite H0 in |- *; rewrite H1 in |- *.
+ reflexivity.
+
+ assert (~ Table.In (elt:=type) x tsubst2).
+  intro; apply n.
+  unfold Table.In in H0.
+  unfold Table.Raw.PX.In in H0.
+  decompose [ex] H0.
+  unfold Table.In in |- *.
+  unfold Table.Raw.PX.In in |- *.
+  exists x0.
+  apply <- H (* Generic printer *).
+  trivial.
+
+  apply TableWF.not_find_mapsto_iff in n.
+  apply TableWF.not_find_mapsto_iff in H0.
+  rewrite n in |- *; rewrite H0 in |- *.
+  reflexivity.
+Qed.
 
 Lemma union_iff: forall A x (T : A) (X Y : table A),
   Table.MapsTo x T (union X Y) <-> Table.MapsTo x T X \/ (~ Table.In x X /\ Table.MapsTo x T Y).
@@ -232,4 +268,19 @@ destruct (TableWF.In_dec tsubst x).
  apply TableWF.find_mapsto_iff in H2.
  rewrite n in H2.
  discriminate.
+Qed.
+
+Lemma type_subst_sub : forall (tsubst : tsubst) x X,
+  ~ TVars.In x X ->
+  type_subst (VarT x) (sub tsubst X) =  type_subst (VarT x) tsubst.
+Proof.
+intros.
+unfold sub.
+apply mapsto_type_subst.
+split; intros.
+ apply filter_iff in H0.
+ tauto.
+
+ apply <- filter_iff (* Generic printer *).
+ tauto.
 Qed.
