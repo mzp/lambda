@@ -32,7 +32,7 @@ Inductive UseTerm : string -> term -> Prop :=
       UseTerm x t1 \/ UseTerm x t2 \/ UseTerm x t3 -> UseTerm x (If t1 t2 t3).
 
 Definition UseC x c := exists S, exists T,
-  TConst.In (S,T) c -> UseT x S \/ UseT x T.
+  TConst.In (S,T) c /\ (UseT x S \/ UseT x T).
 
 Inductive FreshT : string -> type -> Prop :=
   | FVarT : forall x y, x <> y -> FreshT x (VarT y)
