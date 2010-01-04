@@ -491,3 +491,8 @@ induction T; intros.
 
   apply IHT3 in H15; contradiction.
 Qed.
+
+Lemma constraint_use_t: forall t tenv Ts S X C x,
+  TypeConstraint t tenv Ts S X C ->
+  UseC x C ->
+  UseTerm x t \/ TVars.In x X.
