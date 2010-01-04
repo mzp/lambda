@@ -19,6 +19,18 @@ Definition tconst := TConst.t.
 Definition Unified (c : tconst) (t : tsubst) := forall (S T : type),
   TConst.In (S,T) c -> type_subst S t = type_subst T t.
 
+Inductive UseT : string -> type -> Prop :=
+  | UVarT : forall x, UseT x (VarT x)
+  | UFunT : forall x T1 T2, UseT x T1 \/ UseT x T2 -> UseT x (FunT T1 T2).
+
+Inductive UseTerm : string -> term -> Prop :=
+    ULambda : forall x y T t,
+      UseT x T \/ UseTerm x t -> UseTerm x (Lambda y T t)
+  | UApply  : forall x t1 t2,
+      UseTerm x t1 \/ UseTerm x t2 -> UseTerm x (Apply t1 t2)
+  | UIf     : forall x t1 t2 t3,
+      UseTerm x t1 \/ UseTerm x t2 \/ UseTerm x t3 -> UseTerm x (If t1 t2 t3).
+
 Inductive FreshT : string -> type -> Prop :=
   | FVarT : forall x y, x <> y -> FreshT x (VarT y)
   | FFunT : forall x T1 T2, FreshT x T1 /\ FreshT x T2 -> FreshT x (FunT T1 T2).
@@ -418,4 +430,61 @@ apply TypeConstraint_ind; intros.
      split; [apply H14 | apply H5 in H18]; tauto.
 
  trivial.
+Qed.
+
+Lemma use_t_not_fresh: forall x T,
+  UseT x T -> ~ FreshT x T.
+Proof.
+induction T; intros.
+ intro.
+ inversion H; inversion H0.
+ contradiction .
+
+ inversion H.
+
+ intro.
+ inversion H0.
+ decompose [and] H3.
+ inversion H.
+ decompose [or] H9.
+  apply IHT1 in H11.
+  contradiction .
+
+  apply IHT2 in H11.
+  contradiction .
+Qed.
+
+Lemma use_term_not_fresh: forall x T,
+  UseTerm x T -> ~ FreshTerm x T.
+Proof.
+induction T; intros.
+ inversion H.
+
+ inversion H.
+
+ intro.
+ inversion H0; inversion H.
+ decompose [and] H3.
+ decompose [or] H8.
+   apply use_t_not_fresh in H13; contradiction.
+
+   apply IHT in H13; contradiction.
+
+ intro.
+ inversion H0; inversion H.
+ decompose [and] H3.
+ decompose [or] H7.
+  apply IHT1 in H11; contradiction.
+
+  apply IHT2 in H11; contradiction.
+
+ intro.
+ inversion H0; inversion H.
+ decompose [and] H3.
+ decompose [or] H8.
+  apply IHT1 in H12; contradiction.
+
+  apply IHT2 in H15; contradiction.
+
+  apply IHT3 in H15; contradiction.
 Qed.
