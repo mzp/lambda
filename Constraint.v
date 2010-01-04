@@ -46,7 +46,7 @@ Inductive FreshTerm : string -> term -> Prop :=
       FreshTerm x t1 /\ FreshTerm x t2 /\ FreshTerm x t3 -> FreshTerm x (If t1 t2 t3).
 
 Definition FreshC x c := forall S T,
-  TConst.In (S,T) c -> FreshT x S \/ FreshT x T.
+  TConst.In (S,T) c -> FreshT x S /\ FreshT x T.
 
 Definition FreshE x tenv := forall y T,
   Table.MapsTo y T tenv -> FreshT x T.
