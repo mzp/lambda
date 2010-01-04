@@ -360,53 +360,35 @@ split; intros.
  apply H6; trivial.
 Qed.
 
-Lemma ApplyTSubst_subst_eq: forall t tenv Ts T X X1 X2 x y s tsubst tsubst1 tsubst2 C,
-  TypeConstraint t tenv Ts T X1 C ->
-  DisjointTerm X2 t ->
-  FreshTerm x t ->
-  X = TVars.add x (TVars.union X1 X2) ->
-  tsubst = sub tsubst1 X1 ->
+Lemma ApplyTSubst_subst_eq: forall s X X1 X2 tsubst tsubst1 tsubst2 x T y,
   ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x T ->
-  UseTerm y t ->
+  tsubst = sub tsubst1 X1 ->
+  (~ TVars.In y X1 -> ~ TVars.In y X) ->
   type_subst (VarT y) s = type_subst (VarT y) tsubst1.
 Proof.
 intros.
-unfold ApplyTSubst in H4.
-decompose [and] H4.
+unfold ApplyTSubst in H.
+decompose [and] H.
 destruct (TVars.WProp.In_dec y X1).
  apply mapsto_type_subst.
  intro.
  apply iff_sym.
- apply H8.
+ apply H4.
  trivial.
 
  assert (type_subst (VarT y) tsubst = type_subst (VarT y) s).
   apply mapsto_type_subst.
   intro.
-  apply H6.
-  intro; apply n.
-  rewrite H2 in H9.
-  apply TVars.WFact.add_iff in H9.
-  decompose [or] H9.
-   apply use_term_not_fresh in H5.
-   rewrite <- H11 in H5.
-   contradiction .
-
-   apply TVars.WFact.union_iff in H11.
-   decompose [or] H11.
-    trivial.
-
-    unfold DisjointTerm in H0.
-    apply H0 in H12.
-    apply use_term_not_fresh in H5.
-    contradiction .
+  apply H2.
+  apply H1.
+  trivial.
 
   assert (type_subst (VarT y) tsubst = type_subst (VarT y) tsubst1).
-   rewrite H3 in |- *.
+   rewrite H0 in |- *.
    apply type_subst_sub.
    trivial.
 
-   rewrite <- H9 in |- *; rewrite <- H11 in |- *.
+   rewrite <- H5 in |- *; rewrite H7 in |- *.
    reflexivity.
 Qed.
 
