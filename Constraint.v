@@ -63,6 +63,9 @@ Definition DisjointT xs T := forall x,
 Definition DisjointTerm xs t := forall x,
   TVars.In x xs -> FreshTerm x t.
 
+Definition DisjointC xs C := forall x,
+  TVars.In x xs -> FreshC x C.
+
 Definition FreshTs x Ts := forall T,
   List.In T Ts -> FreshT x T.
 
@@ -87,6 +90,7 @@ Inductive TypeConstraint : term -> tenv -> list type -> type -> tvars -> tconst 
     TypeConstraint t2 tenv Ts T2 X2 C2 ->
     TVars.Disjoint X1 X2 -> DisjointT X2 T1 -> DisjointT X1 T2 ->
     DisjointTerm X1 t2 -> DisjointTerm X2 t1 ->
+    DisjointC X1 C2 -> DisjointC X2 C1 ->
     Fresh x X1 X2 T1 T2 C1 C2 tenv Ts t1 t2 ->
     C = TConst.add (T1,FunT T2 (VarT x)) (TConst.union C1 C2) ->
     TypeConstraint (Apply t1 t2) tenv Ts (VarT x) (TVars.add x (TVars.union X1 X2)) C
@@ -98,6 +102,9 @@ Inductive TypeConstraint : term -> tenv -> list type -> type -> tvars -> tconst 
     DisjointTerm X1 t2 -> DisjointTerm X1 t3 ->
     DisjointTerm X2 t1 -> DisjointTerm X2 t3 ->
     DisjointTerm X3 t1 -> DisjointTerm X3 t2 ->
+(*    DisjointC X1 C2 -> DisjointC X1 C3 ->
+    DisjointC X2 C1 -> DisjointC X2 C3 ->
+    DisjointC X3 C1 -> DisjointC X3 C2 ->*)
     C = TConst.add (T1,BoolT) (TConst.add (T2,T3) (TConst.union C1 (TConst.union C2 C3))) ->
     TypeConstraint (If t1 t2 t3) tenv Ts T2 (TVars.union X1 (TVars.union X2 X3)) C.
 
@@ -378,26 +385,26 @@ apply TypeConstraint_ind; intros.
  inversion H0.
 
  (* Apply *)
- apply TVars.WFact.add_iff in H11.
- decompose [or] H11.
-  rewrite <- H12 in |- *.
-  unfold Fresh in H9.
-  decompose [and] H9.
+ apply TVars.WFact.add_iff in H13.
+ decompose [or] H13.
+  rewrite <- H14 in |- *.
+  unfold Fresh in H11.
+  decompose [and] H11.
   split; [ trivial | apply FApply; split; trivial ].
 
-  apply TVars.WFact.union_iff in H12.
-  decompose [or] H12.
+  apply TVars.WFact.union_iff in H14.
+  decompose [or] H14.
    split.
-    apply H1 in H13.
+    apply H1 in H15.
     tauto.
 
-    apply FApply; split; [ apply H1 in H13 | apply H7]; tauto.
+    apply FApply; split; [ apply H1 in H15 | apply H7]; tauto.
 
    split.
-    apply H3 in H13.
+    apply H3 in H15.
     tauto.
 
-    apply FApply; split; [ apply H8 | apply H3 in H13]; tauto.
+    apply FApply; split; [ apply H8 | apply H3 in H15]; tauto.
 
  (* If *)
  apply TVars.WFact.union_iff in H16.
@@ -495,68 +502,17 @@ induction T; intros.
   apply IHT3 in H15; contradiction.
 Qed.
 
-Lemma in_iff : forall A (xs : list A) (x y : A),
-  List.In y (x :: xs) <-> y = x \/ List.In y xs.
+Lemma use_c_not_fresh: forall x C,
+  UseC x C -> ~ FreshC x C.
 Proof.
-intros until xs.
-pattern xs in |- *.
-apply list_ind; split; intros.
- inversion H.
-  auto.
-
-  contradiction .
-
- decompose [or] H.
-  rewrite H0 in |- *.
-  apply in_eq.
-
-  inversion H0.
-
- inversion H0.
-  left.
-  rewrite H1 in |- *.
-  trivial.
-
-  decompose [or] H1.
-   right.
-   rewrite H2 in |- *.
-   apply in_eq.
-
-   right.
-   apply in_cons.
-   trivial.
-
- decompose [or] H0.
-  rewrite H1 in |- *.
-  apply in_eq.
-
-  inversion H1.
-   rewrite H2 in |- *.
-   apply in_cons.
-   apply in_eq.
-
-   apply in_cons.
-   apply <- H (* Generic printer *).
-   right.
-   trivial.
-Qed.
-
-Lemma constraint_use_t: forall t tenv Ts S X C x,
-  TypeConstraint t tenv Ts S X C ->
-  UseC x C ->
-  UseTerm x t \/ UseTs x Ts \/ TVars.In x X.
-Proof.
-intros until x.
+unfold UseC in |- *; unfold FreshC in |- *.
+intros.
+decompose [ex] H.
+decompose [and] H1.
 intro.
-unfold UseC.
-pattern t, tenv, Ts, S, X, C in |- *.
-apply TypeConstraint_ind; intros; auto.
- decompose [ex] H1.
- decompose [and] H3.
- inversion H2.
-
- apply H1 in H2.
- decompose [or] H2.
-  left.
-  apply ULambda.
-
+specialize (H3 x0 x1).
+apply H3 in H0.
+decompose [and] H0.
+decompose [or] H2;
+ apply use_t_not_fresh in H6; contradiction.
+Qed.

@@ -45,16 +45,16 @@ apply TypeConstraint_ind; intros; unfold Solution in |- *; simpl in |- *.
   decompose [and] H2.
   apply TApply with (a := type_subst T2 tsubst).
    assert (T0 = type_subst (VarT x) tsubst).
-    unfold Constraint.Solution in H11.
-    decompose [ex] H11.
-    decompose [and] H13.
+    unfold Constraint.Solution in H13.
+    decompose [ex] H13.
+    decompose [and] H15.
     trivial.
 
-    rewrite H13 in |- *.
+    rewrite H15 in |- *.
     apply H1.
     simpl in |- *.
-    simpl in H12.
-    rewrite <- H12 in |- *.
+    simpl in H14.
+    rewrite <- H14 in |- *.
     tauto.
 
    apply H3.
@@ -62,7 +62,7 @@ apply TypeConstraint_ind; intros; unfold Solution in |- *; simpl in |- *.
 
   trivial.
 
-  rewrite <- H10 in |- *.
+  rewrite <- H12 in |- *.
   trivial.
 
  apply (if_solution_inv t1 t2 t3 T0 T1 T2 T3 X1 X2 X3 C1 C2 C3 _ _ tsubst)

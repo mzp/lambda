@@ -360,36 +360,109 @@ split; intros.
  apply H6; trivial.
 Qed.
 
-Lemma ApplyTSubst_subst_eq: forall s X X1 X2 tsubst tsubst1 tsubst2 x T y,
-  ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x T ->
+Lemma ApplyTSubst_subst_eq: forall s X X1 X2 tsubst tsubst1 tsubst2 x S T,
+  ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x S ->
   tsubst = sub tsubst1 X1 ->
-  (~ TVars.In y X1 -> ~ TVars.In y X) ->
-  type_subst (VarT y) s = type_subst (VarT y) tsubst1.
+  (forall x, UseT x T -> ~ TVars.In x X1 -> ~ TVars.In x X) ->
+  type_subst T s = type_subst T tsubst1.
 Proof.
 intros.
 unfold ApplyTSubst in H.
 decompose [and] H.
-destruct (TVars.WProp.In_dec y X1).
- apply mapsto_type_subst.
- intro.
- apply iff_sym.
- apply H4.
- trivial.
-
- assert (type_subst (VarT y) tsubst = type_subst (VarT y) s).
+induction T; auto.
+ destruct (TVars.WProp.In_dec s0 X1).
   apply mapsto_type_subst.
   intro.
-  apply H2.
-  apply H1.
+  apply iff_sym.
+  apply H4.
   trivial.
 
-  assert (type_subst (VarT y) tsubst = type_subst (VarT y) tsubst1).
-   rewrite H0 in |- *.
-   apply type_subst_sub.
-   trivial.
+  assert (type_subst (VarT s0) tsubst = type_subst (VarT s0) s).
+   apply mapsto_type_subst.
+   intro.
+   apply H2.
+   apply H1.
+    apply UVarT.
 
-   rewrite <- H5 in |- *; rewrite H7 in |- *.
+    trivial.
+
+   assert (type_subst (VarT s0) tsubst = type_subst (VarT s0) tsubst1).
+    rewrite H0 in |- *.
+    apply type_subst_sub.
+    trivial.
+
+    rewrite <- H5 in |- *; rewrite H7 in |- *.
+    reflexivity.
+
+ simpl in |- *.
+ rewrite IHT1 in |- *.
+  rewrite IHT2 in |- *.
    reflexivity.
+
+   intros.
+   apply H1; auto.
+   apply UFunT.
+   right; trivial.
+
+  intros.
+  apply H1; auto.
+  apply UFunT.
+  left.
+  trivial.
+Qed.
+
+Lemma ApplyTSubst_unified: forall s X X1 X2 tsubst tsubst1 tsubst2 x S C,
+  ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x S ->
+  tsubst = sub tsubst1 X1 ->
+  (forall x, UseC x C -> ~ TVars.In x X1 -> ~ TVars.In x X) ->
+  Unified C tsubst1 ->
+  Unified C s.
+Proof.
+unfold Unified in |- *; intros.
+assert (type_subst S0 s = type_subst S0 tsubst1).
+ apply (ApplyTSubst_subst_eq s X X1 X2 tsubst tsubst1 tsubst2 x S); auto.
+ intros.
+ apply H1; auto.
+ unfold UseC in |- *.
+ exists S0; exists T.
+ split; tauto.
+
+ assert (type_subst T s = type_subst T tsubst1).
+  apply (ApplyTSubst_subst_eq s X X1 X2 tsubst tsubst1 tsubst2 x S); auto.
+  intros.
+  apply H1; auto.
+  unfold UseC in |- *.
+  exists S0; exists T.
+  split; tauto.
+
+  rewrite H4 in |- *; rewrite H5 in |- *.
+  apply H2.
+  trivial.
+Qed.
+
+Lemma not_overlap_x: forall x y C X1 X2,
+  FreshC x C -> UseC y C ->
+  DisjointC X2 C ->
+  ~ TVars.In y X1 ->
+  ~ TVars.In y (TVars.add x (TVars.union X1 X2)).
+Proof.
+intros.
+intro.
+apply H2.
+apply TVars.WFact.add_iff in H3.
+decompose [or] H3.
+ rewrite H4 in H.
+ apply use_c_not_fresh in H0.
+ contradiction.
+
+ apply TVars.WFact.union_iff in H4.
+ decompose [or] H4.
+  trivial.
+
+  unfold DisjointC in H1.
+  apply H1 in H5.
+  apply use_c_not_fresh in H0.
+  contradiction.
 Qed.
 
 (* main theorem *)
@@ -479,26 +552,26 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
     inversion H0.
     reflexivity.
 
- apply apply_inv in H11.
- decompose [ex] H11.
- decompose [and] H13.
- apply H1 in H14.
-  apply H3 in H15.
-   decompose [ex] H14; decompose [ex] H15.
-   decompose [and] H16; decompose [and] H17.
+ apply apply_inv in H13.
+ decompose [ex] H13.
+ decompose [and] H15.
+ apply H1 in H16.
+  apply H3 in H17.
+   decompose [ex] H16; decompose [ex] H17.
+   decompose [and] H16; decompose [and] H18.
    assert
     (exists s : _,
        ApplyTSubst s (TVars.add x (TVars.union X1 X2)) X1 X2 tsubst1 x1 x2 x
          T0).
-    unfold Fresh in H9.
-    decompose [and] H9.
+    unfold Fresh in H11.
+    decompose [and] H11.
     apply ex_ApplyTSubst; trivial.
 
     decompose [ex] H22.
     exists x3.
     split.
-     unfold Fresh in H9.
-     decompose [and] H9.
+     unfold Fresh in H11.
+     decompose [and] H11.
      apply
       ApplyTSubst_sub
        with
@@ -514,4 +587,13 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
       apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
 
       split.
-
+       rewrite H12 in |- *.
+       apply Unified_Add_intro.
+        apply Unified_Union_intro.
+         apply
+          (ApplyTSubst_unified x3 (TVars.add x (TVars.union X1 X2)) X1 X2
+             tsubst1 x1 x2 x T0 _); auto.
+          intros.
+          apply not_overlap_x with (C := C1); auto.
+          unfold Fresh in H11.
+          tauto.
