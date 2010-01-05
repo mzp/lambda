@@ -31,6 +31,9 @@ Inductive UseTerm : string -> term -> Prop :=
   | UIf     : forall x t1 t2 t3,
       UseTerm x t1 \/ UseTerm x t2 \/ UseTerm x t3 -> UseTerm x (If t1 t2 t3).
 
+Definition UseTs x Ts := exists T,
+  List.In T Ts /\ UseT x T.
+
 Definition UseC x c := exists S, exists T,
   TConst.In (S,T) c /\ (UseT x S \/ UseT x T).
 
@@ -541,7 +544,7 @@ Qed.
 Lemma constraint_use_t: forall t tenv Ts S X C x,
   TypeConstraint t tenv Ts S X C ->
   UseC x C ->
-  UseTerm x t \/ TVars.In x X.
+  UseTerm x t \/ UseTs x Ts \/ TVars.In x X.
 Proof.
 intros until x.
 intro.
@@ -556,10 +559,4 @@ apply TypeConstraint_ind; intros; auto.
  decompose [or] H2.
   left.
   apply ULambda.
-  tauto.
 
-  tauto.
-
- decompose [ex] H0.
- decompose [and] H2.
- inversion H1.
