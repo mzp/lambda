@@ -492,6 +492,52 @@ induction T; intros.
   apply IHT3 in H15; contradiction.
 Qed.
 
+Lemma in_iff : forall A (xs : list A) (x y : A),
+  List.In y (x :: xs) <-> y = x \/ List.In y xs.
+Proof.
+intros until xs.
+pattern xs in |- *.
+apply list_ind; split; intros.
+ inversion H.
+  auto.
+
+  contradiction .
+
+ decompose [or] H.
+  rewrite H0 in |- *.
+  apply in_eq.
+
+  inversion H0.
+
+ inversion H0.
+  left.
+  rewrite H1 in |- *.
+  trivial.
+
+  decompose [or] H1.
+   right.
+   rewrite H2 in |- *.
+   apply in_eq.
+
+   right.
+   apply in_cons.
+   trivial.
+
+ decompose [or] H0.
+  rewrite H1 in |- *.
+  apply in_eq.
+
+  inversion H1.
+   rewrite H2 in |- *.
+   apply in_cons.
+   apply in_eq.
+
+   apply in_cons.
+   apply <- H (* Generic printer *).
+   right.
+   trivial.
+Qed.
+
 Lemma constraint_use_t: forall t tenv Ts S X C x,
   TypeConstraint t tenv Ts S X C ->
   UseC x C ->
