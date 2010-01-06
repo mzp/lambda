@@ -182,6 +182,26 @@ decompose [or] H0.
  tauto.
 Qed.
 
+Lemma ApplyTSubst_sym : forall A X X1 X2 (s tsubst tsubst1 tsubst2 : table A) x T ,
+   ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x T ->
+   ApplyTSubst s X X2 X1 tsubst tsubst2 tsubst1 x T.
+Proof.
+unfold ApplyTSubst in |- *.
+intros.
+decompose [and] H.
+split; [ idtac | split; [ idtac | split ] ]; intros.
+ apply H0.
+ trivial.
+
+ apply H1.
+ trivial.
+
+ apply H2.
+ trivial.
+
+ trivial.
+Qed.
+
 Lemma ex_ApplyTSubst : forall A X X1 X2 (tsubst tsubst1 tsubst2 : table A) x T ,
   ~ TVars.In x X1 -> ~ TVars.In x X2 -> Disjoint tsubst X ->
   TVars.Disjoint X1 X2 ->
@@ -318,6 +338,7 @@ split; [ idtac | split; [ idtac | split ] ]; intros.
     left.
     split; reflexivity.
 Qed.
+
 
 Lemma ApplyTSubst_sub : forall A (tsubst' tsubst tsubst1 tsubst2 : table A)X X1 X2 x T,
   ~ TVars.In x X1 -> ~ TVars.In x X2 ->   Disjoint tsubst X ->
@@ -558,7 +579,7 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
  apply H1 in H16.
   apply H3 in H17.
    decompose [ex] H16; decompose [ex] H17.
-   decompose [and] H16; decompose [and] H18.
+   decompose [and] H18; decompose [and] H19.
    assert
     (exists s : _,
        ApplyTSubst s (TVars.add x (TVars.union X1 X2)) X1 X2 tsubst1 x1 x2 x
@@ -567,7 +588,7 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
     decompose [and] H11.
     apply ex_ApplyTSubst; trivial.
 
-    decompose [ex] H22.
+    decompose [ex] H24.
     exists x3.
     split.
      unfold Fresh in H11.
@@ -597,3 +618,22 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
           apply not_overlap_x with (C := C1); auto.
           unfold Fresh in H11.
           tauto.
+
+          decompose [ex] H21.
+          tauto.
+
+         apply
+          (ApplyTSubst_unified x3 (TVars.add x (TVars.union X1 X2)) X2 X1
+             tsubst1 x2 x1 x T0 _); auto.
+          apply ApplyTSubst_sym.
+          trivial.
+
+          intros.
+          rewrite TVars.union_sym in |- *.
+          apply not_overlap_x with (C := C2); auto.
+          unfold Fresh in H11.
+          tauto.
+
+          decompose [ex] H23.
+          tauto.
+
