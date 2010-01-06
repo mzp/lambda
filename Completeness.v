@@ -461,29 +461,93 @@ assert (type_subst S0 s = type_subst S0 tsubst1).
   trivial.
 Qed.
 
-Lemma not_overlap_x: forall x y C X1 X2,
+Lemma not_in_disjoint: forall A (Y : A) (Fresh Use : string -> A -> Prop) x y X1 X2 ,
+  (forall x, Use x Y -> ~ Fresh x Y) ->
+  Fresh x Y -> Use y Y ->
+  (forall x , TVars.In x X2 -> Fresh x Y) ->
+  ~ TVars.In y X1 ->
+  ~ TVars.In y (TVars.add x (TVars.union X1 X2)).
+Proof.
+intros.
+intro.
+apply H3.
+apply TVars.WFact.add_iff in H4.
+decompose [or] H4.
+ rewrite H5 in H0.
+ apply H in H1.
+ contradiction .
+
+ apply TVars.WFact.union_iff in H5.
+ decompose [or] H5; auto.
+ apply H2 in H6.
+ apply H in H1.
+ contradiction .
+Qed.
+
+Lemma not_in_disjoint_t: forall x y T X1 X2,
+  FreshT x T -> UseT y T ->
+  DisjointT X2 T ->
+  ~ TVars.In y X1 ->
+  ~ TVars.In y (TVars.add x (TVars.union X1 X2)).
+Proof.
+intros.
+apply (not_in_disjoint _ T FreshT UseT); auto.
+intros.
+apply use_t_not_fresh.
+trivial.
+Qed.
+
+Lemma not_in_disjoint_c: forall x y C X1 X2,
   FreshC x C -> UseC y C ->
   DisjointC X2 C ->
   ~ TVars.In y X1 ->
   ~ TVars.In y (TVars.add x (TVars.union X1 X2)).
 Proof.
 intros.
-intro.
-apply H2.
-apply TVars.WFact.add_iff in H3.
-decompose [or] H3.
- rewrite H4 in H.
- apply use_c_not_fresh in H0.
- contradiction.
+apply (not_in_disjoint _ C FreshC UseC); auto.
+intros.
+apply use_c_not_fresh.
+trivial.
+Qed.
 
- apply TVars.WFact.union_iff in H4.
- decompose [or] H4.
-  trivial.
+Lemma disjoint_union: forall A (tsubst : table A) X1 X2,
+  Disjoint tsubst (TVars.union X1 X2) ->
+  Disjoint tsubst X1.
+Proof.
+unfold Disjoint in |- *.
+intros.
+specialize (H x).
+decompose [and] H.
+split; intros.
+ apply H0 in H2.
+ intro.
+ apply H2.
+ apply <- TVars.WFact.union_iff (* Generic printer *).
+ tauto.
 
-  unfold DisjointC in H1.
-  apply H1 in H5.
-  apply use_c_not_fresh in H0.
-  contradiction.
+ apply H1.
+ apply <- TVars.WFact.union_iff (* Generic printer *).
+ tauto.
+Qed.
+
+Lemma disjoint_add: forall A (tsubst : table A) x X,
+  Disjoint tsubst (TVars.add x X) ->
+  Disjoint tsubst X.
+Proof.
+unfold Disjoint in |- *.
+intros.
+specialize (H x0).
+decompose [and] H.
+split; intros.
+ apply H0 in H2.
+ intro.
+ apply H2.
+ apply <- TVars.WFact.add_iff (* Generic printer *).
+ tauto.
+
+ apply H1.
+ apply <- TVars.WFact.add_iff (* Generic printer *).
+ tauto.
 Qed.
 
 (* main theorem *)
@@ -615,7 +679,7 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
           (ApplyTSubst_unified x3 (TVars.add x (TVars.union X1 X2)) X1 X2
              tsubst1 x1 x2 x T0 _); auto.
           intros.
-          apply not_overlap_x with (C := C1); auto.
+          apply not_in_disjoint_c with (C := C1); auto.
           unfold Fresh in H11.
           tauto.
 
@@ -630,10 +694,69 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
 
           intros.
           rewrite TVars.union_sym in |- *.
-          apply not_overlap_x with (C := C2); auto.
+          apply not_in_disjoint_c with (C := C2); auto.
           unfold Fresh in H11.
           tauto.
 
           decompose [ex] H23.
           tauto.
+
+        unfold Unified in |- *.
+        intros.
+        apply TConst.WFact.singleton_iff in H26.
+        simpl in H26.
+        decompose [and] H26.
+        assert (type_subst T1 x3 = type_subst T1 x1).
+         apply
+          (ApplyTSubst_subst_eq x3 (TVars.add x (TVars.union X1 X2)) X1 X2
+             tsubst1 x1 x2 x T0); auto.
+         intros.
+         apply not_in_disjoint_t with (T := T1); auto.
+         unfold Fresh in H11.
+         tauto.
+
+         assert (type_subst T2 x3 = type_subst T2 x2).
+          apply
+           (ApplyTSubst_subst_eq x3 (TVars.add x (TVars.union X1 X2)) X2 X1
+              tsubst1 x2 x1 x T0); auto.
+           apply ApplyTSubst_sym.
+           trivial.
+
+           intros.
+           rewrite TVars.union_sym in |- *.
+           apply not_in_disjoint_t with (T := T2); auto.
+           unfold Fresh in H11.
+           tauto.
+
+          rewrite <- H27 in |- *.
+          decompose [ex] H21.
+          decompose [and] H31.
+          rewrite H29 in |- *.
+          rewrite <- H35 in |- *.
+          rewrite <- H28 in |- *.
+          simpl in |- *.
+          rewrite H30 in |- *.
+          decompose [ex] H23.
+          decompose [and] H33.
+          rewrite <- H39 in |- *.
+          unfold ApplyTSubst in H25.
+          decompose [and] H25.
+          apply TableWF.find_mapsto_iff in H43.
+          rewrite H43 in |- *.
+          reflexivity.
+
+       unfold ApplyTSubst in H25.
+       decompose [and] H25.
+       apply TableWF.find_mapsto_iff in H30.
+       rewrite H30 in |- *.
+       reflexivity.
+
+   apply disjoint_add in H14.
+   rewrite TVars.union_sym in H14.
+   apply disjoint_union in H14.
+   trivial.
+
+  apply disjoint_add in H14.
+  apply disjoint_union in H14.
+  trivial.
 
