@@ -389,6 +389,56 @@ decompose [and] H3.
 apply not_x_sub_eq; auto.
 Qed.
 
+Lemma x_subst_eq: forall s X X1 tsubst tsubst1 T,
+  (forall Y U, ~ TVars.In Y X  ->
+    (Table.MapsTo Y U tsubst <-> Table.MapsTo Y U s)) ->
+  (forall Y U,   TVars.In Y X1 ->
+    (Table.MapsTo Y U tsubst1 <-> Table.MapsTo Y U s)) ->
+  tsubst = sub tsubst1 X1 ->
+  (forall x, UseT x T -> ~ TVars.In x X1 -> ~ TVars.In x X) ->
+  type_subst T s = type_subst T tsubst1.
+Proof.
+intros.
+induction T; auto.
+ destruct (TVars.WProp.In_dec s0 X1).
+  apply mapsto_type_subst.
+  intro.
+  apply iff_sym.
+  apply H0.
+  trivial.
+
+  assert (type_subst (VarT s0) tsubst = type_subst (VarT s0) s).
+   apply mapsto_type_subst.
+   intro.
+   apply H.
+   apply H2; auto.
+   apply UVarT.
+
+   assert (type_subst (VarT s0) tsubst = type_subst (VarT s0) tsubst1).
+    rewrite H1 in |- *.
+    apply type_subst_sub.
+    trivial.
+
+    rewrite <- H3 in |- *.
+    rewrite <- H4 in |- *.
+    reflexivity.
+
+ simpl in |- *.
+ rewrite IHT1 in |- *.
+  rewrite IHT2 in |- *.
+   reflexivity.
+
+   intros.
+   apply H2; auto.
+   apply UFunT.
+   tauto.
+
+  intros.
+  apply H2; auto.
+  apply UFunT.
+  tauto.
+Qed.
+
 Lemma ApplyTSubst_subst_eq: forall s X X1 X2 tsubst tsubst1 tsubst2 x S T,
   ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x S ->
   tsubst = sub tsubst1 X1 ->
@@ -398,46 +448,7 @@ Proof.
 intros.
 unfold ApplyTSubst in H.
 decompose [and] H.
-induction T; auto.
- destruct (TVars.WProp.In_dec s0 X1).
-  apply mapsto_type_subst.
-  intro.
-  apply iff_sym.
-  apply H4.
-  trivial.
-
-  assert (type_subst (VarT s0) tsubst = type_subst (VarT s0) s).
-   apply mapsto_type_subst.
-   intro.
-   apply H2.
-   apply H1.
-    apply UVarT.
-
-    trivial.
-
-   assert (type_subst (VarT s0) tsubst = type_subst (VarT s0) tsubst1).
-    rewrite H0 in |- *.
-    apply type_subst_sub.
-    trivial.
-
-    rewrite <- H5 in |- *; rewrite H7 in |- *.
-    reflexivity.
-
- simpl in |- *.
- rewrite IHT1 in |- *.
-  rewrite IHT2 in |- *.
-   reflexivity.
-
-   intros.
-   apply H1; auto.
-   apply UFunT.
-   right; trivial.
-
-  intros.
-  apply H1; auto.
-  apply UFunT.
-  left.
-  trivial.
+apply x_subst_eq with (X:=X) (X1:=X1) (tsubst:=tsubst); auto.
 Qed.
 
 Lemma ApplyTSubst_unified: forall s X X1 X2 tsubst tsubst1 tsubst2 x S C,
