@@ -53,7 +53,7 @@ functional induction (subst x0 x s) .
  inversion H.
  apply TLambda.
  apply IHt with (S := S).
-  destruct (string_dec x (Flesh old new body)).
+  destruct (string_dec x (Fresh old new body)).
    rewrite <- e in |- *.
    rewrite alpha_id in |- *.
    generalize _x.
@@ -62,28 +62,28 @@ functional induction (subst x0 x s) .
    rewrite <- _x0 in |- *.
    trivial.
 
-   assert (old <> Flesh old new body).
-    apply Flesh_x.
+   assert (old <> Fresh old new body).
+    apply Fresh_x.
 
-    apply (add_2 _ tenv old (Flesh old new body) S T) in H7.
+    apply (add_2 _ tenv old (Fresh old new body) S T) in H7.
     rewrite H7 in |- *.
     apply add_elim with (s := x) (S := T).
      apply alpha_fv.
      trivial.
 
-     apply (add_2 _ (Table.add old S tenv) x (Flesh old new body) T T) in n.
+     apply (add_2 _ (Table.add old S tenv) x (Fresh old new body) T T) in n.
      rewrite n in |- *.
      apply alpha_preserve.
       trivial.
 
-      apply Flesh_fv2.
+      apply Fresh_fv2.
 
-      apply Flesh_bv2.
+      apply Fresh_bv2.
 
       apply Table.add_1.
       reflexivity.
 
-  apply add_intro; [apply Flesh_fv1 | apply Flesh_bv1 | trivial].
+  apply add_intro; [apply Fresh_fv1 | apply Fresh_bv1 | trivial].
 
  intros.
  inversion H.

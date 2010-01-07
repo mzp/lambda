@@ -4,13 +4,13 @@ Require Import String.
 Require Import Term.
 Require Import Var.
 
-Variable Flesh : string -> term -> term -> string.
-Hypothesis Flesh_x : forall x s t, x <> Flesh x s t.
-Hypothesis Flesh_fv1 : forall x s t, ~Free (Flesh x s t) s.
-Hypothesis Flesh_fv2 : forall x s t, ~Free (Flesh x s t) t.
+Variable Fresh : string -> term -> term -> string.
+Hypothesis Fresh_x : forall x s t, x <> Fresh x s t.
+Hypothesis Fresh_fv1 : forall x s t, ~Free (Fresh x s t) s.
+Hypothesis Fresh_fv2 : forall x s t, ~Free (Fresh x s t) t.
 
-Hypothesis Flesh_bv1 : forall x s t, ~Bound (Flesh x s t) s.
-Hypothesis Flesh_bv2 : forall x s t, ~Bound (Flesh x s t) t.
+Hypothesis Fresh_bv1 : forall x s t, ~Bound (Fresh x s t) s.
+Hypothesis Fresh_bv2 : forall x s t, ~Bound (Fresh x s t) t.
 
 Fixpoint alpha (t : term) (old new : string) :=
   match t with

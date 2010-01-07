@@ -24,7 +24,7 @@ Function subst (t : term) (old : string) (new : term) {measure term_length t}: t
       if string_dec x old then
       	Lambda x T body
       else
-      	let y := Flesh old new body in
+      	let y := Fresh old new body in
           Lambda y T (subst (alpha body x y) old new)
   | Apply t1 t2 =>
       Apply (subst t1 old new) (subst t2 old new)
