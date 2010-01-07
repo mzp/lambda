@@ -19,3 +19,8 @@ FILES[] =
 	Completeness
 
 .DEFAULT: $(CoqProof $(FILES))
+
+.PHONY: clean
+
+clean:
+	rm -rf *.vo *.glob *~ *.omc .omakedb .omakedb.lock
