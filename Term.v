@@ -2,10 +2,10 @@
 Require Import List.
 Require Import String.
 
-Require Import FSets.FMapWeakList.
-Require Import FSets.FMapInterface.
-Require Import FSets.FMapFacts.
-Require Import Logic.DecidableType.
+Require Import FMapWeakList.
+Require Import FMapInterface.
+Require Import FMapFacts.
+Require Import DecidableType.
 
 Inductive type : Set :=
   | VarT  : string -> type
