@@ -35,6 +35,10 @@ FILES[] =
 
 .DEFAULT: $(Proof $(FILES))
 
-.PHONY: clean
+.PHONY: clean doc
+
+doc:
+	mkdir -p doc
+	coqdoc -d doc $(addsuffix .v,$(FILES))
 clean:
-	rm -f *.vo *.glob *~ *.omc .omakedb .omakedb.lock *.html
+	rm -rf *.vo *.glob *~ *.omc .omakedb .omakedb.lock *.html doc
