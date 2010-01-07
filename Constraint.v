@@ -102,9 +102,12 @@ Inductive TypeConstraint : term -> tenv -> list type -> type -> tvars -> tconst 
     DisjointTerm X1 t2 -> DisjointTerm X1 t3 ->
     DisjointTerm X2 t1 -> DisjointTerm X2 t3 ->
     DisjointTerm X3 t1 -> DisjointTerm X3 t2 ->
-(*    DisjointC X1 C2 -> DisjointC X1 C3 ->
+    DisjointC X1 C2 -> DisjointC X1 C3 ->
     DisjointC X2 C1 -> DisjointC X2 C3 ->
-    DisjointC X3 C1 -> DisjointC X3 C2 ->*)
+    DisjointC X3 C1 -> DisjointC X3 C2 ->
+    DisjointT X1 T2 -> DisjointT X1 T3 ->
+    DisjointT X2 T1 -> DisjointT X2 T3 ->
+    DisjointT X3 T1 -> DisjointT X3 T2 ->
     C = TConst.add (T1,BoolT) (TConst.add (T2,T3) (TConst.union C1 (TConst.union C2 C3))) ->
     TypeConstraint (If t1 t2 t3) tenv Ts T2 (TVars.union X1 (TVars.union X2 X3)) C.
 
@@ -407,40 +410,40 @@ apply TypeConstraint_ind; intros.
     apply FApply; split; [ apply H8 | apply H3 in H15]; tauto.
 
  (* If *)
- apply TVars.WFact.union_iff in H16.
- decompose [or] H16.
+ apply TVars.WFact.union_iff in H28.
+ decompose [or] H28.
   split.
-   apply H1 in H17.
+   apply H1 in H29.
    tauto.
 
    apply FIf.
    split.
-    apply H1 in H17.
+    apply H1 in H29.
     tauto.
 
     split; [apply H9 | apply H10]; trivial.
 
-  apply TVars.WFact.union_iff in H17.
-  decompose [or] H17.
+  apply TVars.WFact.union_iff in H29.
+  decompose [or] H29.
    split.
-    apply H3 in H18.
+    apply H3 in H30.
     tauto.
 
     apply FIf.
     split.
      apply H11; trivial.
 
-     split; [apply H3 in H18 | apply H12]; tauto.
+     split; [apply H3 in H30 | apply H12]; tauto.
 
    split.
-    apply H5 in H18.
+    apply H5 in H30.
     tauto.
 
     apply FIf.
     split.
      apply H13; trivial.
 
-     split; [apply H14 | apply H5 in H18]; tauto.
+     split; [apply H14 | apply H5 in H30]; tauto.
 
  trivial.
 Qed.

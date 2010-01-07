@@ -439,6 +439,41 @@ induction T; auto.
   tauto.
 Qed.
 
+Lemma x_unified: forall s X X1 tsubst tsubst1 C,
+  (forall Y U, ~ TVars.In Y X  ->
+    (Table.MapsTo Y U tsubst <-> Table.MapsTo Y U s)) ->
+  (forall Y U,   TVars.In Y X1 ->
+    (Table.MapsTo Y U tsubst1 <-> Table.MapsTo Y U s)) ->
+  tsubst = sub tsubst1 X1 ->
+  (forall x, UseC x C -> ~ TVars.In x X1 -> ~ TVars.In x X) ->
+  Unified C tsubst1 ->
+  Unified C s.
+Proof.
+unfold Unified in |- *; intros.
+assert (type_subst S s = type_subst S tsubst1).
+ apply x_subst_eq with (X := X) (X1 := X1) (tsubst := tsubst); auto.
+ intros.
+ apply H2; auto.
+ unfold UseC in |- *.
+ exists S.
+ exists T.
+ split; tauto.
+
+ assert (type_subst T s = type_subst T tsubst1).
+  apply x_subst_eq with (X := X) (X1 := X1) (tsubst := tsubst); auto.
+  intros.
+  apply H2; auto.
+  unfold UseC in |- *.
+  exists S.
+  exists T.
+  split; auto.
+
+  rewrite H5 in |- *.
+  rewrite H6 in |- *.
+  apply H3.
+  trivial.
+Qed.
+
 Lemma ApplyTSubst_subst_eq: forall s X X1 X2 tsubst tsubst1 tsubst2 x S T,
   ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x S ->
   tsubst = sub tsubst1 X1 ->
@@ -458,26 +493,10 @@ Lemma ApplyTSubst_unified: forall s X X1 X2 tsubst tsubst1 tsubst2 x S C,
   Unified C tsubst1 ->
   Unified C s.
 Proof.
-unfold Unified in |- *; intros.
-assert (type_subst S0 s = type_subst S0 tsubst1).
- apply (ApplyTSubst_subst_eq s X X1 X2 tsubst tsubst1 tsubst2 x S); auto.
- intros.
- apply H1; auto.
- unfold UseC in |- *.
- exists S0; exists T.
- split; tauto.
-
- assert (type_subst T s = type_subst T tsubst1).
-  apply (ApplyTSubst_subst_eq s X X1 X2 tsubst tsubst1 tsubst2 x S); auto.
-  intros.
-  apply H1; auto.
-  unfold UseC in |- *.
-  exists S0; exists T.
-  split; tauto.
-
-  rewrite H4 in |- *; rewrite H5 in |- *.
-  apply H2.
-  trivial.
+intros.
+unfold ApplyTSubst in H.
+decompose [and] H.
+apply x_unified with (X:=X) (X1:=X1) (tsubst:=tsubst) (tsubst1:=tsubst1); auto.
 Qed.
 
 Lemma not_in_disjoint: forall A (Y : A) (Fresh Use : string -> A -> Prop) x y X1 X2 ,
@@ -528,6 +547,60 @@ intros.
 apply use_c_not_fresh.
 trivial.
 Qed.
+
+Lemma not_in_disjoint_3: forall A (Y : A) (Fresh Use : string -> A -> Prop) x X1 X2 X3,
+  (forall x, Use x Y -> ~ Fresh x Y) ->
+  (forall x , TVars.In x X2 -> Fresh x Y) ->
+  (forall x , TVars.In x X3 -> Fresh x Y) ->
+  Use x Y ->
+  ~ TVars.In x X1 ->
+  ~ TVars.In x (TVars.union X1 (TVars.union X2 X3)).
+Proof.
+intros.
+intro.
+apply H3.
+apply TVars.WFact.union_iff in H4.
+decompose [or] H4.
+ tauto.
+
+ apply TVars.WFact.union_iff in H5.
+ apply H in H2.
+ decompose [or] H5.
+  apply H0 in H6.
+  contradiction .
+
+  apply H1 in H6.
+  contradiction .
+Qed.
+
+Lemma not_in_disjoint_c_3: forall x C X1 X2 X3,
+  UseC x C ->
+  DisjointC X2 C ->
+  DisjointC X3 C ->
+  ~ TVars.In x X1 ->
+  ~ TVars.In x (TVars.union X1 (TVars.union X2 X3)).
+Proof.
+intros.
+apply (not_in_disjoint_3 _ C FreshC UseC); auto.
+intros.
+apply use_c_not_fresh.
+tauto.
+Qed.
+
+Lemma not_in_disjoint_t_3: forall x T X1 X2 X3,
+  UseT x T ->
+  DisjointT X2 T ->
+  DisjointT X3 T ->
+  ~ TVars.In x X1 ->
+  ~ TVars.In x (TVars.union X1 (TVars.union X2 X3)).
+Proof.
+intros.
+apply (not_in_disjoint_3 _ T FreshT UseT); auto.
+intros.
+apply use_t_not_fresh.
+tauto.
+Qed.
+
 
 Lemma disjoint_union: forall A (tsubst : table A) X1 X2,
   Disjoint tsubst (TVars.union X1 X2) ->
@@ -590,6 +663,26 @@ Definition IfTSubst {A : Type} tsubst' X X1 X2 X3 (tsubst tsubst1 tsubst2 tsubst
     (Table.MapsTo Y U tsubst2 <-> Table.MapsTo Y U tsubst')) /\
   (forall Y U,   TVars.In Y X3 ->
     (Table.MapsTo Y U tsubst3 <-> Table.MapsTo Y U tsubst')).
+
+Lemma IfTSubst_sym_1: forall A X X1 X2 X3 (s tsubst tsubst1 tsubst2 tsubst3 : table A),
+  IfTSubst s X X1 X2 X3 tsubst tsubst1 tsubst2 tsubst3 ->
+  IfTSubst s X X2 X1 X3 tsubst tsubst2 tsubst1 tsubst3.
+Proof.
+unfold IfTSubst in |- *.
+intros.
+decompose [and] H.
+split; [ idtac | split; [ idtac | split ] ]; intros; auto.
+Qed.
+
+Lemma IfTSubst_sym_2: forall A X X1 X2 X3 (s tsubst tsubst1 tsubst2 tsubst3 : table A),
+  IfTSubst s X X1 X2 X3 tsubst tsubst1 tsubst2 tsubst3 ->
+  IfTSubst s X X3 X2 X1 tsubst tsubst3 tsubst2 tsubst1.
+Proof.
+unfold IfTSubst in |- *.
+intros.
+decompose [and] H.
+split; [ idtac | split; [ idtac | split ] ]; intros; auto.
+Qed.
 
 Lemma ex_IfTSubst : forall A X X1 X2 X3 (tsubst tsubst1 tsubst2 tsubst3 : table A),
   Disjoint tsubst X ->
@@ -767,7 +860,7 @@ split; [ idtac | split; [ idtac | split ] ]; split; intros.
   tauto.
 Qed.
 
-Lemma IfTSubst_sub : forall A (tsubst' tsubst tsubst1 tsubst2 tsubst3: table A)X X1 X2 X3,
+Lemma IfTSubst_sub : forall A (tsubst' tsubst tsubst1 tsubst2 tsubst3: table A) X X1 X2 X3,
   Disjoint tsubst X ->
   X = TVars.union X1 (TVars.union X2 X3) ->
   IfTSubst tsubst' X X1 X2 X3 tsubst tsubst1 tsubst2 tsubst3->
@@ -777,6 +870,31 @@ unfold IfTSubst in |- *.
 intros.
 decompose [and] H1.
 apply not_x_sub_eq; auto.
+Qed.
+
+Lemma IfTSubst_subst_eq: forall X X1 X2 X3 s tsubst tsubst1 tsubst2 tsubst3 T,
+  IfTSubst s X X1 X2 X3 tsubst tsubst1 tsubst2 tsubst3 ->
+  tsubst = sub tsubst1 X1 ->
+  (forall x, UseT x T -> ~ TVars.In x X1 -> ~ TVars.In x X) ->
+  type_subst T s = type_subst T tsubst1.
+Proof.
+intros.
+unfold IfTSubst in H.
+decompose [and] H.
+apply x_subst_eq with (X:=X) (X1:=X1) (tsubst:=tsubst); auto.
+Qed.
+
+Lemma IfTSubst_unified: forall X X1 X2 X3 s tsubst tsubst1 tsubst2 tsubst3 C,
+  IfTSubst s X X1 X2 X3 tsubst tsubst1 tsubst2 tsubst3 ->
+  tsubst = sub tsubst1 X1 ->
+  (forall x, UseC x C -> ~ TVars.In x X1 -> ~ TVars.In x X) ->
+  Unified C tsubst1 ->
+  Unified C s.
+Proof.
+intros.
+unfold IfTSubst in H.
+decompose [and] H.
+apply x_unified with (X:=X) (X1:=X1) (tsubst:=tsubst) (tsubst1:=tsubst1); auto.
 Qed.
 
 (* main theorem *)
@@ -989,24 +1107,24 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
   apply disjoint_union in H14.
   trivial.
 
- apply if_inv in H16.
- decompose [and] H16.
- apply H1 in H18.
-  apply H3 in H20.
-   apply H5 in H21.
-    decompose [ex] H18.
-    decompose [ex] H20.
-    decompose [ex] H21.
+ apply if_inv in H28.
+ decompose [and] H28.
+ apply H1 in H30.
+  apply H3 in H32.
+   apply H5 in H33.
+    decompose [ex] H30.
+    decompose [ex] H32.
+    decompose [ex] H33.
     assert
      (exists s : _,
         IfTSubst s (TVars.union X1 (TVars.union X2 X3)) X1 X2 X3 tsubst1 x x0
           x1).
      apply ex_IfTSubst; auto.
 
-     decompose [ex] H24.
+     decompose [ex] H36.
      exists x2.
      split.
-      apply IfTSubst_sub in H25; auto.
+      apply IfTSubst_sub in H37; auto.
 
       exists (TVars.union X1 (TVars.union X2 X3)).
       split.
@@ -1014,8 +1132,120 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
         auto.
 
        split.
-        rewrite H15 in |- *.
+        rewrite H27 in |- *.
         apply Unified_Add_intro.
          apply Unified_Add_intro.
           apply Unified_Union_intro.
+           apply IfTSubst_unified with (C := C1) in H37; auto.
+            tauto.
 
+            intros.
+            apply not_in_disjoint_c_3 with (C := C1); auto.
+
+            decompose [and ex] H31.
+            tauto.
+
+           apply Unified_Union_intro.
+            apply IfTSubst_sym_1 in H37.
+            apply IfTSubst_unified with (C := C2) in H37; auto.
+             tauto.
+
+             intros.
+             rewrite TVars.union_assoc in |- *.
+             rewrite (TVars.union_sym X1 X2) in |- *.
+             rewrite <- TVars.union_assoc in |- *.
+             apply not_in_disjoint_c_3 with (C := C2); auto.
+
+             decompose [ex and ex] H34.
+             tauto.
+
+            apply IfTSubst_sym_2 in H37.
+            apply IfTSubst_unified with (C := C3) in H37; auto.
+             tauto.
+
+             intros.
+             rewrite TVars.union_assoc in |- *.
+             rewrite TVars.union_sym in |- *.
+             apply not_in_disjoint_c_3 with (C := C3); auto.
+
+             decompose [and ex and] H35.
+             tauto.
+
+          unfold Unified in |- *.
+          intros.
+          apply TConst.WFact.singleton_iff in H38.
+          simpl in H38.
+          decompose [and] H38.
+          rewrite <- H39,  <- H40 in |- *.
+          assert (type_subst T2 x0 = type_subst T2 x2).
+           apply IfTSubst_sym_1 in H37.
+           apply IfTSubst_subst_eq with (T := T2) in H37; auto.
+            tauto.
+
+            intros.
+            rewrite TVars.union_assoc in |- *.
+            rewrite (TVars.union_sym X1 X2) in |- *.
+            rewrite <- TVars.union_assoc in |- *.
+            apply not_in_disjoint_t_3 with (T := T2); auto.
+
+           assert (type_subst T3 x1 = type_subst T3 x2).
+            apply IfTSubst_sym_2 in H37.
+            apply IfTSubst_subst_eq with (T := T3) in H37; auto.
+             tauto.
+
+             intros.
+             rewrite TVars.union_assoc in |- *.
+             rewrite TVars.union_sym in |- *.
+             apply not_in_disjoint_t_3 with (T := T3); auto.
+
+            rewrite <- H41 in |- *.
+            rewrite <- H42 in |- *.
+            decompose [and ex] H35.
+            decompose [and ex] H34.
+            rewrite <- H47,  <- H51 in |- *.
+            reflexivity.
+
+         unfold Unified in |- *.
+         intros.
+         apply TConst.WFact.singleton_iff in H38.
+         simpl in H38.
+         decompose [and] H38.
+         rewrite <- H39,  <- H40 in |- *.
+         simpl in |- *.
+         assert (type_subst T1 x2 = type_subst T1 x).
+          apply IfTSubst_subst_eq with (T := T1) in H37; auto.
+           tauto.
+
+           intros.
+           apply not_in_disjoint_t_3 with (T := T1); auto.
+
+          rewrite H41 in |- *.
+          decompose [ex and] H31.
+          rewrite <- H46 in |- *.
+          reflexivity.
+
+        decompose [ex and] H34.
+        rewrite H42 in |- *.
+        apply IfTSubst_sym_1 in H37.
+        apply IfTSubst_subst_eq with (T := T2) in H37; auto.
+        intros.
+        rewrite TVars.union_assoc in |- *.
+        rewrite (TVars.union_sym X1 X2) in |- *.
+        rewrite <- TVars.union_assoc in |- *.
+        apply not_in_disjoint_t_3 with (T := T2); auto.
+
+    rewrite TVars.union_assoc in H29.
+    rewrite TVars.union_sym in H29.
+    apply disjoint_union in H29.
+    tauto.
+
+   rewrite TVars.union_assoc,  (TVars.union_sym X1 X2),  <-
+    TVars.union_assoc in H29.
+   apply disjoint_union in H29.
+   tauto.
+
+  apply disjoint_union in H29.
+  tauto.
+
+ tauto.
+Qed.

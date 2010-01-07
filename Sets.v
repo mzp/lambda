@@ -71,6 +71,45 @@ Module Make(Dec : DecidableType).
   Qed.
 
 
+  Lemma union_assoc : forall X Y Z,
+    union X (union Y Z) = (union (union X Y) Z).
+  Proof.
+  intros.
+  unfold union in |- *.
+  apply Extensionality_Set.
+  unfold FSet.Equal in |- *.
+  split; intros.
+   apply WFact.union_iff in H.
+   apply <- WFact.union_iff (* Generic printer *).
+   decompose [or] H.
+    left.
+    apply <- WFact.union_iff (* Generic printer *).
+    tauto.
+
+    apply WFact.union_iff in H0.
+    decompose [or] H0.
+     left.
+     apply <- WFact.union_iff (* Generic printer *).
+     tauto.
+
+     tauto.
+
+   apply <- WFact.union_iff (* Generic printer *).
+   apply WFact.union_iff in H.
+   decompose [or] H.
+    apply WFact.union_iff in H0.
+    decompose [or] H0.
+     tauto.
+
+     right.
+     apply <- WFact.union_iff (* Generic printer *).
+     tauto.
+
+    right.
+    apply <- WFact.union_iff (* Generic printer *).
+    tauto.
+  Qed.
+
   Lemma union_sym : forall X Y,
     union X Y = union Y X.
   Proof.
@@ -105,4 +144,5 @@ Module Make(Dec : DecidableType).
   apply <- WFact.inter_iff (* Generic printer *).
   tauto.
   Qed.
+
 End Make.

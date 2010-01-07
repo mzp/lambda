@@ -74,7 +74,7 @@ apply TypeConstraint_ind; intros; unfold Solution in |- *; simpl in |- *.
 
   trivial.
 
-  rewrite <- H15 in |- *.
+  rewrite <- H27 in |- *.
   trivial.
 
  trivial.
