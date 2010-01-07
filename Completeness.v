@@ -558,6 +558,216 @@ split; intros.
  tauto.
 Qed.
 
+Lemma if_inv: forall tsubst T tenv t1 t2 t3,
+  Solution tsubst T tenv (If t1 t2 t3) ->
+  Solution tsubst BoolT tenv t1 /\
+  Solution tsubst T tenv t2 /\
+  Solution tsubst T tenv t3.
+Proof.
+unfold Solution in |- *.
+intros.
+inversion H.
+auto.
+Qed.
+
+Definition IfTSubst {A : Type} tsubst' X X1 X2 X3 (tsubst tsubst1 tsubst2 tsubst3: table A) :=
+  (forall Y U, ~ TVars.In Y X  ->
+    (Table.MapsTo Y U tsubst <-> Table.MapsTo Y U tsubst')) /\
+  (forall Y U,   TVars.In Y X1 ->
+    (Table.MapsTo Y U tsubst1 <-> Table.MapsTo Y U tsubst')) /\
+  (forall Y U,   TVars.In Y X2 ->
+    (Table.MapsTo Y U tsubst2 <-> Table.MapsTo Y U tsubst')) /\
+  (forall Y U,   TVars.In Y X3 ->
+    (Table.MapsTo Y U tsubst3 <-> Table.MapsTo Y U tsubst')).
+
+Lemma ex_IfTSubst : forall A X X1 X2 X3 (tsubst tsubst1 tsubst2 tsubst3 : table A),
+  Disjoint tsubst X ->
+  TVars.Disjoint X1 X2 ->
+  TVars.Disjoint X2 X3 ->
+  TVars.Disjoint X3 X1 ->
+  X = TVars.union X1 (TVars.union X2 X3) ->
+  exists s : table A, IfTSubst s X X1 X2 X3 tsubst tsubst1 tsubst2 tsubst3.
+Proof.
+intros.
+exists
+ (union (filter (fun x => not_sumbool $ TVars.WProp.In_dec x X) tsubst) $
+  union (filter (fun x => TVars.WProp.In_dec x X1) tsubst1) $
+  union (filter (fun x => TVars.WProp.In_dec x X2) tsubst2) $
+  filter (fun x => TVars.WProp.In_dec x X3) tsubst3).
+unfold app in |- *.
+unfold IfTSubst in |- *.
+split; [ idtac | split; [ idtac | split ] ]; split; intros.
+ apply union_filter_intro_1; trivial.
+
+ apply union_iff in H5.
+ decompose [or] H5.
+  apply filter_iff in H6.
+  tauto.
+
+  decompose [and] H6.
+  apply union_filter_elim_2 in H8.
+   apply union_filter_elim_2 in H8.
+    apply filter_iff in H8.
+    decompose [and] H8.
+    assert False.
+     apply H4.
+     rewrite H3 in |- *.
+     apply <- TVars.WFact.union_iff (* Generic printer *).
+     right.
+     apply <- TVars.WFact.union_iff (* Generic printer *).
+     tauto.
+
+     contradiction .
+
+    intro.
+    apply H4.
+    rewrite H3 in |- *.
+    apply <- TVars.WFact.union_iff (* Generic printer *).
+    right.
+    apply <- TVars.WFact.union_iff (* Generic printer *).
+    tauto.
+
+   intro.
+   apply H4.
+   rewrite H3 in |- *.
+   apply <- TVars.WFact.union_iff (* Generic printer *).
+   tauto.
+
+ apply union_filter_intro_2.
+  intro.
+  apply H6.
+  rewrite H3 in |- *.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  tauto.
+
+  apply union_filter_intro_1.
+   trivial.
+
+   trivial.
+
+ apply union_filter_elim_2 in H5.
+  apply union_iff in H5.
+  decompose [or] H5.
+   apply filter_iff in H6.
+   tauto.
+
+   decompose [and] H6.
+   apply union_filter_elim_2 in H8.
+    apply filter_iff in H8.
+    decompose [and] H8.
+    apply TVars.disjoint_left with (x := Y) in H2; auto.
+    contradiction .
+
+    apply TVars.disjoint_left with (X := X1); auto.
+
+  intro.
+  apply H6.
+  rewrite H3 in |- *.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  tauto.
+
+ apply union_filter_intro_2.
+  intro.
+  apply H6.
+  rewrite H3 in |- *.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  right.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  tauto.
+
+  apply union_filter_intro_2.
+   apply TVars.disjoint_left with (X := X2).
+    apply TVars.disjoint_sym.
+    tauto.
+
+    tauto.
+
+   apply union_filter_intro_1; tauto.
+
+ apply union_filter_elim_2 in H5.
+  apply union_filter_elim_2 in H5.
+   apply union_iff in H5.
+   decompose [or] H5.
+    apply filter_iff in H6.
+    tauto.
+
+    decompose [and] H6.
+    apply filter_iff in H8.
+    decompose [and] H8.
+    apply TVars.disjoint_left with (x := Y) in H1; auto.
+    contradiction .
+
+   apply TVars.disjoint_left with (X := X2).
+    apply TVars.disjoint_sym.
+    tauto.
+
+    tauto.
+
+  intro.
+  apply H6.
+  rewrite H3 in |- *.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  right.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  tauto.
+
+ apply union_filter_intro_2.
+  intro.
+  apply H6.
+  rewrite H3 in |- *.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  right.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  tauto.
+
+  apply union_filter_intro_2.
+   apply TVars.disjoint_left with (X := X3); auto.
+
+   apply union_filter_intro_2.
+    apply TVars.disjoint_left with (X := X3).
+     apply TVars.disjoint_sym.
+     trivial.
+
+     trivial.
+
+    apply <- filter_iff (* Generic printer *).
+    tauto.
+
+ apply union_filter_elim_2 in H5.
+  apply union_filter_elim_2 in H5.
+   apply union_filter_elim_2 in H5.
+    apply filter_iff in H5.
+    tauto.
+
+    apply TVars.disjoint_left with (X := X3).
+     apply TVars.disjoint_sym.
+     tauto.
+
+     tauto.
+
+   apply TVars.disjoint_left with (X := X3); auto.
+
+  intro.
+  apply H6.
+  rewrite H3 in |- *.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  right.
+  apply <- TVars.WFact.union_iff (* Generic printer *).
+  tauto.
+Qed.
+
+Lemma IfTSubst_sub : forall A (tsubst' tsubst tsubst1 tsubst2 tsubst3: table A)X X1 X2 X3,
+  Disjoint tsubst X ->
+  X = TVars.union X1 (TVars.union X2 X3) ->
+  IfTSubst tsubst' X X1 X2 X3 tsubst tsubst1 tsubst2 tsubst3->
+  tsubst = sub tsubst' X.
+Proof.
+unfold IfTSubst in |- *.
+intros.
+decompose [and] H1.
+apply not_x_sub_eq; auto.
+Qed.
+
 (* main theorem *)
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
   TypeConstraint t tenv Ts S X C ->
@@ -767,4 +977,34 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
   apply disjoint_add in H14.
   apply disjoint_union in H14.
   trivial.
+
+ apply if_inv in H16.
+ decompose [and] H16.
+ apply H1 in H18.
+  apply H3 in H20.
+   apply H5 in H21.
+    decompose [ex] H18.
+    decompose [ex] H20.
+    decompose [ex] H21.
+    assert
+     (exists s : _,
+        IfTSubst s (TVars.union X1 (TVars.union X2 X3)) X1 X2 X3 tsubst1 x x0
+          x1).
+     apply ex_IfTSubst; auto.
+
+     decompose [ex] H24.
+     exists x2.
+     split.
+      apply IfTSubst_sub in H25; auto.
+
+      exists (TVars.union X1 (TVars.union X2 X3)).
+      split.
+       apply CTIf with (T1 := T1) (T3 := T3) (C1 := C1) (C2 := C2) (C3 := C3);
+        auto.
+
+       split.
+        rewrite H15 in |- *.
+        apply Unified_Add_intro.
+         apply Unified_Add_intro.
+          apply Unified_Union_intro.
 
