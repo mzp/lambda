@@ -339,11 +339,10 @@ split; [ idtac | split; [ idtac | split ] ]; intros.
     split; reflexivity.
 Qed.
 
-
-Lemma ApplyTSubst_sub : forall A (tsubst' tsubst tsubst1 tsubst2 : table A)X X1 X2 x T,
-  ~ TVars.In x X1 -> ~ TVars.In x X2 ->   Disjoint tsubst X ->
-  X = TVars.add x (TVars.union X1 X2) ->
-  ApplyTSubst tsubst' X X1 X2 tsubst tsubst1 tsubst2 x T ->
+Lemma not_x_sub_eq : forall A (tsubst' tsubst : table A) X,
+  Disjoint tsubst X ->
+  (forall Y U, ~ TVars.In Y X  ->
+    (Table.MapsTo Y U tsubst <-> Table.MapsTo Y U tsubst')) ->
   tsubst = sub tsubst' X.
 Proof.
 intros.
@@ -351,10 +350,10 @@ apply Extensionality_Table.
 apply <- TableWF.Equal_mapsto_iff (* Generic printer *).
 split; intros.
  destruct (TVars.WProp.In_dec k X).
-  unfold Disjoint in H1.
-  specialize (H1 k).
-  inversion H1.
-  apply H6 in i.
+  unfold Disjoint in H.
+  specialize (H k).
+  decompose [and] H.
+  apply H3 in i.
   assert False.
    apply i.
    unfold Table.In in |- *.
@@ -367,18 +366,27 @@ split; intros.
   unfold sub in |- *.
   apply <- filter_iff (* Generic printer *); auto.
   split; auto.
-  unfold ApplyTSubst in H3.
-  decompose [and] H3.
-  apply H5 with (U := e) in n; auto.
-  apply n; trivial.
+  apply H0 with (U := e) in n.
+  apply n.
+  trivial.
 
- unfold sub in H4.
- apply filter_iff in H4.
- inversion H4.
- unfold ApplyTSubst in H3.
- decompose [and] H3.
- apply H7 with (U := e) in H6.
- apply H6; trivial.
+ unfold sub in H1.
+ apply filter_iff in H1.
+ decompose [and] H1.
+ apply H0 with (U := e) in H3.
+ apply H3; trivial.
+Qed.
+
+Lemma ApplyTSubst_sub : forall A (tsubst' tsubst tsubst1 tsubst2 : table A)X X1 X2 x T,
+  ~ TVars.In x X1 -> ~ TVars.In x X2 ->   Disjoint tsubst X ->
+  X = TVars.add x (TVars.union X1 X2) ->
+  ApplyTSubst tsubst' X X1 X2 tsubst tsubst1 tsubst2 x T ->
+  tsubst = sub tsubst' X.
+Proof.
+unfold ApplyTSubst in |- *.
+intros.
+decompose [and] H3.
+apply not_x_sub_eq; auto.
 Qed.
 
 Lemma ApplyTSubst_subst_eq: forall s X X1 X2 tsubst tsubst1 tsubst2 x S T,
