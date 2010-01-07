@@ -1,44 +1,12 @@
-# ------------------------------------------------------------
-# rules
-# ------------------------------------------------------------
 
-public.Proof(files) =
-	vo=$(addsuffix .vo,$(files))
-	value $(vo)
+.SUBDIRS : theorems
 
-%.vo %.glob: %.v
-	coqc $<
-
-.SCANNER: %.vo: %.v
-	coqdep -w -coqlib /opt/local/lib/coq/ -I . $<
-
-# ------------------------------------------------------------
-FILES[] =
-	Alpha
-	AlphaFact
-	Term
-	Eval
-	Typing
-	Tables
-	TypeInv
-	TypeUniq
-	CannonicalForm
-	Progress
-	Preservation
-	Soundness
-	Subst
-	TypeSubst
-	TypeSubstFact
-	Constraint
-	Sets
-	Completeness
-
-.DEFAULT: $(Proof $(FILES))
+.DEFAULT:
 
 .PHONY: clean doc
 
 doc:
 	mkdir -p doc
-	coqdoc -d doc $(addsuffix .v,$(FILES))
+
 clean:
 	rm -rf *.vo *.glob *~ *.omc .omakedb .omakedb.lock *.html doc

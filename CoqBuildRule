@@ -1,0 +1,13 @@
+public.COQC   = coqc
+public.COQLIB = $(shell coqc -where)
+public.COQDEP = coqdep -w -coqlib $`(COQLIB) -I .
+
+public.CoqProof(files) =
+	vo=$(addsuffix .vo,$(files))
+	value $(vo)
+
+%.vo %.glob: %.v
+	$(COQC) $<
+
+.SCANNER: %.vo: %.v
+	$(COQDEP) $<

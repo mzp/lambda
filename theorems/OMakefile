@@ -1,0 +1,21 @@
+FILES[] =
+	Alpha
+	AlphaFact
+	Term
+	Eval
+	Typing
+	Tables
+	TypeInv
+	TypeUniq
+	CannonicalForm
+	Progress
+	Preservation
+	Soundness
+	Subst
+	TypeSubst
+	TypeSubstFact
+	Constraint
+	Sets
+	Completeness
+
+.DEFAULT: $(CoqProof $(FILES))
