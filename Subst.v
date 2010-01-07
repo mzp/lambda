@@ -87,7 +87,7 @@ functional induction (subst x0 x s) .
 
  intros.
  inversion H.
- apply TApply with (a := a).
+ apply TApply with (S := S0).
   apply IHt with (S := S); trivial.
   apply IHt0 with (S := S); trivial.
 

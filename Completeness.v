@@ -45,7 +45,7 @@ Proof.
 unfold Solution in |- *; simpl in |- *.
 intros.
 inversion H.
-exists b.
+exists S.
 split.
  unfold tenv_subst in |- *.
  rewrite map_add in |- *.
@@ -105,7 +105,7 @@ Lemma apply_inv: forall T tenv tsubst t1 t2,
 Proof.
 intros.
 inversion H.
-exists a.
+exists S.
 split; trivial.
 Qed.
 

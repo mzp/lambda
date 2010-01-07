@@ -19,7 +19,7 @@ induction t.
  intros.
  inversion H.
  inversion H0.
-  apply TApply with (a := a).
+  apply TApply with (S := S).
    apply IHt1.
     exact H3.
 
@@ -27,7 +27,7 @@ induction t.
 
    exact H6.
 
-  apply TApply with (a := a).
+  apply TApply with (S := S).
    exact H3.
 
    apply IHt2.
@@ -35,7 +35,7 @@ induction t.
 
     exact H11.
 
-  apply subst_preserve with (S := a).
+  apply subst_preserve with (S := S).
    rewrite <- H7 in H3.
    inversion H3.
    exact H15.

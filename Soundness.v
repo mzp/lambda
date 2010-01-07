@@ -43,7 +43,7 @@ apply TypeConstraint_ind; intros; unfold Solution in |- *; simpl in |- *.
      (C1 := C1)
      (X1 := X1) in H2.
   decompose [and] H2.
-  apply TApply with (a := type_subst T2 tsubst).
+  apply TApply with (S := type_subst T2 tsubst).
    assert (T0 = type_subst (VarT x) tsubst).
     unfold Constraint.Solution in H13.
     decompose [ex] H13.

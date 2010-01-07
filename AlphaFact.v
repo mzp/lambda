@@ -80,7 +80,7 @@ induction t.
  intros.
  inversion H.
  simpl in |- *.
- apply TApply with (a := a).
+ apply TApply with (S := S0).
   apply IHt1.
    trivial.
    apply (Free_Apply_inv_1 y t1 t2); trivial.

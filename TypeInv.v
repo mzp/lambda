@@ -36,17 +36,14 @@ Qed.
 
 (* Lambda *)
 Lemma lambda_rel :
-  forall (tenv : tenv) (r a : type) (x : string) (body : term),
-  Typed (Lambda x a body) tenv r ->
-      exists b : type, Typed body (Table.add x a tenv) b /\ r = FunT a b.
+  forall (tenv : tenv) (S T : type) (x : string) (t : term),
+  Typed (Lambda x S t) tenv T ->
+      exists U : type, Typed t (Table.add x S tenv) U /\ T = FunT S U.
 Proof.
 intros.
 inversion H.
-exists b.
-split.
- exact H5.
-
- reflexivity.
+exists S0.
+split; tauto.
 Qed.
 
 (* Apply *)
@@ -57,7 +54,7 @@ Lemma apply_rel :
 Proof.
 intros.
 inversion H.
-exists a.
+exists S.
 split.
  exact H2.
 

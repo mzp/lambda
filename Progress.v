@@ -32,7 +32,7 @@ induction t.
  intros.
  inversion H2.
   inversion H5.
-   assert (exists s : string, exists body : term, t1 = Lambda s a body).
+   assert (exists s : string, exists body : term, t1 = Lambda s S body).
     apply lambda_can with (ty2 := r).
      exact H8.
 

@@ -55,8 +55,8 @@ pattern t, tenv, T in |- *.
 apply Typed_ind; simpl in |- *; intros.
  apply TVar.
  unfold tenv_subst in |- *.
- change (type_subst ty tsubst0)
-  with ((fun T0 : type => type_subst T0 tsubst0) ty)
+ change (type_subst T0 tsubst0)
+  with ((fun T1 : type => type_subst T1 tsubst0) T0)
   in |- *.
  apply Table.map_1.
  trivial.
@@ -67,7 +67,7 @@ apply Typed_ind; simpl in |- *; intros.
  rewrite add_eq in |- *.
  trivial.
 
- apply TApply with (a := type_subst a tsubst0); trivial.
+ apply TApply with (S := type_subst S tsubst0); trivial.
 
  simpl in |- *.
  apply TIf; trivial.

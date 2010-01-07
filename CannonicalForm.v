@@ -25,7 +25,7 @@ Qed.
 Lemma lambda_can :
   forall (v : term) (ty1 ty2 : type),
     Value v -> Typed v empty (FunT ty1 ty2) ->
-      exists x : string, exists body : term, v = Lambda x ty1 body.
+      exists x : string, exists t : term, v = Lambda x ty1 t.
 Proof.
 intros.
 inversion H0.
@@ -33,7 +33,7 @@ inversion H0.
  contradiction .
 
  exists x.
- exists body.
+ exists t.
  reflexivity.
 
  rewrite <- H3 in H.

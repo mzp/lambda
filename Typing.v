@@ -9,17 +9,17 @@ Definition tenv := table type.
 Definition empty := Table.empty type.
 
 Inductive Typed : term -> tenv -> type -> Prop :=
-  | TVar    : forall (tenv : tenv) (s : string) (ty : type),
-                Table.MapsTo s ty tenv -> Typed (Var s) tenv ty
+  | TVar    : forall (tenv : tenv) (s : string) (T : type),
+                Table.MapsTo s T tenv -> Typed (Var s) tenv T
   | TBool   : forall (tenv : tenv) (b : bool) ,
                 Typed (Bool b) tenv BoolT
-  | TLambda : forall (tenv : tenv) (x : string) (a b : type) (body : term),
-                Typed body (Table.add x a tenv) b -> Typed (Lambda x a body) tenv (FunT a b)
-  | TApply  : forall (tenv : tenv) (t1 t2 : term) (a b : type),
-                Typed t1 tenv (FunT a b) -> Typed t2 tenv a -> Typed (Apply t1 t2) tenv b
-  | TIf     : forall (tenv : tenv) (t1 t2 t3 : term) (ty : type),
-                Typed t1 tenv BoolT -> Typed t2 tenv ty -> Typed t3 tenv ty ->
-                   Typed (If t1 t2 t3) tenv ty.
+  | TLambda : forall (tenv : tenv) (x : string) (S T : type) (t : term),
+                Typed t (Table.add x T tenv) S -> Typed (Lambda x T t) tenv (FunT T S)
+  | TApply  : forall (tenv : tenv) (t1 t2 : term) (S T: type),
+                Typed t1 tenv (FunT S T) -> Typed t2 tenv S -> Typed (Apply t1 t2) tenv T
+  | TIf     : forall (tenv : tenv) (t1 t2 t3 : term) (T : type),
+                Typed t1 tenv BoolT -> Typed t2 tenv T -> Typed t3 tenv T ->
+                   Typed (If t1 t2 t3) tenv T.
 
 Lemma add_elim: forall t S T tenv s,
     ~ Free s t -> Typed t (Table.add s S tenv) T -> Typed t tenv T.
@@ -65,7 +65,7 @@ induction t.
 
  intros.
  inversion H0.
- apply TApply with (a := a).
+ apply TApply with (S := S0).
   apply IHt1 with (S := S) (s := s).
    apply Free_Apply_inv_1 with (t2 := t2).
    trivial.
@@ -151,7 +151,7 @@ induction t.
 
  intros.
  inversion H1.
- apply TApply with (a := a).
+ apply TApply with (S := S0).
   apply IHt1.
    intro; apply H.
    apply FApply.

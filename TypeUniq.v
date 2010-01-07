@@ -25,7 +25,7 @@ induction t.
  intros.
  inversion H.
  inversion H0.
- assert (b = b0).
+ assert (S = S0).
   generalize H6, H12.
   apply IHt.
 
@@ -35,7 +35,7 @@ induction t.
  intros.
  inversion H.
  inversion H0.
- assert (FunT a r1 = FunT a0 r2).
+ assert (FunT S r1 = FunT S0 r2).
   generalize H3, H9.
   apply IHt1.
 
