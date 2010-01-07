@@ -10,4 +10,4 @@ doc:
 	coqdoc -d doc theorems/*.v
 
 clean:
-	rm -rf *~ *.omc .omakedb .omakedb.lock *.html doc
+	rm -rf *~ *.omc .omakedb .omakedb.lock *.html doc *.vo *.glob
