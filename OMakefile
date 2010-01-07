@@ -7,6 +7,7 @@
 
 doc:
 	mkdir -p doc
+	coqdoc -d doc theorems/*.v
 
 clean:
-	rm -rf *.vo *.glob *~ *.omc .omakedb .omakedb.lock *.html doc
+	rm -rf *~ *.omc .omakedb .omakedb.lock *.html doc
