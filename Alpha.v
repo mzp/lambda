@@ -45,3 +45,76 @@ induction t; simpl in |- *; intros; auto.
   rewrite <- IHt in |- *.
   reflexivity.
 Qed.
+
+Lemma alpha_id: forall t x,
+  alpha t x x = t.
+Proof.
+induction t; intros; simpl; auto.
+ destruct (string_dec s x).
+  rewrite e.
+  reflexivity.
+
+  reflexivity.
+
+ destruct (string_dec s x).
+  reflexivity.
+
+  rewrite IHt in |- *.
+  reflexivity.
+
+ rewrite IHt1, IHt2 in |- *.
+ reflexivity.
+
+ rewrite IHt1,  IHt2,  IHt3 in |- *.
+ reflexivity.
+Qed.
+
+Lemma alpha_not_free : forall t x y,
+  x <> y -> ~ Free x (alpha t x y).
+Proof.
+induction t; intros; simpl; auto.
+ destruct (string_dec s x).
+  intro.
+  apply H.
+  inversion H0.
+  reflexivity.
+
+  intro.
+  apply n.
+  inversion H0.
+  reflexivity.
+
+ intro.
+ inversion H0.
+
+ destruct (string_dec s x).
+  rewrite e in |- *.
+  intro.
+  inversion H0.
+  tauto.
+
+  intro.
+  inversion H0.
+  generalize H6.
+  apply IHt.
+  tauto.
+
+ intro.
+ inversion H0.
+ decompose [or] H3.
+  generalize H5.
+  apply IHt1.
+  tauto.
+
+  generalize H5.
+  apply IHt2.
+  tauto.
+
+ intro.
+ inversion H0.
+ decompose [or] H3;
+  [ unfold not in IHt1; apply (IHt1 x y) |
+    unfold not in IHt2; apply (IHt2 x y) |
+    unfold not in IHt3; apply (IHt3 x y) ];
+  tauto.
+Qed.

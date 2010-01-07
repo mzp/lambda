@@ -68,7 +68,7 @@ functional induction (subst x0 x s) .
     apply (add_2 _ tenv old (Fresh old new body) S T) in H7.
     rewrite H7 in |- *.
     apply add_elim with (s := x) (S := T).
-     apply alpha_fv.
+     apply alpha_not_free.
      trivial.
 
      apply (add_2 _ (Table.add old S tenv) x (Fresh old new body) T T) in n.

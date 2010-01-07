@@ -7,80 +7,10 @@ Require Import Alpha.
 Require Import Typing.
 Require Import Tables.
 
-Lemma alpha_fv : forall t x y,
-  x <> y -> ~ Free x (alpha t x y).
-Proof.
-induction t.
- intros.
- simpl in |- *.
- destruct (string_dec s x).
-  intro.
-  apply H.
-  inversion H0.
-  reflexivity.
-
-  intro.
-  apply n.
-  inversion H0.
-  reflexivity.
-
- intros.
- simpl in |- *.
- intro.
- inversion H0.
-
- intros.
- simpl in |- *.
- destruct (string_dec s x).
-  rewrite e in |- *.
-  intro.
-  inversion H0.
-  tauto.
-
-  intro.
-  inversion H0.
-  generalize H6.
-  fold not in |- *.
-  apply IHt.
-  exact H.
-
- intros.
- simpl in |- *.
- intro.
- inversion H0.
- inversion H3.
-  generalize H5.
-  apply IHt1.
-  exact H.
-
-  generalize H5.
-  apply IHt2.
-  exact H.
-
- simpl in |- *.
- intros.
- intro.
- inversion H0.
- inversion H3.
-  generalize H6.
-  apply IHt1.
-  exact H.
-
-  inversion H6.
-   generalize H7.
-   apply IHt2.
-   exact H.
-
-   generalize H7.
-   apply IHt3.
-   exact H.
-Qed.
-
 Lemma alpha_preserve : forall t tenv x y T S,
   Typed t tenv T -> ~Free y t -> ~Bound y t -> Table.MapsTo x S tenv ->
      Typed (alpha t x y) (Table.add y S tenv) T.
 Proof.
-
 induction t.
  intros.
  simpl in |- *.
@@ -184,40 +114,5 @@ induction t.
    apply (Free_If_inv_3 y t1 t2 t3); trivial.
    apply (Bound_If_inv_3 y t1 t2 t3); trivial.
    trivial.
-Qed.
-
-Lemma alpha_id: forall t x,
-  alpha t x x = t.
-Proof.
-induction t.
- intro.
- simpl in |- *.
- destruct (string_dec s x).
-  rewrite e in |- *.
-  reflexivity.
-
-  reflexivity.
-
- intro.
- simpl in |- *.
- reflexivity.
-
- intro.
- simpl in |- *.
- destruct (string_dec s x).
-  reflexivity.
-
-  rewrite IHt in |- *.
-  reflexivity.
-
- intro.
- simpl in |- *.
- rewrite IHt1,  IHt2 in |- *.
- reflexivity.
-
- intro.
- simpl in |- *.
- rewrite IHt1,  IHt2,  IHt3 in |- *.
- reflexivity.
 Qed.
 
