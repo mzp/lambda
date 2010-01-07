@@ -3,6 +3,7 @@ Require Import String.
 
 Require Import Tables.
 Require Import Term.
+Require Import Var.
 
 Definition tenv := table type.
 Definition empty := Table.empty type.
@@ -21,7 +22,7 @@ Inductive Typed : term -> tenv -> type -> Prop :=
                    Typed (If t1 t2 t3) tenv ty.
 
 Lemma add_elim: forall t S T tenv s,
-    ~ FV s t -> Typed t (Table.add s S tenv) T -> Typed t tenv T.
+    ~ Free s t -> Typed t (Table.add s S tenv) T -> Typed t tenv T.
 Proof.
 intro.
 induction t.
@@ -30,9 +31,9 @@ induction t.
  apply TVar.
  apply TableWF.add_mapsto_iff in H2.
  inversion H2; inversion H5.
-  assert (FV s0 (Var s)).
+  assert (Free s0 (Var s)).
    rewrite H6 in |- *.
-   apply FVVar.
+   apply FVar.
 
    contradiction.
 
@@ -52,7 +53,7 @@ induction t.
   trivial.
 
   apply IHt with (S := S) (s := s0).
-   apply FV_Lambda_inv with (y := s) (T := t).
+   apply Free_Lambda_inv with (y := s) (T := t).
     apply sym_not_eq.
     trivial.
 
@@ -66,13 +67,13 @@ induction t.
  inversion H0.
  apply TApply with (a := a).
   apply IHt1 with (S := S) (s := s).
-   apply FV_Apply_inv_1 with (t2 := t2).
+   apply Free_Apply_inv_1 with (t2 := t2).
    trivial.
 
    trivial.
 
   apply IHt2 with (S := S) (s := s).
-   apply FV_Apply_inv_2 with (t1 := t1).
+   apply Free_Apply_inv_2 with (t1 := t1).
     trivial.
 
     trivial.
@@ -81,20 +82,20 @@ induction t.
  inversion H0.
  apply TIf.
   apply IHt1 with (S := S) (s := s).
-   apply FV_If_inv_1 with (t2 := t2) (t3 := t3).
+   apply Free_If_inv_1 with (t2 := t2) (t3 := t3).
    trivial.
 
    trivial.
 
   apply IHt2 with (S := S) (s := s).
-   apply FV_If_inv_2 with (t1 := t1) (t3 := t3).
+   apply Free_If_inv_2 with (t1 := t1) (t3 := t3).
    trivial.
 
    trivial.
 
 
   apply IHt3 with (S := S) (s := s).
-   apply FV_If_inv_3 with (t1 := t1) (t2 := t2).
+   apply Free_If_inv_3 with (t1 := t1) (t2 := t2).
    trivial.
 
    trivial.
@@ -102,7 +103,7 @@ Qed.
 
 
 Lemma add_intro: forall t S T tenv s,
-    ~ FV s t -> ~ BV s t -> Typed t tenv T -> Typed t (Table.add s S tenv) T.
+    ~ Free s t -> ~ Bound s t -> Typed t tenv T -> Typed t (Table.add s S tenv) T.
 Proof.
 induction t.
  intros.
@@ -110,7 +111,7 @@ induction t.
  apply Table.add_2.
   intro; apply H.
   rewrite H2 in |- *.
-  apply FVVar.
+  apply FVar.
 
   inversion H1.
   trivial.
@@ -126,7 +127,7 @@ induction t.
   intro.
   apply H0.
   rewrite H8 in |- *.
-  apply BVLambda1.
+  apply BLambda1.
 
   generalize H8.
   intro.
@@ -135,7 +136,7 @@ induction t.
   apply IHt.
    intro.
    apply H.
-   apply FVLambda.
+   apply FLambda.
     apply sym_not_eq.
     trivial.
 
@@ -143,7 +144,7 @@ induction t.
 
    intro.
    apply H0.
-   apply BVLambda2.
+   apply BLambda2.
    trivial.
 
    trivial.
@@ -153,22 +154,22 @@ induction t.
  apply TApply with (a := a).
   apply IHt1.
    intro; apply H.
-   apply FVApply.
+   apply FApply.
    left; trivial.
 
    intro; apply H0.
-   apply BVApply.
+   apply BApply.
    left; trivial.
 
    exact H4.
 
   apply IHt2.
    intro; apply H.
-   apply FVApply.
+   apply FApply.
    right; trivial.
 
    intro; apply H0.
-   apply BVApply.
+   apply BApply.
    right; trivial.
 
    exact H7.
@@ -178,33 +179,33 @@ induction t.
  apply TIf.
   apply IHt1.
    intro; apply H.
-   apply FVIf.
+   apply FIf.
    left; trivial.
 
    intro; apply H0.
-   apply BVIf.
+   apply BIf.
    left; trivial.
 
    exact H5.
 
   apply IHt2.
    intro; apply H.
-   apply FVIf.
+   apply FIf.
    right; left; trivial.
 
    intro; apply H0.
-   apply BVIf.
+   apply BIf.
    right; left; trivial.
 
    trivial.
 
   apply IHt3.
    intro; apply H.
-   apply FVIf.
+   apply FIf.
    right; right; trivial.
 
    intro; apply H0.
-   apply BVIf.
+   apply BIf.
    right; right; trivial.
 
    trivial.

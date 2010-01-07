@@ -2,14 +2,15 @@ Require Import List.
 Require Import String.
 
 Require Import Term.
+Require Import Var.
 
 Variable Flesh : string -> term -> term -> string.
 Hypothesis Flesh_x : forall x s t, x <> Flesh x s t.
-Hypothesis Flesh_fv1 : forall x s t, ~FV (Flesh x s t) s.
-Hypothesis Flesh_fv2 : forall x s t, ~FV (Flesh x s t) t.
+Hypothesis Flesh_fv1 : forall x s t, ~Free (Flesh x s t) s.
+Hypothesis Flesh_fv2 : forall x s t, ~Free (Flesh x s t) t.
 
-Hypothesis Flesh_bv1 : forall x s t, ~BV (Flesh x s t) s.
-Hypothesis Flesh_bv2 : forall x s t, ~BV (Flesh x s t) t.
+Hypothesis Flesh_bv1 : forall x s t, ~Bound (Flesh x s t) s.
+Hypothesis Flesh_bv2 : forall x s t, ~Bound (Flesh x s t) t.
 
 Fixpoint alpha (t : term) (old new : string) :=
   match t with
