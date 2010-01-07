@@ -35,31 +35,13 @@ Fixpoint alpha (t : term) (old new : string) :=
 Lemma alpha_length : forall t x y,
   term_length t = term_length (alpha t x y).
 Proof.
-induction t.
- simpl in |- *.
- intros.
- destruct string_dec; simpl in |- *; reflexivity.
+induction t; simpl in |- *; intros; auto.
+ destruct (string_dec s x); reflexivity.
 
- simpl in |- *.
- intros; reflexivity.
-
- simpl in |- *.
- intros.
- destruct (string_dec s x); simpl in |- *.
+ destruct (string_dec s x).
   reflexivity.
 
-  rewrite (IHt x y) in |- *.
+  simpl in |- *.
+  rewrite <- IHt in |- *.
   reflexivity.
-
- simpl in |- *.
- intros.
- rewrite (IHt1 x y) in |- *.
- rewrite (IHt2 x y) in |- *.
- reflexivity.
-
- simpl in |- *.
- intros.
- rewrite (IHt1 x y) in |- *; rewrite (IHt2 x y) in |- *;
-  rewrite (IHt3 x y) in |- *.
- reflexivity.
 Qed.
