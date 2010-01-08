@@ -54,8 +54,8 @@ induction t.
    apply (add_2 _ tenv y s S t) in H9.
    rewrite <- H9 in |- *.
    apply add_intro.
-    apply Free_Lambda_inv with (y := s) (T := t); trivial.
-    apply Bound_Lambda_inv with (y := s) (T := t); trivial.
+    apply not_free_lambda with (y := s) (T := t); trivial.
+    apply not_bound_lambda with (y := s) (T := t); trivial.
     trivial.
 
   inversion H.
@@ -71,8 +71,8 @@ induction t.
    rewrite <- H9 in |- *.
    apply IHt.
     trivial.
-    apply Free_Lambda_inv with (y := s) (T := t); trivial.
-    apply Bound_Lambda_inv with (y := s) (T := t).
+    apply not_free_lambda with (y := s) (T := t); trivial.
+    apply not_bound_lambda with (y := s) (T := t).
     trivial.
 
     apply Table.add_2; trivial.
@@ -83,15 +83,15 @@ induction t.
  apply TApply with (S := S0).
   apply IHt1.
    trivial.
-   apply (Free_Apply_inv_1 y t1 t2); trivial.
-   apply (Bound_Apply_inv_1 y t1 t2); trivial.
-   trivial.
+   apply not_free_apply in H0; tauto.
+   apply not_bound_apply in H1; tauto.
+   tauto.
 
   apply IHt2.
    trivial.
-   apply (Free_Apply_inv_2 y t1 t2); trivial.
-   apply (Bound_Apply_inv_2 y t1 t2); trivial.
-   trivial.
+   apply not_free_apply in H0; tauto.
+   apply not_bound_apply in H1; tauto.
+   tauto.
 
  intros.
  simpl in |- *.
@@ -99,20 +99,20 @@ induction t.
  apply TIf.
   apply IHt1.
    trivial.
-   apply (Free_If_inv_1 y t1 t2 t3); trivial.
-   apply (Bound_If_inv_1 y t1 t2 t3); trivial.
+   apply not_free_if in H0; tauto.
+   apply not_bound_if in H1; tauto.
    trivial.
 
   apply IHt2.
    trivial.
-   apply (Free_If_inv_2 y t1 t2 t3); trivial.
-   apply (Bound_If_inv_2 y t1 t2 t3); trivial.
+   apply not_free_if in H0; tauto.
+   apply not_bound_if in H1; tauto.
    trivial.
 
   apply IHt3.
    trivial.
-   apply (Free_If_inv_3 y t1 t2 t3); trivial.
-   apply (Bound_If_inv_3 y t1 t2 t3); trivial.
+   apply not_free_if in H0; tauto.
+   apply not_bound_if in H1; tauto.
    trivial.
 Qed.
 

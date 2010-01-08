@@ -53,12 +53,7 @@ induction t.
   trivial.
 
   apply IHt with (S := S) (s := s0).
-   apply Free_Lambda_inv with (y := s) (T := t).
-    apply sym_not_eq.
-    trivial.
-
-    trivial.
-
+   apply not_free_lambda with (y := s) (T := t); auto.
    apply (add_2 _ tenv0 s s0 t S) in n.
    rewrite <- n in |- *.
    trivial.
@@ -66,39 +61,28 @@ induction t.
  intros.
  inversion H0.
  apply TApply with (S := S0).
-  apply IHt1 with (S := S) (s := s).
-   apply Free_Apply_inv_1 with (t2 := t2).
-   trivial.
+  apply IHt1 with (S := S) (s := s); auto.
+   apply not_free_apply in H.
+   tauto.
 
-   trivial.
-
-  apply IHt2 with (S := S) (s := s).
-   apply Free_Apply_inv_2 with (t1 := t1).
-    trivial.
-
-    trivial.
+  apply IHt2 with (S := S) (s := s); auto.
+   apply not_free_apply in H.
+    tauto.
 
  intros.
  inversion H0.
  apply TIf.
-  apply IHt1 with (S := S) (s := s).
-   apply Free_If_inv_1 with (t2 := t2) (t3 := t3).
-   trivial.
+  apply IHt1 with (S := S) (s := s); auto.
+   apply not_free_if in H.
+   tauto.
 
-   trivial.
+  apply IHt2 with (S := S) (s := s); auto.
+   apply not_free_if in H.
+   tauto.
 
-  apply IHt2 with (S := S) (s := s).
-   apply Free_If_inv_2 with (t1 := t1) (t3 := t3).
-   trivial.
-
-   trivial.
-
-
-  apply IHt3 with (S := S) (s := s).
-   apply Free_If_inv_3 with (t1 := t1) (t2 := t2).
-   trivial.
-
-   trivial.
+  apply IHt3 with (S := S) (s := s); auto.
+   apply not_free_if in H.
+   tauto.
 Qed.
 
 
