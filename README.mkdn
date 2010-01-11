@@ -3,7 +3,7 @@ LCC(Lambda calculus on Coq)
 
 OVERVIEW
 --------
-LCC is a implementation of simple typed lambda calculus.
+LCC is a implementation of simple typed lambda calculus. And some theorems.
 
 
 PREREQUIRED
