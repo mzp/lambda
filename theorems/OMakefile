@@ -5,8 +5,9 @@ FILES[] =
 	Alpha
 	Eval
 	EvalImpl
-	AlphaFact
 	Typing
+	Weaking
+	AlphaFact
 	Tables
 	TypeInv
 	TypeUniq

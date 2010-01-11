@@ -5,6 +5,7 @@ Require Import Term.
 Require Import Var.
 Require Import Alpha.
 Require Import Typing.
+Require Import Weaking.
 Require Import Tables.
 
 Lemma alpha_preserve : forall t tenv x y T S,

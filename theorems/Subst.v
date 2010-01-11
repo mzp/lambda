@@ -2,6 +2,7 @@ Require Import List.
 Require Import String.
 
 Require Import Term.
+Require Import Weaking.
 Require Import Eval.
 Require Import Alpha.
 Require Import AlphaFact.
