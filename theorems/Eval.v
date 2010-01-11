@@ -3,10 +3,10 @@ Require Import ListSet.
 Require Import String.
 Require Import Recdef.
 
+Require Import Util.
 Require Import Term.
 Require Import Alpha.
 
-(** * Propotion *)
 Inductive Value  : term -> Prop :=
   | VBool   : forall b : bool,   Value (Bool b)
   | VLambda : forall (x : string) (ty : type) (body : term), Value (Lambda x ty body).
@@ -73,14 +73,6 @@ Inductive Eval : term -> term -> Prop :=
   | EIfCond   : forall (t1 t2 t3 : term) t', Eval t1 t' -> Eval (If t1 t2 t3) (If t' t2 t3)
   | EIfTrue   : forall (t1 t2 : term), Eval (If (Bool true) t1 t2) t1
   | EIfFalse  : forall (t1 t2 : term), Eval (If (Bool false) t1 t2) t2.
-
-Definition mbind {A : Type} (x : option A) (f : A -> option A) : option A :=
-  match x with
-  | None => None
-  | Some y => f y
-  end.
-
-Infix ">>=" := mbind (at level 50).
 
 Definition value_dec : forall (t : term), {Value t} + {~ Value t}.
 Proof.

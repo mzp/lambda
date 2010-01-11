@@ -1,8 +1,10 @@
 FILES[] =
-	Alpha
-	AlphaFact
+	Util
 	Term
+	Var
+	Alpha
 	Eval
+	AlphaFact
 	Typing
 	Tables
 	TypeInv
