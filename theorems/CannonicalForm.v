@@ -11,15 +11,16 @@ Lemma bool_can :
     Value v -> Typed v empty BoolT ->
       v = Bool true \/ v = Bool false.
 Proof.
-intros.
-inversion H.
- destruct b.
-  left; reflexivity.
+intros; induction v; simpl in H.
+ contradiction.
 
-  right; reflexivity.
+ destruct b; tauto.
 
- rewrite <- H1 in H0.
  inversion H0.
+
+ contradiction.
+
+ contradiction.
 Qed.
 
 Lemma lambda_can :
@@ -27,19 +28,18 @@ Lemma lambda_can :
     Value v -> Typed v empty (FunT ty1 ty2) ->
       exists x : string, exists t : term, v = Lambda x ty1 t.
 Proof.
-intros.
-inversion H0.
- apply Table.empty_1 in H1.
- contradiction .
+induction v; intros; simpl in H.
+ contradiction.
 
- exists x.
- exists t.
+ inversion H0.
+
+ inversion H0.
+ exists s.
+ exists v.
  reflexivity.
 
- rewrite <- H3 in H.
- inversion H.
+ contradiction.
 
- rewrite <- H4 in H.
- inversion H.
+ contradiction.
 Qed.
 

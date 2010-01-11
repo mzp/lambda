@@ -18,11 +18,13 @@ induction t.
 
  intros.
  left.
- apply VBool.
+ simpl.
+ tauto.
 
  intros.
  left.
- apply VLambda.
+ simpl.
+ tauto.
 
  intros.
  right.

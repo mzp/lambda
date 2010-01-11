@@ -7,9 +7,12 @@ Require Import Util.
 Require Import Term.
 Require Import Alpha.
 
-Inductive Value  : term -> Prop :=
-  | VBool   : forall b : bool,   Value (Bool b)
-  | VLambda : forall (x : string) (ty : type) (body : term), Value (Lambda x ty body).
+Definition Value v :=
+  match v with
+  | Bool _ => True
+  | Lambda _ _ _ => True
+  | _ => False
+  end.
 
 Function subst (t : term) (old : string) (new : term) {measure term_length t}: term :=
   match t with
@@ -34,37 +37,37 @@ Function subst (t : term) (old : string) (new : term) {measure term_length t}: t
 Proof.
  intros.
  rewrite <- alpha_length in |- *.
- simpl in |- *.
  apply Lt.le_lt_n_Sm.
  apply le_n.
 
  intros.
- simpl in |- *.
+ simpl.
  apply Lt.le_lt_n_Sm.
  apply Plus.le_plus_r.
 
  intros.
- simpl in |- *.
+ simpl.
  apply Lt.le_lt_n_Sm.
  apply Plus.le_plus_l.
 
  intros.
- simpl in |- *.
+ simpl.
  apply Lt.le_lt_n_Sm.
  apply Plus.le_plus_r.
 
  intros.
- simpl in |- *.
+ simpl.
  apply Lt.le_lt_n_Sm.
  apply Plus.le_plus_trans.
  apply Plus.le_plus_r.
 
  intros.
- simpl in |- *.
+ simpl.
  apply Lt.le_lt_n_Sm.
  apply Plus.le_plus_trans.
  apply Plus.le_plus_l.
 Qed.
+
 
 Inductive Eval : term -> term -> Prop :=
   | EAppLeft  : forall t1 t2 t' : term, Eval t1 t' -> Eval (Apply t1 t2) (Apply t' t2)
