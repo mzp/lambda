@@ -22,10 +22,7 @@ Proof.
 intros.
 apply Extensionality_Table.
 apply (TableWF.Equal_mapsto_iff A B).
-split.
- apply H.
-
- apply H0.
+split; [ apply H | apply H0 ].
 Qed.
 
 Lemma add_1 : forall (t : Type) (A : table t) x r1 r2,
