@@ -4,6 +4,7 @@ FILES[] =
 	Var
 	Alpha
 	Eval
+	EvalImpl
 	AlphaFact
 	Typing
 	Tables
