@@ -5,67 +5,53 @@ Require Import Term.
 Require Import TypingRule.
 Require Import Tables.
 
-(* For Var *)
-Lemma var_rel :
-  forall (tenv : tenv) (r : type) (x : string),
-  Typed (Var x) tenv r -> Table.MapsTo x r tenv.
+Lemma var_inv : forall tenv T x,
+  Typed (Var x) tenv T -> Table.MapsTo x T tenv.
 Proof.
 intros.
 inversion H.
-exact H1.
+tauto.
 Qed.
 
-(* For Bool *)
-Lemma true_rel:
-  forall  (tenv : tenv) (r : type) ,
-  Typed  (Bool true) tenv r -> r = BoolT.
+Lemma true_inv: forall tenv T,
+  Typed  (Bool true) tenv T -> T = BoolT.
 Proof.
 intros.
 inversion H.
 reflexivity.
 Qed.
 
-Lemma false_rel:
-  forall (tenv : tenv) (r : type),
-  Typed  (Bool false) tenv r -> r = BoolT.
+Lemma false_inv: forall tenv T,
+  Typed  (Bool false) tenv T -> T = BoolT.
 Proof.
 intros.
 inversion H.
 reflexivity.
 Qed.
 
-(* Lambda *)
-Lemma lambda_rel :
-  forall (tenv : tenv) (S T : type) (x : string) (t : term),
+Lemma lambda_inv : forall tenv S T x t,
   Typed (Lambda x S t) tenv T ->
       exists U : type, Typed t (Table.add x S tenv) U /\ T = FunT S U.
 Proof.
 intros.
 inversion H.
 exists S0.
-split; tauto.
+tauto.
 Qed.
 
-(* Apply *)
-Lemma apply_rel :
-  forall (tenv : tenv) (r : type) (f x : term),
-    Typed (Apply f x) tenv r ->
-      exists t : type,  Typed f tenv (FunT t r) /\ Typed x tenv t.
+Lemma apply_inv : forall tenv T f x,
+  Typed (Apply f x) tenv T ->
+  exists S : type,  Typed f tenv (FunT S T) /\ Typed x tenv S.
 Proof.
 intros.
 inversion H.
 exists S.
-split.
- exact H2.
-
- exact H5.
+tauto.
 Qed.
 
-(* If *)
-Lemma if_rel:
-  forall (tenv : tenv) (r : type) (t1 t2 t3 : term),
-    Typed (If t1 t2 t3) tenv r ->
-      Typed t1 tenv BoolT /\  Typed t2 tenv r /\ Typed t3 tenv r.
+Lemma if_inv: forall tenv T t1 t2 t3,
+  Typed (If t1 t2 t3) tenv T ->
+  Typed t1 tenv BoolT /\  Typed t2 tenv T /\ Typed t3 tenv T.
 Proof.
 intros.
 inversion H.
