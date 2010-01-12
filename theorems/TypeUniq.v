@@ -5,47 +5,38 @@ Require Import Term.
 Require Import TypingRule.
 Require Import Tables.
 
-
-Theorem TypeUniq :
-  forall (t : term) (tenv : tenv) (r1 r2 : type),
-    Typed t tenv r1 -> Typed t tenv r2 -> r1 = r2.
+Theorem TypeUniq : forall t tenv S T,
+  Typed t tenv S -> Typed t tenv T -> S = T.
 Proof.
-induction t.
- intros.
- inversion H.
- inversion H0.
- generalize H2 H6.
- apply TableWF.MapsTo_fun.
+intros until T.
+intro.
+generalize T.
+pattern t,tenv,S.
+apply Typed_ind; intros; auto.
+ inversion H1.
+ apply TableWF.MapsTo_fun with (m:=tenv0) (x:=s); auto.
 
- intros.
- inversion H.
  inversion H0.
  reflexivity.
 
- intros.
- inversion H.
- inversion H0.
- assert (S = S0).
-  generalize H6, H12.
-  apply IHt.
+ inversion H2.
+ assert (S0 = S1).
+  apply H1.
+  tauto.
 
-  rewrite H13 in |- *.
+  rewrite H9 in |- *.
   reflexivity.
 
- intros.
- inversion H.
- inversion H0.
- assert (FunT S r1 = FunT S0 r2).
-  generalize H3, H9.
-  apply IHt1.
+ inversion H4.
+ assert (FunT S0 T0 = FunT S1 T1).
+  apply H1.
+  tauto.
 
-  inversion H13.
+  inversion H11.
   reflexivity.
 
- intros.
- inversion H.
- inversion H0.
- generalize H7, H15.
- apply IHt2.
+ inversion H6.
+ apply H3.
+ tauto.
 Qed.
 
