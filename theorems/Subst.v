@@ -68,7 +68,7 @@ functional induction (subst x0 x s) .
 
     apply (add_2 _ tenv old (Fresh old new body) S T) in H7.
     rewrite H7 in |- *.
-    apply add_elim with (s := x) (S := T).
+    apply weaking_elim with (s := x) (S := T).
      apply alpha_not_free.
      trivial.
 
@@ -84,7 +84,7 @@ functional induction (subst x0 x s) .
       apply Table.add_1.
       reflexivity.
 
-  apply add_intro; [apply Fresh_fv1 | apply Fresh_bv1 | trivial].
+  apply weaking_intro; [apply Fresh_fv1 | apply Fresh_bv1 | trivial].
 
  intros.
  inversion H.

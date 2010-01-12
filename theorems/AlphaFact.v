@@ -54,7 +54,7 @@ induction t.
    generalize H9; intro.
    apply (add_2 _ tenv y s S t) in H9.
    rewrite <- H9 in |- *.
-   apply add_intro.
+   apply weaking_intro.
     apply not_free_lambda with (y := s) (T := t); trivial.
     apply not_bound_lambda with (y := s) (T := t); trivial.
     trivial.
