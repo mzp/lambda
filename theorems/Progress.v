@@ -7,8 +7,8 @@ Require Import TypingRule.
 Require Import Tables.
 Require Import CannonicalForm.
 
-Theorem Progress : forall t (r : type),
-    Typed t TypingRule.empty r -> Value t \/ (exists t', Eval t t').
+Theorem Progress : forall t T,
+    Typed t TypingRule.empty T -> Value t \/ (exists t', Eval t t').
 Proof.
 induction t.
  intros.
@@ -35,7 +35,7 @@ induction t.
  inversion H2.
   inversion H5.
    assert (exists s : string, exists body : term, t1 = Lambda s S body).
-    apply lambda_can with (T := r).
+    apply lambda_can with (T := T).
      exact H8.
 
      exact H6.
