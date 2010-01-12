@@ -7,7 +7,6 @@ FILES[] =
 	EvalImpl
 	TypingRule
 	Weaking
-	AlphaFact
 	Tables
 	TypeInv
 	TypeUniq
@@ -15,7 +14,7 @@ FILES[] =
 	Progress
 	Preservation
 	Soundness
-	Subst
+	SubstLemma
 	TypeSubst
 	TypeSubstFact
 	Constraint

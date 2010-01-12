@@ -1,7 +1,7 @@
 Require Import Term.
 Require Import Eval.
 Require Import TypingRule.
-Require Import Subst.
+Require Import SubstLemma.
 
 Theorem preservation: forall t t' tenv T,
   Typed t tenv T -> Eval t t' -> Typed t' tenv T.
