@@ -29,160 +29,99 @@ Lemma add_1 : forall (t : Type) (A : table t) x r1 r2,
   Table.add x r1 (Table.add x r2 A) = Table.add x r1 A.
 Proof.
 intros.
-apply equal_ind.
- intros.
- apply TableWF.add_mapsto_iff in H.
- decompose [or] H.
-  inversion H0.
-  rewrite H1 in |- *.
-  rewrite H2 in |- *.
-  apply Table.add_1.
-  reflexivity.
+apply equal_ind; intros; apply TableWF.add_mapsto_iff in H;
+ decompose [or and] H.
+ rewrite H1,  H2 in |- *.
+ apply Table.add_1.
+ reflexivity.
 
-  decompose [and] H0.
-  apply Table.add_2.
-   trivial.
+ apply Table.add_2; auto.
+ apply Table.add_3 in H2; tauto.
 
-   apply Table.add_3 in H2; trivial.
+ rewrite H1,  H2 in |- *.
+ apply Table.add_1.
+ reflexivity.
 
- intros.
- apply TableWF.add_mapsto_iff in H.
- decompose [or] H.
-  inversion H0.
-  rewrite H1 in |- *.
-  rewrite H2 in |- *.
-  apply Table.add_1.
-  reflexivity.
-
-  inversion H0.
-  apply Table.add_2.
-   trivial.
-
-   apply Table.add_2; trivial.
+ apply Table.add_2; auto.
+ apply Table.add_2; tauto.
 Qed.
 
 Lemma add_2 : forall (t : Type) (A : table t) x y r1 r2,
   x <> y -> Table.add x r1 (Table.add y r2 A) = Table.add y r2 (Table.add x r1 A).
 Proof.
 intros.
-apply equal_ind.
- intros.
- apply TableWF.add_mapsto_iff in H0.
- inversion H0.
-  inversion H1.
-  rewrite H2 in |- *.
-  rewrite H3 in |- *.
+apply equal_ind; intros; apply TableWF.add_mapsto_iff in H0.
+ decompose [and or] H0.
+  rewrite H2,  H3 in |- *.
   apply Table.add_2.
    apply sym_not_eq.
-   rewrite <- H2.
-   trivial.
+   rewrite <- H2 in |- *.
+   tauto.
 
    apply Table.add_1.
    reflexivity.
 
-  decompose [and] H1.
   apply TableWF.add_mapsto_iff in H3.
-  decompose [or] H3.
-   inversion H4.
-   rewrite H5 in |- *; rewrite H6 in |- *.
+  decompose [and or] H3.
+   rewrite H4,  H5 in |- *.
    apply Table.add_1.
    reflexivity.
 
-   decompose [and] H4.
-   apply Table.add_2.
-    trivial.
+   apply Table.add_2; auto.
+   apply Table.add_2; tauto.
 
-    apply Table.add_2; trivial.
+ decompose [and or] H0.
+  rewrite <- H2,  <- H3 in |- *.
+  apply Table.add_2; auto.
+  apply Table.add_1.
+  reflexivity.
 
- intros.
- apply TableWF.add_mapsto_iff in H0.
- decompose [or] H0.
-  inversion H1.
-  rewrite H2 in |- *; rewrite H3 in |- *.
-  apply Table.add_2.
-   trivial.
-   inversion H1.
-   decompose [or] H3.
-   inversion H4.
-   decompose [and] H4.
-   trivial.
-
-   rewrite <- H6.
-   trivial.
-
-   apply Table.add_1.
-   reflexivity.
-
-  inversion H1.
   apply TableWF.add_mapsto_iff in H3.
-  decompose [or] H3.
-   inversion H4.
-   rewrite H6 in |- *.
-   rewrite H5 in |- *.
+  decompose [and or] H3.
+   rewrite H4,  H5 in |- *.
    apply Table.add_1.
    reflexivity.
 
-   decompose [and] H4.
-   apply Table.add_2.
-    trivial.
-
-    apply Table.add_2; trivial.
+   apply Table.add_2; auto.
+   apply Table.add_2; tauto.
 Qed.
 
 Lemma map_add : forall (A : Type) (f : A -> A) x T table,
   Table.map f (Table.add x T table) = Table.add x (f T) (Table.map f table).
 Proof.
 intros.
-apply equal_ind.
- intros.
+apply equal_ind; intros.
  apply TableWF.map_mapsto_iff in H.
- inversion H.
- inversion H0.
+ decompose [ex and] H.
  apply TableWF.add_mapsto_iff in H2.
- inversion H2.
-  inversion H3.
-  rewrite H4 in |- *.
-  rewrite H5 in |- *.
-  rewrite H1 in |- *.
+ decompose [and or] H2.
+  rewrite H1, H3, H4 in |- *.
   apply Table.add_1.
   reflexivity.
 
-  inversion H3.
-  apply Table.add_2.
-   trivial.
+  apply Table.add_2; auto.
+  apply <- TableWF.map_mapsto_iff.
+  exists x0.
+  split; tauto.
 
-   apply (TableWF.map_mapsto_iff table0 k e f).
-   exists x0.
-   split.
-    trivial.
-
-    trivial.
-
- intros.
  apply TableWF.add_mapsto_iff in H.
- apply (TableWF.map_mapsto_iff (Table.add x T table0) k e f).
- inversion H.
-  inversion H0.
+ apply <- TableWF.map_mapsto_iff.
+ decompose [and or] H.
   exists T.
   split.
    rewrite H2 in |- *.
    reflexivity.
 
    apply Table.add_1.
-   trivial.
+   tauto.
 
-  inversion H0.
-  apply (TableWF.map_mapsto_iff table0 k e f) in H2.
-  inversion H2.
-  inversion H3.
+  apply TableWF.map_mapsto_iff in H2.
+  decompose [ex and] H2.
   exists x0.
   split.
-   trivial.
+   tauto.
 
-   apply Table.add_2.
-    trivial.
-
-    trivial.
+   apply Table.add_2; tauto.
 Qed.
 
 Lemma MapsTo_In : forall (t : Type)  A x (T : table t),
@@ -193,5 +132,5 @@ unfold Table.In in |- *.
 unfold Table.Raw.PX.In in |- *.
 unfold Table.MapsTo in H.
 exists T.
-exact H.
+tauto.
 Qed.
