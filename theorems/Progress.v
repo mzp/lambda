@@ -1,88 +1,69 @@
 Require Import List.
+
 Require Import String.
 
+Require Import Util.
 Require Import Term.
 Require Import Eval.
 Require Import TypingRule.
 Require Import Tables.
 Require Import CannonicalForm.
 
-Theorem Progress : forall t T,
-    Typed t TypingRule.empty T -> Value t \/ (exists t', Eval t t').
+Theorem Progress : forall t tenv T,
+  Typed t tenv T ->
+  tenv = TypingRule.empty ->
+  Value t \/ (exists t', Eval t t').
 Proof.
-induction t.
- intros.
- inversion H.
- apply Table.empty_1 in H1.
- contradiction .
+intros until T.
+intro.
+pattern t, tenv, T in |- *.
+apply Typed_ind; intros; auto; try (simpl in |- *; tauto).
+ rewrite H1 in H0.
+ inversion H0.
 
- intros.
- left.
- simpl.
- tauto.
-
- intros.
- left.
- simpl.
- tauto.
-
- intros.
  right.
- inversion H.
- generalize H2, H5.
- apply IHt1 in H2; apply IHt2 in H5.
- intros.
- inversion H2.
-  inversion H5.
-   assert (exists s : string, exists body : term, t1 = Lambda s S body).
-    apply lambda_can with (T := T).
-     exact H8.
+ do 2 Dup H4.
+ apply H1 in H4.
+ apply H3 in H5.
+ decompose [ex or] H4.
+  decompose [ex or] H5.
+   assert (exists s : string, exists t : term, t1 = Lambda s S t).
+    apply lambda_can with (T := T0); auto.
+    rewrite <- H6 in |- *.
+    tauto.
 
-     exact H6.
-
-    decompose [ex] H10.
-    rewrite H12 in |- *.
+    decompose [ex] H9.
+    rewrite H11 in |- *.
     exists (subst x0 x t2).
     apply ELambda.
-    exact H9.
+    tauto.
 
-   decompose [ex] H9.
    exists (Apply t1 x).
-   apply EAppRight.
-    exact H8.
+   apply EAppRight; tauto.
 
-    exact H10.
-
-  decompose [ex] H8.
   exists (Apply x t2).
   apply EAppLeft.
-  exact H9.
+  tauto.
 
- intros.
  right.
- inversion H.
- generalize H3, H6, H7.
- apply IHt1 in H3; apply IHt2 in H6; apply IHt3 in H7.
- intros.
- inversion H3.
+ do 3 Dup H6.
+ apply H1 in H6.
+ apply H3 in H7.
+ apply H5 in H8.
+ decompose [ex or] H6.
   assert (t1 = Bool true \/ t1 = Bool false).
-   apply bool_can.
-    exact H11.
+   apply bool_can; auto.
+   rewrite <- H9 in |- *.
+   tauto.
 
-    exact H8.
-
-   inversion H12.
-    rewrite H13 in |- *.
+   decompose [or] H11; rewrite H12 in |- *.
     exists t2.
     apply EIfTrue.
 
-    rewrite H13 in |- *.
     exists t3.
     apply EIfFalse.
 
-  decompose [ex] H11.
   exists (If x t2 t3).
   apply EIfCond.
-  exact H12.
+  tauto.
 Qed.
-
