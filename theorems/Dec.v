@@ -36,21 +36,7 @@ Module TypeDec : DecidableType
     with Definition eq := fun (x y : type) => x = y.
   Definition t := type.
   Definition eq (x y : type) := x = y.
-  Definition eq_dec (x y : t) : {eq x y} + {~ eq x y}.
-  Proof.
-  unfold eq.
-  decide equality.
-  decide equality.
-  decide equality.
-  decide equality.
-  decide equality.
-  decide equality.
-  decide equality.
-  decide equality.
-  decide equality.
-  decide equality.
-  decide equality.
-  Qed.
+  Definition eq_dec := type_dec.
 
   Theorem eq_refl : forall x : t, eq x x.
   Proof.
@@ -87,18 +73,13 @@ Module PairDec (A B : DecidableType) : DecidableType
   destruct (A.eq_dec t0 t2).
   destruct (B.eq_dec t1 t3).
     left.
-    split; trivial.
+    tauto.
 
     right.
-    intro.
-    apply n.
-    inversion H.
-    trivial.
+    tauto.
 
   right.
-  intro.
-  apply n.
-  inversion H; trivial.
+  tauto.
   Qed.
 
   Theorem eq_refl : forall x : t, eq x x.
@@ -112,27 +93,30 @@ Module PairDec (A B : DecidableType) : DecidableType
   Theorem eq_sym : forall x y : t, eq x y -> eq y x.
   Proof.
   unfold eq in |- *.
-  destruct x; destruct y.
+  destruct x.
+  destruct y.
   simpl in |- *.
   intros.
-  inversion H.
-  split.
-   apply A.eq_sym; trivial.
-
-   apply B.eq_sym; trivial.
+  decompose [and] H.
+  split;
+   [ apply A.eq_sym | apply B.eq_sym];
+   tauto.
   Qed.
 
   Theorem eq_trans : forall x y z : t, eq x y -> eq y z -> eq x z.
   Proof.
   unfold eq in |- *.
-  destruct x; destruct y; destruct z.
+  destruct x.
+  destruct y.
+  destruct z.
   simpl in |- *.
   intros.
-  inversion H; inversion H0.
-  split.
-   apply A.eq_trans with (y := t2); trivial.
-
-   apply B.eq_trans with (y := t3); trivial.
+  decompose [and] H.
+  decompose [and] H0.
+  split;
+  [ apply A.eq_trans with (y := t2) |
+    apply B.eq_trans with (y := t3) ];
+  tauto.
   Qed.
 
 End PairDec.

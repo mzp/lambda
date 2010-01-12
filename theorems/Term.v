@@ -24,3 +24,10 @@ Fixpoint term_length (t : term) :=
     1 + term_length t1 + term_length t2 + term_length t3
   end.
 
+
+Definition type_dec (x y : type) : {x = y} + {x <> y}.
+Proof.
+intros.
+decide equality.
+apply string_dec.
+Qed.
