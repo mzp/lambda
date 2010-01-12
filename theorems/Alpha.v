@@ -1,6 +1,7 @@
 Require Import List.
 Require Import String.
 
+Require Import Util.
 Require Import Term.
 Require Import Var.
 
@@ -74,13 +75,11 @@ Lemma alpha_not_free : forall t x y,
 Proof.
 induction t; intros; simpl; auto.
  destruct (string_dec s x).
-  intro.
-  apply H.
+  Contrapositive H.
   inversion H0.
   reflexivity.
 
-  intro.
-  apply n.
+  Contrapositive n.
   inversion H0.
   reflexivity.
 
