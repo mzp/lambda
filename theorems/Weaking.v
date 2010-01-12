@@ -1,6 +1,6 @@
 Require Import String.
 Require Import Var.
-Require Import Typing.
+Require Import TypingRule.
 Require Import Term.
 Require Import Tables.
 

@@ -5,7 +5,7 @@ FILES[] =
 	Alpha
 	Eval
 	EvalImpl
-	Typing
+	TypingRule
 	Weaking
 	AlphaFact
 	Tables

@@ -3,12 +3,12 @@ Require Import String.
 
 Require Import Term.
 Require Import Eval.
-Require Import Typing.
+Require Import TypingRule.
 Require Import Tables.
 Require Import CannonicalForm.
 
 Theorem Progress : forall t (r : type),
-    Typed t Typing.empty r -> Value t \/ (exists t', Eval t t').
+    Typed t TypingRule.empty r -> Value t \/ (exists t', Eval t t').
 Proof.
 induction t.
  intros.

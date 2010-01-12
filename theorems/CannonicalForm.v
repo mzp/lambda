@@ -4,7 +4,7 @@ Require Import String.
 Require Import Term.
 Require Import Tables.
 Require Import Eval.
-Require Import Typing.
+Require Import TypingRule.
 
 Lemma bool_can :
   forall (v : term),

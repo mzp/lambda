@@ -4,7 +4,7 @@ Require Import String.
 Require Import Term.
 Require Import Var.
 Require Import Alpha.
-Require Import Typing.
+Require Import TypingRule.
 Require Import Weaking.
 Require Import Tables.
 

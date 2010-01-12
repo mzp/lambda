@@ -1,7 +1,7 @@
 Require Import String.
 
 Require Import Term.
-Require Import Typing.
+Require Import TypingRule.
 Require Import Tables.
 
 Definition tsubst := table type.

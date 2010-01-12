@@ -2,7 +2,7 @@ Require Import List.
 Require Import Ensembles.
 Require Import String.
 
-Require Import Typing.
+Require Import TypingRule.
 Require Import Tables.
 Require Import Sets.
 Require Import Term.

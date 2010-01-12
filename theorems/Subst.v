@@ -6,7 +6,7 @@ Require Import Weaking.
 Require Import Eval.
 Require Import Alpha.
 Require Import AlphaFact.
-Require Import Typing.
+Require Import TypingRule.
 Require Import Tables.
 
 Lemma subst_preserve : forall t s x T S tenv,
