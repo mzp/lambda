@@ -24,7 +24,11 @@ FILES[] =
 
 .DEFAULT: $(CoqProof $(FILES))
 
-.PHONY: clean
+.PHONY: clean graph
 
 clean:
 	rm -rf *.vo *.glob *~ *.omc .omakedb .omakedb.lock
+
+graph:
+	coqdep -I . *.v | ruby ../scripts/depends.rb > depend-graph.dot
+	dot -Tpng -o depend-graph.png depend-graph.dot
