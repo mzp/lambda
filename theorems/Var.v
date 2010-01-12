@@ -1,3 +1,4 @@
+Require Import Util.
 Require Import String.
 Require Import Term.
 
@@ -35,8 +36,7 @@ Lemma not_free_apply: forall x t1 t2,
 Proof.
 intros.
 split;
- intro;
- apply H;
+ Contrapositive H;
  apply FApply;
  tauto.
 Qed.
@@ -46,8 +46,7 @@ Lemma not_bound_apply: forall x t1 t2,
 Proof.
 intros.
 split;
- intro;
- apply H;
+ Contrapositive H;
  apply BApply;
  tauto.
 Qed.
@@ -57,8 +56,7 @@ Lemma not_free_if: forall x t1 t2 t3,
 Proof.
 intros.
 split; [ | split ];
- intro;
- apply H;
+ Contrapositive H;
  apply FIf;
  tauto.
 Qed.
@@ -68,8 +66,7 @@ Lemma not_bound_if: forall x t1 t2 t3,
 Proof.
 intros.
 split; [ | split ];
- intro;
- apply H;
+ Contrapositive H;
  apply BIf;
  tauto.
 Qed.
