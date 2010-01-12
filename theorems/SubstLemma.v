@@ -1,6 +1,7 @@
 Require Import List.
 Require Import String.
 
+Require Import Util.
 Require Import Term.
 Require Import Var.
 Require Import Weaking.
@@ -13,176 +14,108 @@ Lemma alpha_preserve : forall t tenv x y T S,
   Typed t tenv T -> ~Free y t -> ~Bound y t -> Table.MapsTo x S tenv ->
      Typed (alpha t x y) (Table.add y S tenv) T.
 Proof.
-induction t.
- intros.
- simpl in |- *.
+intros until S.
+intro.
+pattern t,tenv,T.
+apply Typed_ind; auto; intros; simpl.
  destruct (string_dec s x).
-  inversion H.
-  apply TableWF.MapsTo_fun with (e := T) in H2.
-   rewrite <- H2 in |- *.
-   apply TVar.
-   apply Table.add_1.
-   reflexivity.
-
-   rewrite <- e in |- *.
-   exact H4.
+  apply TableWF.MapsTo_fun with (e := T0) in H3.
+  apply TVar.
+  rewrite <- H3.
+  apply Table.add_1; auto.
+  rewrite <- e in |- *.
+  tauto.
 
   apply TVar.
-  inversion H.
-  apply Table.add_2.
-   intro; apply H0.
-   rewrite H7 in |- *.
-   apply FVar.
+  apply Table.add_2; auto.
+  Contrapositive H1.
+  rewrite H4.
+  apply FVar.
 
-   exact H4.
-
- intros.
- simpl in |- *.
- inversion H.
  apply TBool.
 
- intros.
- simpl in |- *.
- destruct (string_dec s x).
-  inversion H.
+ destruct (string_dec x0 x).
   apply TLambda.
-  assert (y <> s).
-   intro.
-   apply H1.
-   rewrite H9 in |- *.
+  assert (y <> x0).
+   Contrapositive H3.
+   rewrite H5 in |- *.
    apply BLambda1.
 
-   generalize H9; intro.
-   apply (add_2 _ tenv y s S t) in H9.
-   rewrite <- H9 in |- *.
-   apply weaking_intro.
-    apply not_free_lambda with (y := s) (T := t); trivial.
-    apply not_bound_lambda with (y := s) (T := t); trivial.
-    trivial.
+   rewrite <- add_2 in |- *; auto.
+   apply weaking_intro;
+    [ apply not_free_lambda with (y := x0) (T:=T0)
+    | apply not_bound_lambda with (y := x0) (T := T0)
+    | ];
+    tauto.
 
-  inversion H.
   apply TLambda.
-  assert (y <> s).
-   intro.
-   apply H1.
-   rewrite H9 in |- *.
+  assert (y <> x0).
+   Contrapositive H3.
+   rewrite H5 in |- *.
    apply BLambda1.
 
-   generalize H9; intro.
-   apply (add_2 _ tenv y s S t) in H9.
-   rewrite <- H9 in |- *.
-   apply IHt.
-    trivial.
-    apply not_free_lambda with (y := s) (T := t); trivial.
-    apply not_bound_lambda with (y := s) (T := t).
-    trivial.
+   rewrite <- add_2; auto.
+   apply H1;
+     [ apply not_free_lambda with (y := x0) (T := T0)
+     | apply not_bound_lambda with (y := x0) (T := T0)
+     | apply Table.add_2 ];
+     tauto.
 
-    apply Table.add_2; trivial.
+ apply TApply with (S := S0);
+  [ apply H1 | apply H3 ];
+  try (apply not_free_apply in H4; tauto);
+  try (apply not_bound_apply in H5; tauto);
+  tauto.
 
- intros.
- inversion H.
- simpl in |- *.
- apply TApply with (S := S0).
-  apply IHt1.
-   trivial.
-   apply not_free_apply in H0; tauto.
-   apply not_bound_apply in H1; tauto.
-   tauto.
-
-  apply IHt2.
-   trivial.
-   apply not_free_apply in H0; tauto.
-   apply not_bound_apply in H1; tauto.
-   tauto.
-
- intros.
- simpl in |- *.
- inversion H.
- apply TIf.
-  apply IHt1.
-   trivial.
-   apply not_free_if in H0; tauto.
-   apply not_bound_if in H1; tauto.
-   trivial.
-
-  apply IHt2.
-   trivial.
-   apply not_free_if in H0; tauto.
-   apply not_bound_if in H1; tauto.
-   trivial.
-
-  apply IHt3.
-   trivial.
-   apply not_free_if in H0; tauto.
-   apply not_bound_if in H1; tauto.
-   trivial.
+ apply TIf;
+  [ apply H1 | apply H3 | apply H5];
+  try (apply not_free_if  in H6; tauto);
+  try (apply not_bound_if in H7; tauto);
+  tauto.
 Qed.
 
 Lemma subst_preserve : forall t s x T S tenv,
-    Typed t (Table.add x S tenv) T -> Typed s tenv S -> Typed (subst t x s) tenv T.
+  Typed t (Table.add x S tenv) T -> Typed s tenv S ->
+  Typed (subst t x s) tenv T.
 Proof.
 intros x0 s x.
-functional induction (subst x0 x s) .
- intros.
- rewrite _x in H.
- inversion H.
+functional induction (subst x0 x s); intros; inversion H.
+ rewrite _x in H2.
  apply TableWF.add_mapsto_iff in H2.
- inversion H2.
-  inversion H5.
-  rewrite <- H7 in |- *.
-  trivial.
+ decompose [or and] H2; try tauto.
+ rewrite <- H7 in |- *.
+ tauto.
 
-  inversion H5.
-  tauto.
-
- intros.
- inversion H.
  apply TableWF.add_mapsto_iff in H2.
- inversion H2.
-  inversion H5.
+ decompose [or and] H2.
   apply sym_eq in H6.
-  contradiction .
+  contradiction.
 
   apply TVar.
-  inversion H5.
-  trivial.
+  tauto.
 
- intros.
- inversion H.
  apply TBool.
 
- intros.
- inversion H.
  apply TLambda.
- rewrite _x in H6.
- rewrite (add_1 _ tenv old T S) in H6.
+ rewrite _x,add_1 in H6.
  rewrite _x in |- *.
  trivial.
 
- intros.
- inversion H.
  apply TLambda.
  apply IHt with (S := S).
   destruct (string_dec x (Fresh old new body)).
-   rewrite <- e in |- *.
-   rewrite alpha_id in |- *.
-   generalize _x.
-   intro.
-   apply (add_2 _ tenv x old T S) in _x0.
-   rewrite <- _x0 in |- *.
-   trivial.
+   rewrite <- e, alpha_id in |- *.
+   rewrite <- add_2; auto.
 
    assert (old <> Fresh old new body).
     apply Fresh_x.
 
-    apply (add_2 _ tenv old (Fresh old new body) S T) in H7.
-    rewrite H7 in |- *.
+    rewrite <- add_2; auto.
     apply weaking_elim with (s := x) (S := T).
      apply alpha_not_free.
      trivial.
 
-     apply (add_2 _ (Table.add old S tenv) x (Fresh old new body) T T) in n.
-     rewrite n in |- *.
+     rewrite <- add_2 in |- *.
      apply alpha_preserve.
       trivial.
 
@@ -193,18 +126,17 @@ functional induction (subst x0 x s) .
       apply Table.add_1.
       reflexivity.
 
-  apply weaking_intro; [apply Fresh_fv1 | apply Fresh_bv1 | trivial].
+      apply sym_not_eq.
+      tauto.
 
- intros.
- inversion H.
- apply TApply with (S := S0).
-  apply IHt with (S := S); trivial.
-  apply IHt0 with (S := S); trivial.
+  apply weaking_intro;
+   [apply Fresh_fv1 | apply Fresh_bv1 | trivial].
 
- intros.
- inversion H.
- apply TIf.
-  apply IHt with (S := S); trivial.
-  apply IHt0 with (S := S); trivial.
-  apply IHt1 with (S := S); trivial.
+ apply TApply with (S := S0);
+  [ apply IHt with (S := S) | apply IHt0 with (S := S) ];
+  tauto.
+
+ apply TIf;
+  [ apply IHt with (S := S) | apply IHt0 with (S := S) | apply IHt1 with (S := S) ];
+  tauto.
 Qed.
