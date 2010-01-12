@@ -1,13 +1,10 @@
 Require Import String.
 
+Require Import Util.
 Require Import Term.
 Require Import Var.
 Require Import TypingRule.
 Require Import Tables.
-
-Ltac Contrapositive H :=
-  intro;
-  apply H.
 
 Lemma weaking_elim: forall t S T tenv s,
   ~ Free s t -> Typed t (Table.add s S tenv) T -> Typed t tenv T.

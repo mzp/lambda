@@ -5,3 +5,7 @@ Definition mbind {A : Type} (x : option A) (f : A -> option A) : option A :=
   end.
 
 Infix ">>=" := mbind (at level 50).
+
+Ltac Contrapositive H :=
+  intro;
+  apply H.
