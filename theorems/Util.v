@@ -9,3 +9,7 @@ Infix ">>=" := mbind (at level 50).
 Ltac Contrapositive H :=
   intro;
   apply H.
+
+Ltac Dup H :=
+  generalize H;
+  intro.
