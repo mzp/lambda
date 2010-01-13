@@ -11,8 +11,9 @@ Require Import TypingRule.
 Require Import Tables.
 
 Lemma alpha_preserve : forall t tenv x y T S,
-  Typed t tenv T -> ~Free y t -> ~Bound y t -> Table.MapsTo x S tenv ->
-     Typed (alpha t x y) (Table.add y S tenv) T.
+  Typed t tenv T -> ~ Free y t -> ~ Bound y t ->
+  Table.MapsTo x S tenv ->
+  Typed (alpha t x y) (Table.add y S tenv) T.
 Proof.
 intros until S.
 intro.
@@ -75,7 +76,8 @@ apply Typed_ind; auto; intros; simpl.
 Qed.
 
 Lemma subst_preserve : forall t s x T S tenv,
-  Typed t (Table.add x S tenv) T -> Typed s tenv S ->
+  Typed t (Table.add x S tenv) T ->
+  Typed s tenv S ->
   Typed (subst t x s) tenv T.
 Proof.
 intros x0 s x.
