@@ -13,11 +13,14 @@ FILES[] =
 	CannonicalForm
 	Progress
 	Preservation
+	TVar
 	Soundness
 	SubstLemma
 	TypeSubst
 	TypeSubstFact
 	Constraint
+	TVar
+	ConstraintRule
 	Sets
 	Completeness
 
