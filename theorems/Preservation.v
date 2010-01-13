@@ -6,58 +6,32 @@ Require Import SubstLemma.
 Theorem preservation: forall t t' tenv T,
   Typed t tenv T -> Eval t t' -> Typed t' tenv T.
 Proof.
-induction t.
- intros.
+intros until T.
+intro.
+generalize t'.
+pattern t, tenv, T in |- *.
+apply Typed_ind; intros; auto.
+ inversion H1.
+
  inversion H0.
 
- intros.
- inversion H0.
+ inversion H2.
 
- intros.
- inversion H0.
+ inversion H4.
+  apply TApply with (S := S);
+   [ apply H1 | ];
+   tauto.
 
- intros.
- inversion H.
- inversion H0.
-  apply TApply with (S := S).
-   apply IHt1.
-    exact H3.
+  apply TApply with (S := S);
+   [ | apply H3];
+   tauto.
 
-    exact H10.
+  apply subst_preserve with (S := S); auto.
+  rewrite <- H5 in H0.
+  inversion H0.
+  tauto.
 
-   exact H6.
-
-  apply TApply with (S := S).
-   exact H3.
-
-   apply IHt2.
-    exact H6.
-
-    exact H11.
-
-  apply subst_preserve with (S := S).
-   rewrite <- H7 in H3.
-   inversion H3.
-   exact H15.
-
-   exact H6.
-
- intros.
- inversion H.
- inversion H0.
-  apply TIf.
-   apply IHt1.
-    exact H4.
-
-    exact H13.
-
-   exact H7.
-
-   exact H8.
-
-  rewrite <- H9 in |- *.
-  exact H7.
-
-  rewrite <- H9 in |- *.
-  exact H8.
+ inversion H6;
+  [ apply TIf | rewrite <- H7 in |- * | rewrite <- H7 in |- * ];
+  auto.
 Qed.
