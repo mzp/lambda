@@ -178,16 +178,13 @@ Module Make(Dec : DecidableType).
    decompose [and] H.
    split; auto.
    unfold Disjoint.
-   unfold Disjoint in H1.
    intros.
-   specialize (H1 x0).
-   Contrapositive H1.
+   Contrapositive H0.
    apply WFact.inter_iff in H2.
    decompose [and] H2.
    apply WFact.singleton_iff in H3.
-
-
-
+   rewrite H3.
+   tauto.
   Qed.
 
   Lemma disjoint_iff : forall X Y,
