@@ -1,19 +1,18 @@
 Require Import List.
 Require Import String.
 
-Require Import Dec.
-Require Import Tables.
-Require Import Sets.
-Require Import Term.
-Require Import TVar.
+Require Import TypeSubst.
 Require Import Constraint.
 Require Import TypingRule.
-Require Import TypeSubst.
 Require Import ConstraintRule.
 
-Definition Solution tsubst T tenv Ts t S C := exists X,
+Definition TSolution tsubst T tenv t :=
+  Typed (term_subst t tsubst) (tenv_subst tenv tsubst) T.
+
+Definition CSolution tsubst T tenv Ts t S C := exists X,
   TypeConstraint t tenv Ts S X C /\ Unified C tsubst /\ T = type_subst S tsubst.
 
+(*
 Lemma var_solution_inv : forall T S tenv Ts tsubst x C,
   Solution tsubst T tenv Ts (Var x) S C ->
   Table.MapsTo x T (tenv_subst tenv tsubst).
@@ -361,4 +360,4 @@ apply H3 in H0.
 decompose [and] H0.
 decompose [or] H2;
  apply use_t_not_fresh in H6; contradiction.
-Qed.
+Qed.*)

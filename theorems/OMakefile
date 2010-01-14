@@ -18,6 +18,7 @@ FILES[] =
 	SubstLemma
 	TypeSubst
 	TypeSubstFact
+	Solution
 	Constraint
 	TVar
 	ConstraintRule
