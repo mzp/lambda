@@ -31,10 +31,7 @@ Fixpoint term_subst t tsubst :=
      If (term_subst t1 tsubst) (term_subst t2 tsubst) (term_subst t3 tsubst)
   end.
 
-Definition Solution tsubst T tenv t :=
-  Typed (term_subst t tsubst) (tenv_subst tenv tsubst) T.
-
-Lemma add_eq : forall x T tenv tsubst,
+(*Lemma add_eq : forall x T tenv tsubst,
   (Table.add x (type_subst T tsubst) (tenv_subst tenv tsubst)) = (tenv_subst (Table.add x T tenv) tsubst).
 Proof.
 intros.
@@ -74,3 +71,4 @@ apply Typed_ind; simpl in |- *; intros.
 
  trivial.
 Qed.
+*)
