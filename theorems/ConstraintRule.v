@@ -75,7 +75,3 @@ Inductive TypeConstraint : term -> tenv -> list type -> type -> tvars -> tconst 
     C = TConst.add (T1,BoolT) (TConst.add (T2,T3) (TConst.union C1 (TConst.union C2 C3))) ->
     X = TVars.union X1 (TVars.union X2 X3) ->
     TypeConstraint (If t1 t2 t3) tenv Ts T2 X C.
-
-(*
-
-*)
