@@ -14,16 +14,16 @@ FILES[] =
 	Progress
 	Preservation
 	TVar
-	Soundness
 	SubstLemma
 	TypeSubst
-	TypeSubstFact
 	Solution
 	Constraint
 	TVar
 	ConstraintRule
 	Sets
-	Completeness
+#	TypeSubstFact
+#	Soundness
+#	Completeness
 
 .DEFAULT: $(CoqProof $(FILES))
 
