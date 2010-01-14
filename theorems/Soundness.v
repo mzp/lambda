@@ -1,8 +1,10 @@
 Require Import List.
 Require Import String.
 
+Require Import Util.
 Require Import Tables.
 Require Import Term.
+Require Import TypingRule.
 Require Import Constraint.
 Require Import ConstraintRule.
 Require Import TypeSubst.
@@ -22,6 +24,19 @@ destruct x.
 apply unified_add_iff in H.
 decompose [and] H.
 assumption.
+Qed.
+
+Lemma add_eq : forall x T tenv tsubst,
+  Table.add x (type_subst T tsubst) (tenv_subst tenv tsubst) =
+  tenv_subst (Table.add x T tenv) tsubst.
+Proof.
+intros.
+unfold tenv_subst in |- *.
+change (type_subst T tsubst)
+  with ((fun T0 : type => type_subst T0 tsubst) T)
+  in |- *.
+rewrite <- map_add.
+reflexivity.
 Qed.
 
 Lemma var_solution_inv : forall T S tenv Ts tsubst x C,
@@ -62,88 +77,93 @@ simpl in H3.
 assumption.
 Qed.
 
-Lemma apply_solution_inv: forall tsubst tenv Ts t1 t2 T T1 T2 S C1 C2 X1 X2,
+Lemma apply_solution_inv: forall T T1 T2 S C1 C2 C X1 X2 tsubst tenv Ts t1 t2 ,
+ CSolution tsubst S tenv Ts (Apply t1 t2) T C ->
+ C = TConst.add (T1,FunT T2 T) (TConst.union C1 C2) ->
  TypeConstraint t1 tenv Ts T1 X1 C1 ->
  TypeConstraint t2 tenv Ts T2 X2 C2 ->
- CSolution tsubst S tenv Ts (Apply t1 t2) T (TConst.add (T1,FunT T2 T) (TConst.union C1 C2)) ->
    type_subst T1 tsubst = type_subst (FunT T2 T) tsubst /\
    CSolution tsubst (type_subst T1 tsubst) tenv Ts t1 T1 C1 /\
    CSolution tsubst (type_subst T2 tsubst) tenv Ts t2 T2 C2.
 Proof.
-Prepare H1.
+Prepare H.
 split.
- apply unified_add_iff in H2.
+ rewrite H0 in H3.
+ apply unified_add_iff in H3.
  tauto.
 
+ rewrite H0 in H3.
  split;
   [ exists X1 |  exists X2 ];
-  apply add_elim in H2;
-  apply unified_union_iff in H2;
+  apply add_elim in H3;
+  apply unified_union_iff in H3;
   tauto.
 Qed.
 
-Lemma if_solution_inv : forall t1 t2 t3 S T1 T2 T3 X1 X2 X3 C1 C2 C3 tenv Ts tsubst,
+Lemma if_solution_inv : forall S T1 T2 T3 X1 X2 X3 C C1 C2 C3 t1 t2 t3 tenv Ts tsubst,
+  CSolution tsubst S tenv Ts (If t1 t2 t3) T2 C ->
+  C = TConst.add (T1, BoolT)
+                 (TConst.add (T2, T3)
+                             (TConst.union C1 (TConst.union C2 C3))) ->
+
   TypeConstraint t1 tenv Ts T1 X1 C1 ->
   TypeConstraint t2 tenv Ts T2 X2 C2 ->
   TypeConstraint t3 tenv Ts T3 X3 C3 ->
-  CSolution tsubst S tenv Ts (If t1 t2 t3) T2
-                  (TConst.add (T1, BoolT)
-                            (TConst.add (T2, T3)
-                                      (TConst.union C1 (TConst.union C2 C3)))) ->
   CSolution tsubst BoolT tenv Ts t1 T1 C1 /\
   CSolution tsubst S tenv Ts t2 T2 C2 /\
   CSolution tsubst S tenv Ts t3 T3 C3.
 Proof.
-Prepare H2.
+Prepare H.
+rewrite H0 in H4.
 split; [ | split].
  exists X1.
  split; [ | split]; auto.
-  do 2 (apply add_elim in H3).
-  apply unified_union_iff in H3.
+  do 2 (apply add_elim in H4).
+  apply unified_union_iff in H4.
   tauto.
 
-  apply unified_add_iff in H3.
-  decompose [and] H3.
-  rewrite H5.
+  apply unified_add_iff in H4.
+  decompose [and] H4.
+  rewrite H6.
   reflexivity.
 
  exists X2.
  split; [ | split]; auto.
-  do 2 (apply add_elim in H3).
-  apply unified_union_iff in H3.
-  decompose [and] H3.
-  apply unified_union_iff in H7.
+  do 2 (apply add_elim in H4).
+  apply unified_union_iff in H4.
+  decompose [and] H4.
+  apply unified_union_iff in H8.
   tauto.
 
  exists X3.
  split; [ | split]; auto.
-  do 2 (apply add_elim in H3).
-  apply unified_union_iff in H3.
-  decompose [and] H3.
-  apply unified_union_iff in H7.
+  do 2 (apply add_elim in H4).
+  apply unified_union_iff in H4.
+  decompose [and] H4.
+  apply unified_union_iff in H8.
   tauto.
 
-  apply add_elim in H3.
-  apply unified_add_iff in H3.
-  decompose [and] H3.
-  rewrite <- H5,H6.
+  apply add_elim in H4.
+  apply unified_add_iff in H4.
+  decompose [and] H4.
+  rewrite <- H6,H7.
   reflexivity.
 Qed.
 
-
 Theorem soundness : forall t tenv Ts S X C T tsubst,
   TypeConstraint t tenv Ts S X C ->
-  Constraint.Solution tsubst T tenv Ts t S C ->
-  TypeSubst.Solution tsubst T tenv t.
+  CSolution tsubst T tenv Ts t S C ->
+  TSolution tsubst T tenv t.
 Proof.
+unfold TSolution.
 intros until tsubst.
 intro.
 generalize T.
 pattern t, tenv, Ts, S, X, C in |- *.
-apply TypeConstraint_ind; intros; unfold Solution in |- *; simpl in |- *.
+apply TypeConstraint_ind; simpl; intros; auto.
  apply var_solution_inv in H1.
  apply TVar.
- trivial.
+ tauto.
 
  apply lambda_solution_inv in H2.
  decompose [and] H2.
@@ -151,56 +171,34 @@ apply TypeConstraint_ind; intros; unfold Solution in |- *; simpl in |- *.
  rewrite H3 in |- *.
  apply TLambda.
  rewrite add_eq in |- *.
- trivial.
+ tauto.
 
  apply bool_solution_inv in H0.
  rewrite H0 in |- *.
  apply TBool.
 
- apply
-  apply_solution_inv
-   with
-     (tsubst := tsubst)
-     (T := VarT x)
-     (t1 := t1)
-     (T1 := T1)
-     (S := T0)
-     (C1 := C1)
-     (X1 := X1) in H2.
-  decompose [and] H2.
-  apply TApply with (S := type_subst T2 tsubst).
-   assert (T0 = type_subst (VarT x) tsubst).
-    unfold Constraint.Solution in H13.
-    decompose [ex] H13.
-    decompose [and] H15.
-    trivial.
-
-    rewrite H15 in |- *.
-    apply H1.
-    simpl in |- *.
-    simpl in H14.
-    rewrite <- H14 in |- *.
-    tauto.
-
-   apply H3.
+ Dup H8.
+ apply (apply_solution_inv _ T1 T2 T0 C1 C2 _ X1 X2) in H8; auto.
+ decompose [and] H8.
+ apply TApply with (S := type_subst T2 tsubst).
+  assert (T0 = type_subst (VarT x) tsubst).
+   unfold CSolution in H9.
+   decompose [ex and] H9.
    tauto.
 
+   rewrite H11 in |- *.
+   apply H1.
+   simpl in H10.
+   simpl.
+   rewrite <- H10.
+   tauto.
+
+  apply H3.
+  tauto.
+
+ apply (if_solution_inv T0 T1 T2 T3 X1 X2 X3 _ C1 C2 C3) in H9; auto.
+ decompose [and] H9.
+ apply TIf;
+  [ apply H1 | apply H3 | apply H5 ];
   trivial.
-
-  rewrite <- H12 in |- *.
-  trivial.
-
- apply (if_solution_inv t1 t2 t3 T0 T1 T2 T3 X1 X2 X3 C1 C2 C3 _ _ tsubst)
-  in H4.
-  decompose [and] H4.
-  apply TIf; [apply H1 | apply H3 | apply H5]; trivial.
-
-  trivial.
-
-  trivial.
-
-  rewrite <- H27 in |- *.
-  trivial.
-
- trivial.
-Qed.*)
+Qed.
