@@ -22,7 +22,7 @@ FILES[] =
 	ConstraintRule
 	Sets
 #	TypeSubstFact
-#	Soundness
+	Soundness
 #	Completeness
 
 .DEFAULT: $(CoqProof $(FILES))
