@@ -7,34 +7,34 @@ Require Import Tables.
 Require Import Sets.
 Require Import Term.
 Require Import Constraint.
+Require Import ConstraintRule.
+Require Import Solution.
 Require Import TypeSubst.
-Require Import TypeSubstFact.
 
 (* Lemma *)
 
 (* for var *)
-Lemma var_inv : forall s T S tenv tsubst ,
+Lemma var_inv : forall T tenv s S tsubst,
+  TSolution tsubst T tenv (Var s) ->
   Table.MapsTo s S tenv ->
-  Solution tsubst T tenv (Var s) ->
   T = type_subst S tsubst.
 Proof.
-unfold Solution in |- *.
-simpl in |- *.
+unfold TSolution, tenv_subst.
+simpl.
 intros.
-inversion H0.
-unfold tenv_subst in H2.
-apply (TableWF.map_mapsto_iff tenv s T (fun T : type => type_subst T tsubst))
- in H2.
-inversion H2.
-inversion H5.
-rewrite H6 in |- *.
+inversion H.
+apply TableWF.map_mapsto_iff in H2.
+decompose [ex and] H2.
+rewrite H6.
 assert (x = S).
- apply TableWF.MapsTo_fun with (m := tenv) (x := s); trivial.
+ apply TableWF.MapsTo_fun with (m := tenv) (x := s); tauto.
 
- rewrite H8 in |- *.
+ rewrite H5.
  reflexivity.
 Qed.
 
+
+(*Proof.
 (* for lambda *)
 Lemma lambda_inv : forall T tenv tsubst x T1 t,
   Solution tsubst T tenv (Lambda x T1 t) ->
@@ -1249,3 +1249,4 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
 
  tauto.
 Qed.
+*)

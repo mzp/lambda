@@ -23,7 +23,7 @@ FILES[] =
 	Sets
 #	TypeSubstFact
 	Soundness
-#	Completeness
+	Completeness
 
 .DEFAULT: $(CoqProof $(FILES))
 
