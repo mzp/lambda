@@ -46,8 +46,7 @@ Lemma mapsto_type_subst: forall x tsubst1 tsubst2,
 Proof.
 intros; simpl.
 destruct (TableWF.In_dec tsubst1 x).
- unfold Table.In, Table.Raw.PX.In in i.
- decompose [ex] i.
+ UnfoldIn i.
  Dup H0.
  apply H in H0.
  apply TableWF.find_mapsto_iff in H0.
@@ -57,8 +56,7 @@ destruct (TableWF.In_dec tsubst1 x).
 
  assert (~ Table.In (elt:=type) x tsubst2).
   Contrapositive n.
-  unfold Table.In, Table.Raw.PX.In in H0.
-  decompose [ex] H0.
+  UnfoldIn H0.
   unfold Table.In, Table.Raw.PX.In in |- *.
   exists x0.
   apply <- H.

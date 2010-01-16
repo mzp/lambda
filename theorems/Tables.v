@@ -14,6 +14,11 @@ Definition empty t := Table.empty t.
 Axiom Extensionality_Table : forall (t : Type) (A B : table t),
    Table.Equal A B -> A = B.
 
+Ltac UnfoldIn H :=
+   unfold Table.In, Table.Raw.PX.In in H;
+   decompose [ex] H.
+
+
 Lemma equal_ind : forall (t : Type) A B,
  (forall k (e : t), Table.MapsTo k e A -> Table.MapsTo k e B) ->
  (forall k (e : t), Table.MapsTo k e B -> Table.MapsTo k e A) ->
@@ -128,8 +133,7 @@ Lemma MapsTo_In : forall (t : Type)  A x (T : table t),
   Table.MapsTo x T A -> Table.In x A.
 Proof.
 intros.
-unfold Table.In in |- *.
-unfold Table.Raw.PX.In in |- *.
+unfold Table.In,Table.Raw.PX.In in |- *.
 unfold Table.MapsTo in H.
 exists T.
 tauto.

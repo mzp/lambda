@@ -33,11 +33,11 @@ Lemma sub_in : forall A x (tsubst : table A) X,
  Table.In x (tsubst // X) -> Table.In x tsubst.
 Proof.
 intros.
-unfold Table.In, Table.Raw.PX.In, sub in H.
-unfold Table.In, Table.Raw.PX.In.
-decompose [ex] H.
+UnfoldIn H.
+unfold sub in H0.
 apply filter_iff in H0.
 decompose [and] H0.
+unfold Table.In, Table.Raw.PX.In.
 exists x0.
 assumption.
 Qed.
@@ -62,8 +62,7 @@ Lemma sub_find : forall A (tsubst : table A) x X ,
 Proof.
 intros.
 destruct (TableWF.In_dec tsubst x).
- unfold Table.In, Table.Raw.PX.In in i.
- decompose [ex] i.
+ UnfoldIn i.
  Dup H0.
  apply sub_mapsto in H1.
   apply H.
