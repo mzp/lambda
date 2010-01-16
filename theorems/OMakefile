@@ -19,8 +19,11 @@ FILES[] =
 	Solution
 	Constraint
 	TVar
+	TVars
 	ConstraintRule
 	Sets
+	Solution
+	TSolutionInv
 #	TypeSubstFact
 	Soundness
 	Completeness

@@ -1,16 +1,12 @@
 Require Import List.
 Require Import String.
 
-Require Import Dec.
 Require Import Tables.
-Require Import Sets.
 Require Import Term.
 Require Import TVar.
+Require Import TVars.
 Require Import Constraint.
 Require Import TypingRule.
-
-Module TVars  := Sets.Make StrDec.
-Definition tvars  := TVars.t.
 
 Definition FreeE x tenv := exists y, exists T,
   Table.MapsTo y T tenv /\ FreeT x T.
@@ -24,9 +20,6 @@ Definition Fresh x X1 X2 T1 T2 C1 C2 tenv ts t1 t2 :=
   ~ FreeC x C1     /\ ~ FreeC x C2    /\
   ~ FreeE x tenv   /\ ~ FreeTs x ts   /\
   ~ FreeTerm x t1  /\ ~ FreeTerm x t2.
-
-Definition DisjointBy {A : Type} (Free : string -> A -> Prop) xs (T : A) := forall x,
-  TVars.In x xs -> ~ Free x T /\ Free x T -> ~ TVars.In x xs.
 
 Definition DisjointT    := DisjointBy FreeT.
 Definition DisjointTerm := DisjointBy FreeTerm.
