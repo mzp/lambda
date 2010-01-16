@@ -1,5 +1,6 @@
 Require Import String.
 
+Require Import Util.
 Require Import Term.
 Require Import TypingRule.
 Require Import Tables.
@@ -40,42 +41,38 @@ Definition filter {A : Type} {P : string -> Prop} (dec : forall x, {P x} + {~ P 
     tsubst.
 
 Lemma mapsto_type_subst: forall x tsubst1 tsubst2,
- (forall U,Table.MapsTo x U tsubst1 <-> Table.MapsTo x U tsubst2) ->
+ (forall U, Table.MapsTo x U tsubst1 <-> Table.MapsTo x U tsubst2) ->
  type_subst (VarT x) tsubst1 = type_subst (VarT x) tsubst2.
 Proof.
-intros.
-simpl in |- *.
+intros; simpl.
 destruct (TableWF.In_dec tsubst1 x).
- unfold Table.In in i.
- unfold Table.Raw.PX.In in i.
+ unfold Table.In, Table.Raw.PX.In in i.
  decompose [ex] i.
- generalize H0.
- intro.
- apply H in H1.
+ Dup H0.
+ apply H in H0.
  apply TableWF.find_mapsto_iff in H0.
  apply TableWF.find_mapsto_iff in H1.
- rewrite H0 in |- *; rewrite H1 in |- *.
+ rewrite H0,H1 in |- *.
  reflexivity.
 
  assert (~ Table.In (elt:=type) x tsubst2).
-  intro; apply n.
-  unfold Table.In in H0.
-  unfold Table.Raw.PX.In in H0.
+  Contrapositive n.
+  unfold Table.In, Table.Raw.PX.In in H0.
   decompose [ex] H0.
-  unfold Table.In in |- *.
-  unfold Table.Raw.PX.In in |- *.
+  unfold Table.In, Table.Raw.PX.In in |- *.
   exists x0.
-  apply <- H (* Generic printer *).
-  trivial.
+  apply <- H.
+  tauto.
 
   apply TableWF.not_find_mapsto_iff in n.
   apply TableWF.not_find_mapsto_iff in H0.
-  rewrite n in |- *; rewrite H0 in |- *.
+  rewrite n,H0 in |- *.
   reflexivity.
 Qed.
 
 Lemma union_iff: forall A x (T : A) (X Y : table A),
-  Table.MapsTo x T (union X Y) <-> Table.MapsTo x T X \/ (~ Table.In x X /\ Table.MapsTo x T Y).
+  Table.MapsTo x T (union X Y) <->
+  Table.MapsTo x T X \/ (~ Table.In x X /\ Table.MapsTo x T Y).
 Proof.
 intros.
 unfold union in |- *.
@@ -86,127 +83,87 @@ pattern X,
 apply TableProp.fold_rec_bis; intros.
  apply Extensionality_Table in H.
  rewrite <- H in |- *.
- trivial.
+ tauto.
 
- split; intros.
+ split; intros; auto.
   right.
-  split.
-   intro.
-   apply TableWF.empty_in_iff in H0.
-   contradiction .
+  split; auto.
+  intro.
+  apply TableWF.empty_in_iff in H0.
+  contradiction.
 
-   trivial.
-
-  decompose [or] H.
-   inversion H0.
-
-   decompose [and] H0.
-   trivial.
+  decompose [or and] H; auto.
+  inversion H0.
 
  split; intros.
   apply TableWF.add_mapsto_iff in H2.
-  decompose [or] H2.
+  decompose [or and] H2.
    left.
-   decompose [and] H3.
-   rewrite H4 in |- *; rewrite H5 in |- *.
-   apply <- TableWF.add_mapsto_iff (* Generic printer *).
-   left; split; reflexivity.
+   rewrite H4, H5 in |- *.
+   apply <- TableWF.add_mapsto_iff.
+   tauto.
 
-   decompose [and] H3.
    apply H1 in H5.
-   decompose [or] H5.
+   decompose [or and] H5.
     left.
-    apply <- TableWF.add_mapsto_iff (* Generic printer *).
+    apply <- TableWF.add_mapsto_iff.
+    tauto.
+
     right.
-    split; trivial.
+    split; auto.
+    Contrapositive H6.
+    apply TableWF.add_in_iff in H3.
+    decompose [or] H3; auto.
+    contradiction.
 
-    decompose [and] H6.
-    right.
-    split.
-     intro.
-     apply H7.
-     apply TableWF.add_in_iff in H9.
-     decompose [or] H9.
-      contradiction .
-
-      trivial.
-
-     trivial.
-
-  decompose [or] H2.
+  decompose [or and] H2.
    apply TableWF.add_mapsto_iff in H3.
-   decompose [or] H3.
-    decompose [and] H4.
-    rewrite H5 in |- *; rewrite H6 in |- *.
-    apply <- TableWF.add_mapsto_iff (* Generic printer *).
-    left.
-    split; reflexivity.
+   decompose [or and] H3.
+    rewrite H5, H6 in |- *.
+    apply <- TableWF.add_mapsto_iff.
+    tauto.
 
-    decompose [and] H4.
-    apply <- TableWF.add_mapsto_iff (* Generic printer *).
-    right.
-    split.
-     trivial.
+    apply <- TableWF.add_mapsto_iff.
+    tauto.
 
-     apply H1.
-     left.
-     trivial.
-
-   decompose [and] H3.
-   apply <- TableWF.add_mapsto_iff (* Generic printer *).
+   apply <- TableWF.add_mapsto_iff.
    right.
    split.
-    intro.
-    apply H4.
-    apply <- TableWF.add_in_iff (* Generic printer *).
-    left.
-    trivial.
+    Contrapositive H4.
+    apply <- TableWF.add_in_iff.
+    tauto.
 
     apply H1.
     right.
-    split.
-     intro.
-     apply H4.
-     apply <- TableWF.add_in_iff (* Generic printer *).
-     right.
-     trivial.
-
-     trivial.
+    split; auto.
+    Contrapositive H4.
+    apply <- TableWF.add_in_iff.
+    tauto.
 Qed.
 
 Lemma filter_iff : forall A x P (dec : forall x, {P x} + {~ P x}) (T : A) (m : table A),
-  Table.MapsTo x T (filter dec m) <-> Table.MapsTo x T m /\ (P x).
+  Table.MapsTo x T (filter dec m) <->
+  Table.MapsTo x T m /\ (P x).
 Proof.
 unfold filter in |- *.
-intros; split; intros.
+split; intros.
  apply TableProp.filter_iff in H.
-  intro.
-  unfold Morphisms.respectful in |- *.
+  unfold Morphisms.Morphism,Morphisms.respectful in |- *.
   intros.
   rewrite H0 in |- *.
   reflexivity.
 
   decompose [and] H.
-  split.
-   trivial.
+  split; auto.
+  destruct (dec x); auto.
+  discriminate.
 
-   destruct (dec x).
-    trivial.
-
-    discriminate.
-
- apply <- TableProp.filter_iff (* Generic printer *).
+ apply <- TableProp.filter_iff.
   decompose [and] H.
-  split.
-   trivial.
+  split; auto.
+  destruct (dec x); auto.
 
-   destruct (dec x).
-    reflexivity.
-
-    contradiction .
-
-  unfold Morphisms.Morphism in |- *.
-  unfold Morphisms.respectful in |- *.
+  unfold Morphisms.Morphism, Morphisms.respectful in |- *.
   intros.
   rewrite H0 in |- *.
   reflexivity.
