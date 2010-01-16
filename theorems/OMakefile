@@ -19,6 +19,7 @@ FILES[] =
 	Solution
 	Constraint
 	TVar
+	TVars
 	ConstraintRule
 	Sets
 	Solution
