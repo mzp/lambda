@@ -25,6 +25,7 @@ FILES[] =
 	Sets
 	Solution
 	TSolutionInv
+	CSolutionInv
 #	TypeSubstFact
 	Soundness
 	Completeness
