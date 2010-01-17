@@ -1,60 +1,65 @@
+Require Import List.
 Require Import Util.
 Require Import Tables.
 Require Import Term.
 Require Import TVars.
 Require Import TypeSubst.
 Require Import TVarsSub.
+Require Import String.
 
-Definition Include {A : Type} (m' m : table A) P := forall k e,
-  Table.MapsTo k e m' <-> (P k /\ Table.MapsTo k e m).
+Definition Maps A := list ((string -> bool) * table A).
 
-Lemma ex_include : forall A P (dec : forall x, {P x} + {~ P x}) (m : table A),
-  exists m', Include m' m P.
+Definition Union {A : Type} m' (ms : Maps A) := forall k e P p m,
+  In (p,m) ms -> prop_bool P p -> P k ->
+  (Table.MapsTo k e m' <-> Table.MapsTo k e m).
+
+Definition Disjoint {A : Type} (ms : Maps A) := forall i j m1 m2 p1 p2 P Q,
+  i <> j ->
+  Some (p1,m1) = List.nth_error ms i ->
+  Some (p2,m2) = List.nth_error ms j ->
+  prop_bool P p1 ->
+  prop_bool Q p2 ->
+  (forall x, P x -> ~ Q x) /\ (forall x, Q x -> ~ P x).
+
+Lemma cons_disjoint : forall A m (ms : Maps A),
+  Disjoint (m::ms) -> Disjoint ms.
 Proof.
+unfold Disjoint.
 intros.
-exists (filter dec m).
-unfold Include, app.
-split; intros.
- apply filter_iff in H.
- tauto.
-
- apply <- filter_iff.
- tauto.
+apply (H (1+i)%nat (1+j)%nat m1 m2 p1 p2); auto.
 Qed.
 
-Definition ApplyTSubst {A : Type} m' X X1 X2 (m m1 m2: table A) x T :=
-  Include m' m  (fun y => ~ TVars.In y X) /\
-  Include m' m1 (fun y => TVars.In y X1)  /\
-  Include m' m2 (fun y => TVars.In y X2)  /\
-  Include m' (Table.add x T (empty A)) (fun y => x = y).
-
-Lemma ex_include_and: forall A P (Q : Prop) (m' m : table A),
-  Q ->
-  exists m',
-    Include m' m P /\ Q.
+Lemma ex_union : forall A ms,
+  Disjoint ms ->
+  exists m' : table A, Union m' ms.
 Proof.
-intros.
+induction ms; intros.
+ exists (empty A).
+ unfold Union.
+ Split.
+  inversion H3.
 
-Lemma ex_ApplyTSubst : forall A X X1 X2 (tsubst tsubst1 tsubst2 : table A) x T ,
-  Disjoint tsubst X ->
-  ~ TVars.In x X1 -> ~ TVars.In x X2 ->
-  TVars.Disjoint X1 X2 ->
-  X = TVars.add x (TVars.union X1 X2) ->
-  exists s : table A, ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x T.
-Proof.
-intros.
+  inversion H0.
 
+ apply cons_disjoint in H; auto.
+ apply IHms in H.
+ decompose [ex] H.
+ destruct a.
+ exists (union (filter_bool b t) x).
+ unfold Union.
+ Split.
+  inversion H1.
+   inversion H5.
+   rewrite H7,H8 in H4.
+   apply union_iff in H4.
+   decompose [and or] H4.
+    apply filter_bool_iff in H6; try tauto.
+    apply H2.
 
+    UnfoldIn H9.
+    assert False.
+     apply H9.
 
-Definition ApplyTSubst {A : Type} m' X X1 X2 (m m1 m2: table A) x T :=
-  Union m' (fun x => ~ TVars.In x X) m.
-
-(*  (forall Y U, ~ TVars.In Y X  ->
-    (Table.MapsTo Y U tsubst <-> Table.MapsTo Y U tsubst')) /\
-  (forall Y U,   TVars.In Y X1 ->
-    (Table.MapsTo Y U tsubst1 <-> Table.MapsTo Y U tsubst')) /\
-  (forall Y U,   TVars.In Y X2 ->
-    (Table.MapsTo Y U tsubst2 <-> Table.MapsTo Y U tsubst')) /\
-  Table.MapsTo x T tsubst'.
-
-*)
+     apply <- filter_bool_iff.
+     split.
+      apply H10.
