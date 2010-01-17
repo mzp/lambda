@@ -144,11 +144,6 @@ Qed.
 Definition union {A : Type} (tsubst1 tsubst2 : table A) :=
   Table.fold (fun key e m => Table.add key e m) tsubst1 tsubst2.
 
-Definition filter {A : Type} {P : string -> Prop} (dec : forall x, {P x} + {~ P x}) (tsubst : table A) :=
-  TableProp.filter
-    (fun key _ => if dec key then true else false)
-    tsubst.
-
 Lemma union_iff: forall A x (T : A) (X Y : table A),
   Table.MapsTo x T (union X Y) <->
   Table.MapsTo x T X \/ (~ Table.In x X /\ Table.MapsTo x T Y).
@@ -219,6 +214,11 @@ apply TableProp.fold_rec_bis; intros.
     apply <- TableWF.add_in_iff.
     tauto.
 Qed.
+
+Definition filter {A : Type} {P : string -> Prop} (dec : forall x, {P x} + {~ P x}) (tsubst : table A) :=
+  TableProp.filter
+    (fun key _ => if dec key then true else false)
+    tsubst.
 
 Lemma filter_iff : forall A x P (dec : forall x, {P x} + {~ P x}) (T : A) (m : table A),
   Table.MapsTo x T (filter dec m) <->
