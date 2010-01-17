@@ -26,3 +26,5 @@ Ltac Dup H :=
   generalize H;
   intro.
 
+Ltac Split :=
+  split; intros.
