@@ -215,35 +215,61 @@ apply TableProp.fold_rec_bis; intros.
     tauto.
 Qed.
 
+Definition filter_bool {A : Type} (p : string -> bool) (tsubst : table A) :=
+  TableProp.filter (fun key _ => p key) tsubst.
+
+Definition prop_bool {A : Type} P f :=
+  forall (x : A), P x <-> f x = true.
+
+Lemma filter_bool_iff : forall A x (P : string -> Prop) p (T : A) (m : table A),
+  prop_bool P p ->
+  (Table.MapsTo x T (filter_bool p m) <-> Table.MapsTo x T m /\ (P x)).
+Proof.
+unfold prop_bool,filter_bool in |- *.
+intros.
+Split.
+ apply TableProp.filter_iff in H0.
+  unfold Morphisms.Morphism,Morphisms.respectful in |- *.
+  intros.
+  rewrite H1 in |- *.
+  reflexivity.
+
+  decompose [and] H0.
+  split; auto.
+
+  apply <- H.
+  tauto.
+
+ apply <- TableProp.filter_iff.
+  decompose [and] H0.
+  split; auto.
+  apply H in H2.
+  tauto.
+
+  unfold Morphisms.Morphism, Morphisms.respectful in |- *.
+  intros.
+  rewrite H1 in |- *.
+  reflexivity.
+Qed.
+
 Definition filter {A : Type} {P : string -> Prop} (dec : forall x, {P x} + {~ P x}) (tsubst : table A) :=
-  TableProp.filter
-    (fun key _ => if dec key then true else false)
-    tsubst.
+  filter_bool (fun key => if dec key then true else false) tsubst.
 
 Lemma filter_iff : forall A x P (dec : forall x, {P x} + {~ P x}) (T : A) (m : table A),
   Table.MapsTo x T (filter dec m) <->
   Table.MapsTo x T m /\ (P x).
 Proof.
-unfold filter in |- *.
-split; intros.
- apply TableProp.filter_iff in H.
-  unfold Morphisms.Morphism,Morphisms.respectful in |- *.
-  intros.
-  rewrite H0 in |- *.
+intros.
+apply filter_bool_iff.
+unfold prop_bool.
+Split.
+ destruct (dec x0).
   reflexivity.
 
-  decompose [and] H.
-  split; auto.
-  destruct (dec x); auto.
+  contradiction.
+
+ destruct (dec x0).
+  tauto.
+
   discriminate.
-
- apply <- TableProp.filter_iff.
-  decompose [and] H.
-  split; auto.
-  destruct (dec x); auto.
-
-  unfold Morphisms.Morphism, Morphisms.respectful in |- *.
-  intros.
-  rewrite H0 in |- *.
-  reflexivity.
 Qed.
