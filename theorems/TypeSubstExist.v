@@ -1,3 +1,4 @@
+Require Import Classical_Prop.
 Require Import List.
 Require Import Util.
 Require Import Tables.
@@ -7,127 +8,101 @@ Require Import TypeSubst.
 Require Import TVarsSub.
 Require Import String.
 
-Definition ApplyTSubst {A : Type} tsubst' X X1 X2 (tsubst tsubst1 tsubst2 : table A) x T :=
-  (forall Y U, ~ TVars.In Y X  ->
-    (Table.MapsTo Y U tsubst <-> Table.MapsTo Y U tsubst')) /\
-  (forall Y U,   TVars.In Y X1 ->
-    (Table.MapsTo Y U tsubst1 <-> Table.MapsTo Y U tsubst')) /\
-  (forall Y U,   TVars.In Y X2 ->
-    (Table.MapsTo Y U tsubst2 <-> Table.MapsTo Y U tsubst')) /\
-  Table.MapsTo x T tsubst'.
+Definition merge {A P} (dec : forall x, {P x} + {~ P x}) (m1 m2 : table A) :=
+  union (filter dec m1) $ filter (fun y => not_sumbool $ dec y) m2.
 
-Lemma union_in : forall A k (m1 m2 : table A),
-  Table.In k (union m1 m2) <-> Table.In k m1 \/ Table.In k m2.
+Lemma filter_in: forall A P (dec : forall x, {P x} + {~ P x}) (m : table A) k,
+  Table.In k (filter dec m) -> P k.
 Proof.
+intros.
+UnfoldIn H.
+apply filter_iff in H0.
+tauto.
+Qed.
+
+Lemma merge_iff : forall A P (dec : forall x, {P x} + {~ P x}) (m1 m2 : table A) k e,
+ Table.MapsTo k e (merge dec m1 m2) <-> (P k /\ Table.MapsTo k e m1) \/ (~ P k /\ Table.MapsTo k e m2).
+unfold merge, app.
 split; intros.
- UnfoldIn H.
- apply union_iff in H0.
- decompose [or and] H0.
+ apply union_iff in H.
+ decompose [and or] H.
+  apply filter_iff in H0.
+  tauto.
+
+  apply filter_iff in H2.
+  tauto.
+
+ apply <- union_iff.
+ decompose [and or] H.
   left.
-  unfold Table.In, Table.Raw.PX.In.
-  exists x.
+  apply <- filter_iff.
   tauto.
 
   right.
-  unfold Table.In, Table.Raw.PX.In.
-  exists x.
-  tauto.
+  split.
+   Contrapositive H1.
+   apply filter_in in H0.
+   assumption.
 
- decompose [or] H.
-  UnfoldIn H0.
-  unfold Table.In, Table.Raw.PX.In.
-  exists x.
-  apply <- union_iff.
-  tauto.
-
-  destruct (TableWF.In_dec m1 k).
-   UnfoldIn i.
-   unfold Table.In, Table.Raw.PX.In.
-   exists x.
-   apply <- union_iff.
-   tauto.
-
-   UnfoldIn H0.
-   unfold Table.In, Table.Raw.PX.In.
-   exists x.
-   apply <- union_iff.
+   apply <- filter_iff.
    tauto.
 Qed.
 
-Lemma union_assoc: forall A (m1 m2 m3 : table A),
-  union m1 (union m2 m3) = union (union m1 m2) m3.
+Lemma merge_sym: forall A P (dec : forall x, {P x} + {~ P x}) (m1 m2 : table A),
+  merge dec m1 m2 = merge (fun x => not_sumbool $ dec x) m2 m1.
 Proof.
 intros.
 apply equal_ind; intros.
- apply union_iff in H.
- decompose [or and] H.
-  apply <- union_iff.
-  left.
-  apply <- union_iff.
+ apply <- merge_iff.
+ apply merge_iff in H.
+ tauto.
+
+ apply <- merge_iff.
+ apply merge_iff in H.
+ decompose [and or] H; auto.
+ apply NNPP in H1.
+ tauto.
+Qed.
+
+Lemma disjoint_merge: forall A P Q
+                            (dec1 : forall x, {P x} + {~ P x})
+                            (dec2 : forall x, {Q x} + {~ Q x})
+                            (m1 m2 m3 : table A),
+  (forall x, P x -> ~ Q x) ->
+  (forall x, Q x -> ~ P x) ->
+  merge dec1 m1 (merge dec2 m2 m3) = merge dec2 m2 (merge dec1 m1 m3).
+Proof.
+intros.
+apply equal_ind; intros.
+ apply <- merge_iff.
+ apply merge_iff in H1.
+ decompose [and or] H1.
+  right.
+  split; (try (apply H; assumption)).
+  apply <- merge_iff.
   tauto.
 
-  apply union_iff in H2.
-  decompose [or and] H2.
-  apply <- union_iff.
-  left.
-  apply <- union_iff.
-  tauto.
-
-  apply <- union_iff.
+  apply merge_iff in H4.
+  decompose [and or] H4; auto.
   right.
   split; auto.
-  intro.
-  apply union_in in H0.
-  decompose [or] H0; contradiction.
-
- apply union_iff in H.
- decompose [and or] H.
-  apply union_iff in H0.
-  decompose [and or] H0.
-   apply <- union_iff.
-   tauto.
-
-   apply <- union_iff.
-   right.
-   split; auto.
-   apply <- union_iff.
-   tauto.
-
- apply <- union_iff.
- right.
- split.
-  Contrapositive H1.
-  apply <- union_in.
+  apply <- merge_iff.
   tauto.
 
-  apply <- union_iff.
+ apply <- merge_iff.
+ apply merge_iff in H1.
+ decompose [and or] H1.
+  right.
+  split; (try (apply H0; assumption)).
+  apply <- merge_iff.
+  tauto.
+
+  apply merge_iff in H4.
+  decompose [and or] H4; auto.
   right.
   split; auto.
-  Contrapositive H1.
-  apply <- union_in.
+  apply <- merge_iff.
+  right.
   tauto.
 Qed.
 
-Lemma ex_ApplyTSubst : forall A X X1 X2 (tsubst tsubst1 tsubst2 : table A) x T ,
-  ~ TVars.In x X1 -> ~ TVars.In x X2 -> Disjoint tsubst X ->
-  TVars.Disjoint X1 X2 ->
-  X = TVars.add x (TVars.union X1 X2) ->
-  exists s : table A, ApplyTSubst s X X1 X2 tsubst tsubst1 tsubst2 x T.
-Proof.
-intros.
-exists
- (union (filter (fun x => not_sumbool $ TVars.WProp.In_dec x X) tsubst) $
-  union (filter (fun x => TVars.WProp.In_dec x X1) tsubst1) $
-  union (filter (fun x => TVars.WProp.In_dec x X2) tsubst2) $
-  Table.add x T (Table.empty A)).
-unfold app,ApplyTSubst in |- *.
-split; [ idtac | split; [ idtac | split ] ]; try (split; intros).
- apply <- union_iff.
- left.
- apply <- filter_iff.
- tauto.
-
- apply union_iff in H5.
- decompose [or] H5.
-  apply filter_iff in H6.
-  tauto.
