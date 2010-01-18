@@ -106,3 +106,46 @@ apply equal_ind; intros.
   tauto.
 Qed.
 
+Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
+  (forall Y U, ~ TVars.In Y X  ->
+    (Table.MapsTo Y U m <-> Table.MapsTo Y U m')) /\
+  (forall Y U,   TVars.In Y X1 ->
+    (Table.MapsTo Y U m1 <-> Table.MapsTo Y U m')) /\
+  (forall Y U,   TVars.In Y X2 ->
+    (Table.MapsTo Y U m2 <-> Table.MapsTo Y U m')) /\
+  Table.MapsTo x T m'.
+
+Lemma ex_ApplyMaps : forall A X X1 X2 (m m1 m2 : table A) x T ,
+  Disjoint m X ->
+  TVars.Disjoint X1 X2 ->
+  (forall x0 : string, ~ TVars.FSet.In x0 X -> ~ TVars.FSet.In x0 X1) ->
+  (forall x0 : string, TVars.FSet.In x0 X1 -> ~~ TVars.FSet.In x0 X) ->
+  X = TVars.add x (TVars.union X1 X2) ->
+  exists s : table A, ApplyMaps s X X1 X2 m m1 m2 x T.
+Proof.
+intros.
+exists
+ (merge (fun x => not_sumbool $ TVars.WProp.In_dec x X) m $
+   merge (fun x => TVars.WProp.In_dec x X1) m1 $
+   merge (fun x => TVars.WProp.In_dec x X2) m2 $
+         Table.add x T (Table.empty A)).
+unfold ApplyMaps,app.
+split; [ idtac | split; [ idtac | split ] ]; intros; (try (split; intros)).
+ apply <- merge_iff.
+ tauto.
+
+ apply merge_iff in H5.
+ decompose [or and] H5; auto.
+ contradiction.
+
+ rewrite disjoint_merge; auto.
+ apply <- merge_iff.
+ tauto.
+
+ rewrite disjoint_merge in H5; auto.
+ apply merge_iff in H5.
+ decompose [and or] H5; auto.
+ contradiction.
+
+ rewrite disjoint_merge with (m1:=m1) (m2:=m2); auto.
+ rewrite disjoint_merge; auto.
