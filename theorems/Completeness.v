@@ -14,45 +14,6 @@ Require Import Solution.
 Require Import TypeSubst.
 Require Import TypeSubstMerge.
 
-Lemma in_not_eq: forall x y X,
- ~ TVars.In x X ->
- TVars.In y X -> x <> y.
-Proof.
-intros.
-Contrapositive H.
-rewrite H1.
-assumption.
-Qed.
-
-Lemma eq_not_in: forall x y X,
-  ~ TVars.In x X ->
-  x = y -> ~ TVars.In y X.
-Proof.
-intros.
-rewrite <- H0.
-assumption.
-Qed.
-
-Lemma not_in_not_eq: forall x y X,
- TVars.In x X ->
- ~ TVars.In y X -> x <> y.
-Proof.
-intros.
-Contrapositive H0.
-rewrite <- H1.
-assumption.
-Qed.
-
-Lemma eq_in: forall x y X,
- TVars.In x X ->
- x = y -> TVars.FSet.In y X.
-Proof.
-intros.
-rewrite <- H0.
-assumption.
-Qed.
-
-Hint Resolve in_not_eq eq_not_in not_in_not_eq eq_in: Disjoint.
 
 Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
   (forall Y U, ~ TVars.In Y X  ->
@@ -106,10 +67,10 @@ split; [ idtac | split; [ idtac | split ] ]; intros; try (split; intro MH).
  decompose [and or] MH; [ assumption | contradiction  ].
 
  rewrite disjoint_merge with (m1 := m2) (m2 := Table.add x T (Table.empty A))
-  in |- *; eauto    with Disjoint.
+  in |- *; eauto    with TVars.
  rewrite disjoint_merge with (m1 := m1) (m2 := Table.add x T (Table.empty A))
-  in |- *; eauto    with Disjoint.
- rewrite disjoint_merge in |- *; eauto    with Disjoint.
+  in |- *; eauto    with TVars.
+ rewrite disjoint_merge in |- *; eauto    with TVars.
  apply <- merge_iff.
  left.
  split; auto.
