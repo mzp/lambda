@@ -14,7 +14,46 @@ Require Import Solution.
 Require Import TypeSubst.
 Require Import TypeSubstMerge.
 
-(* Lemma *)
+Lemma in_not_eq: forall x y X,
+ ~ TVars.In x X ->
+ TVars.In y X -> x <> y.
+Proof.
+intros.
+Contrapositive H.
+rewrite H1.
+assumption.
+Qed.
+
+Lemma eq_not_in: forall x y X,
+  ~ TVars.In x X ->
+  x = y -> ~ TVars.In y X.
+Proof.
+intros.
+rewrite <- H0.
+assumption.
+Qed.
+
+Lemma not_in_not_eq: forall x y X,
+ TVars.In x X ->
+ ~ TVars.In y X -> x <> y.
+Proof.
+intros.
+Contrapositive H0.
+rewrite <- H1.
+assumption.
+Qed.
+
+Lemma eq_in: forall x y X,
+ TVars.In x X ->
+ x = y -> TVars.FSet.In y X.
+Proof.
+intros.
+rewrite <- H0.
+assumption.
+Qed.
+
+Hint Resolve in_not_eq eq_not_in not_in_not_eq eq_in: Disjoint.
+
 Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
   (forall Y U, ~ TVars.In Y X  ->
     (Table.MapsTo Y U m <-> Table.MapsTo Y U m')) /\
@@ -32,84 +71,52 @@ Lemma ex_ApplyMaps : forall A X X1 X2 (m m1 m2 : table A) x T ,
   exists s : table A, ApplyMaps s X X1 X2 m m1 m2 x T.
 Proof.
 intros.
-(* assumptions *)
-assert (forall y, x = y -> TVars.FSet.In y X).
- intros y Eq.
- rewrite <- Eq in |- *.
- assumption.
+rewrite TVars.disjoint_iff in H.
+decompose [and] H.
+exists
+ (merge (fun y => not_sumbool $ TVars.WProp.In_dec y X) m $
+  merge (fun y => TVars.WProp.In_dec y X1) m1 $
+  merge (fun y => TVars.WProp.In_dec y X2) m2 $
+  merge (fun y => string_dec x y) (Table.add x T (Table.empty A)) $
+  Table.empty A).
+unfold ApplyMaps, app in |- *.
+split; [ idtac | split; [ idtac | split ] ]; intros; try (split; intro MH).
+ apply <- merge_iff.
+ tauto.
 
- assert (forall y, TVars.FSet.In y X1 -> x <> y).
-  intros y In.
-  intro Eq.
-  rewrite <- Eq in In.
-  contradiction .
+ apply merge_iff in MH.
+ decompose [or and] MH; [ assumption | contradiction  ].
 
-  assert (forall y, x = y -> ~ TVars.FSet.In y X1).
-   intros y Eq.
-   rewrite <- Eq in |- *.
-   assumption.
+ rewrite disjoint_merge in |- *; auto.
+ apply <- merge_iff.
+ tauto.
 
-   assert (forall y, TVars.FSet.In y X2 -> x <> y).
-    intros y In.
-    intro Eq.
-    rewrite <- Eq in In.
-    contradiction .
+ rewrite disjoint_merge in MH; auto.
+ apply merge_iff in MH.
+ decompose [and or] MH; [ assumption | contradiction  ].
 
-    assert (forall y, x = y -> ~ TVars.FSet.In y X2).
-     intros y Eq.
-     rewrite <- Eq in |- *.
-     assumption.
+ rewrite disjoint_merge with (m1 := m1) (m2 := m2) in |- *; auto.
+ rewrite disjoint_merge in |- *; auto.
+ apply <- merge_iff.
+ tauto.
 
-     rewrite TVars.disjoint_iff in H.
+ rewrite disjoint_merge with (m1 := m1) (m2 := m2) in MH; auto.
+ rewrite disjoint_merge in MH; auto.
+ apply merge_iff in MH.
+ decompose [and or] MH; [ assumption | contradiction  ].
 
-     (* main *)
-     decompose [and] H.
-     exists
-      (merge (fun y => not_sumbool $ TVars.WProp.In_dec y X) m $
-       merge (fun y => TVars.WProp.In_dec y X1) m1 $
-       merge (fun y => TVars.WProp.In_dec y X2) m2 $
-       merge (fun y => string_dec x y) (Table.add x T (Table.empty A)) $
-       Table.empty A).
-     unfold ApplyMaps, app in |- *.
-     split; [ idtac | split; [ idtac | split ] ]; intros;
-      try (split; intro MH).
-      apply <- merge_iff.
-      tauto.
-
-      apply merge_iff in MH.
-      decompose [or and] MH; [ assumption | contradiction  ].
-
-      rewrite disjoint_merge in |- *; auto.
-      apply <- merge_iff.
-      tauto.
-
-      rewrite disjoint_merge in MH; auto.
-      apply merge_iff in MH.
-      decompose [and or] MH; [ assumption | contradiction  ].
-
-      rewrite disjoint_merge with (m1 := m1) (m2 := m2) in |- *; auto.
-      rewrite disjoint_merge in |- *; auto.
-      apply <- merge_iff.
-      tauto.
-
-      rewrite disjoint_merge with (m1 := m1) (m2 := m2) in MH; auto.
-      rewrite disjoint_merge in MH; auto.
-      apply merge_iff in MH.
-      decompose [and or] MH; [ assumption | contradiction  ].
-
-      rewrite
-       disjoint_merge with (m1 := m2) (m2 := Table.add x T (Table.empty A))
-       in |- *; auto.
-      rewrite
-       disjoint_merge with (m1 := m1) (m2 := Table.add x T (Table.empty A))
-       in |- *; auto.
-      rewrite disjoint_merge in |- *; auto.
-      apply <- merge_iff.
-      left.
-      split; auto.
-      apply <- TableWF.add_mapsto_iff.
-      tauto.
+ rewrite disjoint_merge with (m1 := m2) (m2 := Table.add x T (Table.empty A))
+  in |- *; eauto    with Disjoint.
+ rewrite disjoint_merge with (m1 := m1) (m2 := Table.add x T (Table.empty A))
+  in |- *; eauto    with Disjoint.
+ rewrite disjoint_merge in |- *; eauto    with Disjoint.
+ apply <- merge_iff.
+ left.
+ split; auto.
+ apply <- TableWF.add_mapsto_iff.
+ tauto.
 Qed.
+
 
 
 (*
@@ -222,9 +229,9 @@ Lemma union_filter_intro_1 : forall A (P : string-> Prop) (dec : forall x, {P x}
    Table.MapsTo k e (union (filter dec X) Y).
 Proof.
 intros.
-apply <- union_iff (* Generic printer *).
+apply <- union_iff.
 left.
-apply <- filter_iff (* Generic printer *).
+apply <- filter_iff.
 split; trivial.
 Qed.
 
@@ -233,7 +240,7 @@ Lemma union_filter_intro_2 : forall A (P : string-> Prop) (dec : forall x, {P x}
    Table.MapsTo k e (union (filter dec X) Y).
 Proof.
 intros.
-apply <- union_iff (* Generic printer *).
+apply <- union_iff.
 right.
 split.
  unfold Table.In in |- *.
@@ -256,14 +263,14 @@ intros.
 rewrite H in |- *.
 decompose [or] H0.
  rewrite H1 in |- *.
- apply <- TVars.WFact.add_iff (* Generic printer *); left; reflexivity.
+ apply <- TVars.WFact.add_iff; left; reflexivity.
 
- apply <- TVars.WFact.add_iff (* Generic printer *); right; apply <-
-  TVars.WFact.union_iff (* Generic printer *); left;
+ apply <- TVars.WFact.add_iff; right; apply <-
+  TVars.WFact.union_iff; left;
   trivial.
 
- apply <- TVars.WFact.add_iff (* Generic printer *); right; apply <-
-  TVars.WFact.union_iff (* Generic printer *); right;
+ apply <- TVars.WFact.add_iff; right; apply <-
+  TVars.WFact.union_iff; right;
   trivial.
 Qed.
 
@@ -433,7 +440,7 @@ split; [ idtac | split; [ idtac | split ] ]; intros.
    apply union_filter_intro_2.
     trivial.
 
-    apply <- TableWF.add_mapsto_iff (* Generic printer *).
+    apply <- TableWF.add_mapsto_iff.
     left.
     split; reflexivity.
 Qed.
@@ -446,7 +453,7 @@ Lemma not_x_sub_eq : forall A (tsubst' tsubst : table A) X,
 Proof.
 intros.
 apply Extensionality_Table.
-apply <- TableWF.Equal_mapsto_iff (* Generic printer *).
+apply <- TableWF.Equal_mapsto_iff.
 split; intros.
  destruct (TVars.WProp.In_dec k X).
   unfold Disjoint in H.
@@ -463,7 +470,7 @@ split; intros.
    contradiction .
 
   unfold sub in |- *.
-  apply <- filter_iff (* Generic printer *); auto.
+  apply <- filter_iff; auto.
   split; auto.
   apply H0 with (U := e) in n.
   apply n.
@@ -713,11 +720,11 @@ split; intros.
  apply H0 in H2.
  intro.
  apply H2.
- apply <- TVars.WFact.union_iff (* Generic printer *).
+ apply <- TVars.WFact.union_iff.
  tauto.
 
  apply H1.
- apply <- TVars.WFact.union_iff (* Generic printer *).
+ apply <- TVars.WFact.union_iff.
  tauto.
 Qed.
 
@@ -733,11 +740,11 @@ split; intros.
  apply H0 in H2.
  intro.
  apply H2.
- apply <- TVars.WFact.add_iff (* Generic printer *).
+ apply <- TVars.WFact.add_iff.
  tauto.
 
  apply H1.
- apply <- TVars.WFact.add_iff (* Generic printer *).
+ apply <- TVars.WFact.add_iff.
  tauto.
 Qed.
 
@@ -815,9 +822,9 @@ split; [ idtac | split; [ idtac | split ] ]; split; intros.
     assert False.
      apply H4.
      rewrite H3 in |- *.
-     apply <- TVars.WFact.union_iff (* Generic printer *).
+     apply <- TVars.WFact.union_iff.
      right.
-     apply <- TVars.WFact.union_iff (* Generic printer *).
+     apply <- TVars.WFact.union_iff.
      tauto.
 
      contradiction .
@@ -825,22 +832,22 @@ split; [ idtac | split; [ idtac | split ] ]; split; intros.
     intro.
     apply H4.
     rewrite H3 in |- *.
-    apply <- TVars.WFact.union_iff (* Generic printer *).
+    apply <- TVars.WFact.union_iff.
     right.
-    apply <- TVars.WFact.union_iff (* Generic printer *).
+    apply <- TVars.WFact.union_iff.
     tauto.
 
    intro.
    apply H4.
    rewrite H3 in |- *.
-   apply <- TVars.WFact.union_iff (* Generic printer *).
+   apply <- TVars.WFact.union_iff.
    tauto.
 
  apply union_filter_intro_2.
   intro.
   apply H6.
   rewrite H3 in |- *.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   tauto.
 
   apply union_filter_intro_1.
@@ -866,16 +873,16 @@ split; [ idtac | split; [ idtac | split ] ]; split; intros.
   intro.
   apply H6.
   rewrite H3 in |- *.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   tauto.
 
  apply union_filter_intro_2.
   intro.
   apply H6.
   rewrite H3 in |- *.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   right.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   tauto.
 
   apply union_filter_intro_2.
@@ -909,18 +916,18 @@ split; [ idtac | split; [ idtac | split ] ]; split; intros.
   intro.
   apply H6.
   rewrite H3 in |- *.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   right.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   tauto.
 
  apply union_filter_intro_2.
   intro.
   apply H6.
   rewrite H3 in |- *.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   right.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   tauto.
 
   apply union_filter_intro_2.
@@ -933,7 +940,7 @@ split; [ idtac | split; [ idtac | split ] ]; split; intros.
 
      trivial.
 
-    apply <- filter_iff (* Generic printer *).
+    apply <- filter_iff.
     tauto.
 
  apply union_filter_elim_2 in H5.
@@ -953,9 +960,9 @@ split; [ idtac | split; [ idtac | split ] ]; split; intros.
   intro.
   apply H6.
   rewrite H3 in |- *.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   right.
-  apply <- TVars.WFact.union_iff (* Generic printer *).
+  apply <- TVars.WFact.union_iff.
   tauto.
 Qed.
 
