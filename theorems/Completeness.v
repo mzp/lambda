@@ -11,9 +11,11 @@ Require Import TVars.
 Require Import Constraint.
 Require Import ConstraintRule.
 Require Import Solution.
+Require Import CSolutionInv.
+Require Import TSolutionInv.
+Require Import TVarsSub.
 Require Import TypeSubst.
 Require Import TypeSubstMerge.
-
 
 Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
   (forall Y U, ~ TVars.In Y X  ->
@@ -78,8 +80,341 @@ split; [ idtac | split; [ idtac | split ] ]; intros; try (split; intro MH).
  tauto.
 Qed.
 
+Theorem completeness: forall t tenv Ts S T X C tsubst1,
+  TypeConstraint t tenv Ts S X C ->
+  TSolution tsubst1 T tenv t ->
+  Disjoint tsubst1 X ->
+  exists tsubst2,
+    tsubst1 = tsubst2 // X /\
+    CSolution tsubst2 T tenv Ts t S C.
+Proof.
+intros until tsubst1.
+intro.
+generalize T.
+pattern t, tenv, Ts, S, X, C in |- *.
+apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
+ exists tsubst1.
+ split; try (apply sub_empty).
+ exists TVars.empty.
+  split; [ | split].
+   apply CTVar.
+   trivial.
 
+   apply unified_empty.
 
+   apply var_inv with (S := T0) in H1; tauto.
+
+ apply lambda_inv in H2.
+ decompose [ex and] H2.
+ apply H1 in H5.
+  decompose [ex and] H5.
+  exists x1.
+  split; auto.
+  exists X0.
+  split; [ | split ]; auto.
+   apply CTLambda.
+   tauto.
+
+   assert (type_subst T1 x1 = type_subst T1 (x1 // X0)).
+    apply sub_type_subst.
+    intros.
+    apply tvars_free with (x := x2) in H0.
+        decompose [and] H0.
+        unfold FreshTs in H11.
+        apply H11.
+        apply in_eq.
+
+        trivial.
+
+       trivial.
+
+      rewrite H6 in |- *.
+      rewrite H10 in |- *.
+      decompose [ex] H9.
+      decompose [and] H11.
+      rewrite H15 in |- *.
+      trivial.
+
+  trivial.
+
+ exists tsubst1.
+ split.
+  apply sub_empty.
+
+  exists TVars.empty.
+  split.
+   apply CTBool.
+
+   split.
+    apply Unified_empty.
+
+    inversion H0.
+    reflexivity.
+
+ apply apply_inv in H13.
+ decompose [ex] H13.
+ decompose [and] H15.
+ apply H1 in H16.
+  apply H3 in H17.
+   decompose [ex] H16; decompose [ex] H17.
+   decompose [and] H18; decompose [and] H19.
+   assert
+    (exists s : _,
+       ApplyTSubst s (TVars.add x (TVars.union X1 X2)) X1 X2 tsubst1 x1 x2 x
+         T0).
+    unfold Fresh in H11.
+    decompose [and] H11.
+    apply ex_ApplyTSubst; trivial.
+
+    decompose [ex] H24.
+    exists x3.
+    split.
+     unfold Fresh in H11.
+     decompose [and] H11.
+     apply
+      ApplyTSubst_sub
+       with
+         (tsubst1 := x1)
+         (tsubst2 := x2)
+         (X1 := X1)
+         (X2 := X2)
+         (x := x)
+         (T := T0); trivial.
+
+     exists (TVars.add x (TVars.union X1 X2)).
+     split.
+      apply CTApply with (T1 := T1) (T2 := T2) (C1 := C1) (C2 := C2); trivial.
+
+      split.
+       rewrite H12 in |- *.
+       apply Unified_Add_intro.
+        apply Unified_Union_intro.
+         apply
+          (ApplyTSubst_unified x3 (TVars.add x (TVars.union X1 X2)) X1 X2
+             tsubst1 x1 x2 x T0 _); auto.
+          intros.
+          apply not_in_disjoint_c with (C := C1); auto.
+          unfold Fresh in H11.
+          tauto.
+
+          decompose [ex] H21.
+          tauto.
+
+         apply
+          (ApplyTSubst_unified x3 (TVars.add x (TVars.union X1 X2)) X2 X1
+             tsubst1 x2 x1 x T0 _); auto.
+          apply ApplyTSubst_sym.
+          trivial.
+
+          intros.
+          rewrite TVars.union_sym in |- *.
+          apply not_in_disjoint_c with (C := C2); auto.
+          unfold Fresh in H11.
+          tauto.
+
+          decompose [ex] H23.
+          tauto.
+
+        unfold Unified in |- *.
+        intros.
+        apply TConst.WFact.singleton_iff in H26.
+        simpl in H26.
+        decompose [and] H26.
+        assert (type_subst T1 x3 = type_subst T1 x1).
+         apply
+          (ApplyTSubst_subst_eq x3 (TVars.add x (TVars.union X1 X2)) X1 X2
+             tsubst1 x1 x2 x T0); auto.
+         intros.
+         apply not_in_disjoint_t with (T := T1); auto.
+         unfold Fresh in H11.
+         tauto.
+
+         assert (type_subst T2 x3 = type_subst T2 x2).
+          apply
+           (ApplyTSubst_subst_eq x3 (TVars.add x (TVars.union X1 X2)) X2 X1
+              tsubst1 x2 x1 x T0); auto.
+           apply ApplyTSubst_sym.
+           trivial.
+
+           intros.
+           rewrite TVars.union_sym in |- *.
+           apply not_in_disjoint_t with (T := T2); auto.
+           unfold Fresh in H11.
+           tauto.
+
+          rewrite <- H27 in |- *.
+          decompose [ex] H21.
+          decompose [and] H31.
+          rewrite H29 in |- *.
+          rewrite <- H35 in |- *.
+          rewrite <- H28 in |- *.
+          simpl in |- *.
+          rewrite H30 in |- *.
+          decompose [ex] H23.
+          decompose [and] H33.
+          rewrite <- H39 in |- *.
+          unfold ApplyTSubst in H25.
+          decompose [and] H25.
+          apply TableWF.find_mapsto_iff in H43.
+          rewrite H43 in |- *.
+          reflexivity.
+
+       unfold ApplyTSubst in H25.
+       decompose [and] H25.
+       apply TableWF.find_mapsto_iff in H30.
+       rewrite H30 in |- *.
+       reflexivity.
+
+   apply disjoint_add in H14.
+   rewrite TVars.union_sym in H14.
+   apply disjoint_union in H14.
+   trivial.
+
+  apply disjoint_add in H14.
+  apply disjoint_union in H14.
+  trivial.
+
+ apply if_inv in H28.
+ decompose [and] H28.
+ apply H1 in H30.
+  apply H3 in H32.
+   apply H5 in H33.
+    decompose [ex] H30.
+    decompose [ex] H32.
+    decompose [ex] H33.
+    assert
+     (exists s : _,
+        IfTSubst s (TVars.union X1 (TVars.union X2 X3)) X1 X2 X3 tsubst1 x x0
+          x1).
+     apply ex_IfTSubst; auto.
+
+     decompose [ex] H36.
+     exists x2.
+     split.
+      apply IfTSubst_sub in H37; auto.
+
+      exists (TVars.union X1 (TVars.union X2 X3)).
+      split.
+       apply CTIf with (T1 := T1) (T3 := T3) (C1 := C1) (C2 := C2) (C3 := C3);
+        auto.
+
+       split.
+        rewrite H27 in |- *.
+        apply Unified_Add_intro.
+         apply Unified_Add_intro.
+          apply Unified_Union_intro.
+           apply IfTSubst_unified with (C := C1) in H37; auto.
+            tauto.
+
+            intros.
+            apply not_in_disjoint_c_3 with (C := C1); auto.
+
+            decompose [and ex] H31.
+            tauto.
+
+           apply Unified_Union_intro.
+            apply IfTSubst_sym_1 in H37.
+            apply IfTSubst_unified with (C := C2) in H37; auto.
+             tauto.
+
+             intros.
+             rewrite TVars.union_assoc in |- *.
+             rewrite (TVars.union_sym X1 X2) in |- *.
+             rewrite <- TVars.union_assoc in |- *.
+             apply not_in_disjoint_c_3 with (C := C2); auto.
+
+             decompose [ex and ex] H34.
+             tauto.
+
+            apply IfTSubst_sym_2 in H37.
+            apply IfTSubst_unified with (C := C3) in H37; auto.
+             tauto.
+
+             intros.
+             rewrite TVars.union_assoc in |- *.
+             rewrite TVars.union_sym in |- *.
+             apply not_in_disjoint_c_3 with (C := C3); auto.
+
+             decompose [and ex and] H35.
+             tauto.
+
+          unfold Unified in |- *.
+          intros.
+          apply TConst.WFact.singleton_iff in H38.
+          simpl in H38.
+          decompose [and] H38.
+          rewrite <- H39,  <- H40 in |- *.
+          assert (type_subst T2 x0 = type_subst T2 x2).
+           apply IfTSubst_sym_1 in H37.
+           apply IfTSubst_subst_eq with (T := T2) in H37; auto.
+            tauto.
+
+            intros.
+            rewrite TVars.union_assoc in |- *.
+            rewrite (TVars.union_sym X1 X2) in |- *.
+            rewrite <- TVars.union_assoc in |- *.
+            apply not_in_disjoint_t_3 with (T := T2); auto.
+
+           assert (type_subst T3 x1 = type_subst T3 x2).
+            apply IfTSubst_sym_2 in H37.
+            apply IfTSubst_subst_eq with (T := T3) in H37; auto.
+             tauto.
+
+             intros.
+             rewrite TVars.union_assoc in |- *.
+             rewrite TVars.union_sym in |- *.
+             apply not_in_disjoint_t_3 with (T := T3); auto.
+
+            rewrite <- H41 in |- *.
+            rewrite <- H42 in |- *.
+            decompose [and ex] H35.
+            decompose [and ex] H34.
+            rewrite <- H47,  <- H51 in |- *.
+            reflexivity.
+
+         unfold Unified in |- *.
+         intros.
+         apply TConst.WFact.singleton_iff in H38.
+         simpl in H38.
+         decompose [and] H38.
+         rewrite <- H39,  <- H40 in |- *.
+         simpl in |- *.
+         assert (type_subst T1 x2 = type_subst T1 x).
+          apply IfTSubst_subst_eq with (T := T1) in H37; auto.
+           tauto.
+
+           intros.
+           apply not_in_disjoint_t_3 with (T := T1); auto.
+
+          rewrite H41 in |- *.
+          decompose [ex and] H31.
+          rewrite <- H46 in |- *.
+          reflexivity.
+
+        decompose [ex and] H34.
+        rewrite H42 in |- *.
+        apply IfTSubst_sym_1 in H37.
+        apply IfTSubst_subst_eq with (T := T2) in H37; auto.
+        intros.
+        rewrite TVars.union_assoc in |- *.
+        rewrite (TVars.union_sym X1 X2) in |- *.
+        rewrite <- TVars.union_assoc in |- *.
+        apply not_in_disjoint_t_3 with (T := T2); auto.
+
+    rewrite TVars.union_assoc in H29.
+    rewrite TVars.union_sym in H29.
+    apply disjoint_union in H29.
+    tauto.
+
+   rewrite TVars.union_assoc,  (TVars.union_sym X1 X2),  <-
+    TVars.union_assoc in H29.
+   apply disjoint_union in H29.
+   tauto.
+
+  apply disjoint_union in H29.
+  tauto.
+
+ tauto.
 (*
 Lemma var_inv : forall T tenv s S tsubst,
   TSolution tsubst T tenv (Var s) ->
