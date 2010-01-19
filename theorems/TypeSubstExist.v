@@ -127,12 +127,11 @@ Qed.
 
 
 Lemma ex_ApplyMaps : forall A X X1 X2 (m m1 m2 : table A) x T ,
- (forall x0, TVars.FSet.In x0 X1 -> ~ TVars.FSet.In x0 X2) ->
- (forall x0, TVars.FSet.In x0 X2 -> ~ TVars.FSet.In x0 X1) ->
+ TVars.Disjoint X1 X2 ->
  (forall x0, TVars.FSet.In x0 X1 -> TVars.FSet.In x0 X) ->
  (forall x0, TVars.FSet.In x0 X2 -> TVars.FSet.In x0 X) ->
  (forall x0 : string, ~ TVars.FSet.In x0 X -> x <> x0) ->
- (forall x0 : string, x = x0 -> ~ ~ TVars.FSet.In x0 X) ->
+ (forall x0 : string, x = x0 -> TVars.FSet.In x0 X) ->
  (forall x0 : string, TVars.FSet.In x0 X1 -> x <> x0) ->
  (forall x0 : string, x = x0 -> ~ TVars.FSet.In x0 X1) ->
  (forall x0 : string, TVars.FSet.In x0 X2 -> x <> x0) ->
@@ -141,6 +140,8 @@ Lemma ex_ApplyMaps : forall A X X1 X2 (m m1 m2 : table A) x T ,
   exists s : table A, ApplyMaps s X X1 X2 m m1 m2 x T.
 Proof.
 intros.
+rewrite TVars.disjoint_iff in H.
+decompose [and] H.
 exists
  (merge  (fun y => not_sumbool $ TVars.WProp.In_dec y X) m $
    merge (fun y => TVars.WProp.In_dec y X1) m1 $

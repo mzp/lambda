@@ -188,18 +188,18 @@ Module Make(Dec : DecidableType).
   Qed.
 
   Lemma disjoint_iff : forall X Y,
-    Disjoint X Y <-> (forall x, (In x X -> ~ In x Y) /\ (In x Y -> ~ In x X)).
+    Disjoint X Y <-> (forall x, In x X -> ~ In x Y) /\ (forall x, In x Y -> ~ In x X).
   Proof.
   unfold Disjoint in |- *.
   split; intros.
-  specialize (H x).
-  split; intros;
+  split; intros; specialize (H x);
    Contrapositive H;
    apply <- WFact.inter_iff;
    tauto.
 
-  specialize (H x).
   decompose [and] H.
+  specialize (H0 x).
+  specialize (H1 x).
   intro.
   apply WFact.inter_iff in H2.
   decompose [and] H2.
