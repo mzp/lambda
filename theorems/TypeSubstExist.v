@@ -116,36 +116,45 @@ Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
   Table.MapsTo x T m'.
 
 Lemma ex_ApplyMaps : forall A X X1 X2 (m m1 m2 : table A) x T ,
-  Disjoint m X ->
-  TVars.Disjoint X1 X2 ->
-  (forall x0 : string, ~ TVars.FSet.In x0 X -> ~ TVars.FSet.In x0 X1) ->
-  (forall x0 : string, TVars.FSet.In x0 X1 -> ~~ TVars.FSet.In x0 X) ->
-  X = TVars.add x (TVars.union X1 X2) ->
+ (forall x0, TVars.FSet.In x0 X1 -> ~ TVars.FSet.In x0 X2) ->
+ (forall x0, TVars.FSet.In x0 X2 -> ~ TVars.FSet.In x0 X1) ->
+ (forall x0, TVars.FSet.In x0 X1 -> TVars.FSet.In x0 X) ->
+ (forall x0, TVars.FSet.In x0 X2 -> TVars.FSet.In x0 X) ->
   exists s : table A, ApplyMaps s X X1 X2 m m1 m2 x T.
 Proof.
 intros.
 exists
- (merge (fun x => not_sumbool $ TVars.WProp.In_dec x X) m $
-   merge (fun x => TVars.WProp.In_dec x X1) m1 $
-   merge (fun x => TVars.WProp.In_dec x X2) m2 $
-         Table.add x T (Table.empty A)).
+ (merge  (fun y => not_sumbool $ TVars.WProp.In_dec y X) m $
+   merge (fun y => TVars.WProp.In_dec y X1) m1 $
+   merge (fun y => TVars.WProp.In_dec y X2) m2 $
+   merge (fun y => string_dec x y) (Table.add x T (Table.empty A)) $
+         Table.empty A).
+
 unfold ApplyMaps,app.
-split; [ idtac | split; [ idtac | split ] ]; intros; (try (split; intros)).
+split; [ idtac | split; [ idtac | split ] ]; intros; (try (split; intro MH)).
  apply <- merge_iff.
  tauto.
 
- apply merge_iff in H5.
- decompose [or and] H5; auto.
- contradiction.
+ apply merge_iff in MH.
+ decompose [or and] MH; [ assumption | contradiction ].
 
  rewrite disjoint_merge; auto.
  apply <- merge_iff.
  tauto.
 
- rewrite disjoint_merge in H5; auto.
- apply merge_iff in H5.
- decompose [and or] H5; auto.
- contradiction.
+ rewrite disjoint_merge in MH; auto.
+ apply merge_iff in MH.
+ decompose [and or] MH;
+  [ assumption | contradiction ].
 
  rewrite disjoint_merge with (m1:=m1) (m2:=m2); auto.
  rewrite disjoint_merge; auto.
+ apply <- merge_iff.
+ tauto.
+
+ rewrite disjoint_merge with (m1:=m1) (m2:=m2) in MH; auto.
+ rewrite disjoint_merge in MH; auto.
+ apply merge_iff in MH.
+ decompose [and or] MH;
+  [ assumption | contradiction ].
+
