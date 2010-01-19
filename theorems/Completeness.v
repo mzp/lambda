@@ -3,17 +3,116 @@ Require Import String.
 Require Import Sumbool.
 Require Import Classical.
 
+Require Import Util.
 Require Import Tables.
 Require Import Sets.
 Require Import Term.
+Require Import TVars.
 Require Import Constraint.
 Require Import ConstraintRule.
 Require Import Solution.
 Require Import TypeSubst.
+Require Import TypeSubstMerge.
 
 (* Lemma *)
+Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
+  (forall Y U, ~ TVars.In Y X  ->
+    (Table.MapsTo Y U m <-> Table.MapsTo Y U m')) /\
+  (forall Y U,   TVars.In Y X1 ->
+    (Table.MapsTo Y U m1 <-> Table.MapsTo Y U m')) /\
+  (forall Y U,   TVars.In Y X2 ->
+    (Table.MapsTo Y U m2 <-> Table.MapsTo Y U m')) /\
+  Table.MapsTo x T m'.
 
-(* for var *)
+Lemma ex_ApplyMaps : forall A X X1 X2 (m m1 m2 : table A) x T ,
+ TVars.Disjoint X1 X2 ->
+ (forall y, TVars.FSet.In y X1 -> TVars.FSet.In y X) ->
+ (forall y, TVars.FSet.In y X2 -> TVars.FSet.In y X) ->
+ TVars.FSet.In x X -> ~ TVars.FSet.In x X1  -> ~ TVars.FSet.In x X2 ->
+  exists s : table A, ApplyMaps s X X1 X2 m m1 m2 x T.
+Proof.
+intros.
+(* assumptions *)
+assert (forall y, x = y -> TVars.FSet.In y X).
+ intros y Eq.
+ rewrite <- Eq in |- *.
+ assumption.
+
+ assert (forall y, TVars.FSet.In y X1 -> x <> y).
+  intros y In.
+  intro Eq.
+  rewrite <- Eq in In.
+  contradiction .
+
+  assert (forall y, x = y -> ~ TVars.FSet.In y X1).
+   intros y Eq.
+   rewrite <- Eq in |- *.
+   assumption.
+
+   assert (forall y, TVars.FSet.In y X2 -> x <> y).
+    intros y In.
+    intro Eq.
+    rewrite <- Eq in In.
+    contradiction .
+
+    assert (forall y, x = y -> ~ TVars.FSet.In y X2).
+     intros y Eq.
+     rewrite <- Eq in |- *.
+     assumption.
+
+     rewrite TVars.disjoint_iff in H.
+
+     (* main *)
+     decompose [and] H.
+     exists
+      (merge (fun y => not_sumbool $ TVars.WProp.In_dec y X) m $
+       merge (fun y => TVars.WProp.In_dec y X1) m1 $
+       merge (fun y => TVars.WProp.In_dec y X2) m2 $
+       merge (fun y => string_dec x y) (Table.add x T (Table.empty A)) $
+       Table.empty A).
+     unfold ApplyMaps, app in |- *.
+     split; [ idtac | split; [ idtac | split ] ]; intros;
+      try (split; intro MH).
+      apply <- merge_iff.
+      tauto.
+
+      apply merge_iff in MH.
+      decompose [or and] MH; [ assumption | contradiction  ].
+
+      rewrite disjoint_merge in |- *; auto.
+      apply <- merge_iff.
+      tauto.
+
+      rewrite disjoint_merge in MH; auto.
+      apply merge_iff in MH.
+      decompose [and or] MH; [ assumption | contradiction  ].
+
+      rewrite disjoint_merge with (m1 := m1) (m2 := m2) in |- *; auto.
+      rewrite disjoint_merge in |- *; auto.
+      apply <- merge_iff.
+      tauto.
+
+      rewrite disjoint_merge with (m1 := m1) (m2 := m2) in MH; auto.
+      rewrite disjoint_merge in MH; auto.
+      apply merge_iff in MH.
+      decompose [and or] MH; [ assumption | contradiction  ].
+
+      rewrite
+       disjoint_merge with (m1 := m2) (m2 := Table.add x T (Table.empty A))
+       in |- *; auto.
+      rewrite
+       disjoint_merge with (m1 := m1) (m2 := Table.add x T (Table.empty A))
+       in |- *; auto.
+      rewrite disjoint_merge in |- *; auto.
+      apply <- merge_iff.
+      left.
+      split; auto.
+      apply <- TableWF.add_mapsto_iff.
+      tauto.
+Qed.
+
+
+(*
 Lemma var_inv : forall T tenv s S tsubst,
   TSolution tsubst T tenv (Var s) ->
   Table.MapsTo s S tenv ->
@@ -1249,4 +1348,4 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
 
  tauto.
 Qed.
-*)
+*)*)
