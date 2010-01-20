@@ -22,14 +22,14 @@ FILES[] =
 	TVar
 	TVars
 	TVarsSub
+	TVarsFree
 	ConstraintRule
 	Sets
 	Solution
 	TSolutionInv
 	CSolutionInv
-#	TypeSubstFact
 	Soundness
-	Completeness
+#	Completeness
 
 .DEFAULT: $(CoqProof $(FILES))
 
