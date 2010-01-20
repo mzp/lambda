@@ -31,7 +31,7 @@ Definition CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 :=
     DisjointTerm X1 t2   /\ DisjointTerm X2 t1 /\
     DisjointC X1 C2      /\ DisjointC X2 C1.
 
-Definition CTIfDIsjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3:=
+Definition CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3:=
     TVars.Disjoint X1 X2 /\ TVars.Disjoint X2 X3 /\ TVars.Disjoint X3 X1 /\
     DisjointTerm X1 t2 /\ DisjointTerm X1 t3 /\
     DisjointTerm X2 t1 /\ DisjointTerm X2 t3 /\
@@ -64,7 +64,7 @@ Inductive TypeConstraint : term -> tenv -> list type -> type -> tvars -> tconst 
     TypeConstraint t1 tenv Ts T1 X1 C1 ->
     TypeConstraint t2 tenv Ts T2 X2 C2 ->
     TypeConstraint t3 tenv Ts T3 X3 C3 ->
-    CTIfDIsjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
+    CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
     C = TConst.add (T1,BoolT) (TConst.add (T2,T3) (TConst.union C1 (TConst.union C2 C3))) ->
     X = TVars.union X1 (TVars.union X2 X3) ->
     TypeConstraint (If t1 t2 t3) tenv Ts T2 X C.

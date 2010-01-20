@@ -18,7 +18,7 @@ auto.
 Qed.
 
 Lemma if_disjoint_term: forall x t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
- CTIfDIsjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
+ CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
  (TVars.In x X1 -> ~FreeTerm x t2 /\ ~FreeTerm x t3) /\
  (TVars.In x X2 -> ~FreeTerm x t1 /\ ~FreeTerm x t3) /\
  (TVars.In x X3 -> ~FreeTerm x t1 /\ ~FreeTerm x t2).
