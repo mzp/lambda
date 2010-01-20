@@ -2,14 +2,14 @@ Require Import List.
 Require Import String.
 
 Require Import Util.
+Require Import Term.
 Require Import TVar.
 Require Import TVars.
 Require Import ConstraintRule.
 
 Lemma apply_disjoint_term: forall x t1 t2 T1 T2 X1 X2 C1 C2,
   CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
-  (TVars.In x X1 -> ~FreeTerm x t2) /\
-  (TVars.In x X2 -> ~FreeTerm x t1).
+  TVars.In x X1 -> ~FreeTerm x t2.
 Proof.
 unfold CTApplyDisjoint, DisjointTerm, DisjointBy.
 intros.
@@ -17,16 +17,71 @@ decompose [and] H.
 auto.
 Qed.
 
+Lemma apply_disjoint_sym: forall t1 t2 T1 T2 X1 X2 C1 C2,
+  CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
+  CTApplyDisjoint t2 t1 T2 T1 X2 X1 C2 C1.
+Proof.
+unfold CTApplyDisjoint.
+intros.
+decompose [and] H.
+split.
+ apply TVars.disjoint_sym.
+ auto.
+
+ split; auto.
+Qed.
+
+Lemma free_apply_inv : forall x t1 t2,
+  ~ FreeTerm x t1 -> ~ FreeTerm x t2 -> ~ FreeTerm x (Apply t1 t2).
+Proof.
+intros.
+intro.
+inversion H1.
+decompose [or] H4; contradiction.
+Qed.
+
 Lemma if_disjoint_term: forall x t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
  CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
- (TVars.In x X1 -> ~FreeTerm x t2 /\ ~FreeTerm x t3) /\
- (TVars.In x X2 -> ~FreeTerm x t1 /\ ~FreeTerm x t3) /\
- (TVars.In x X3 -> ~FreeTerm x t1 /\ ~FreeTerm x t2).
+ TVars.In x X1 -> ~FreeTerm x t2 /\ ~FreeTerm x t3.
 Proof.
 unfold CTIfDisjoint,DisjointTerm,DisjointBy.
 intros.
 decompose [and] H.
 auto.
+Qed.
+
+Lemma if_disjoint_sym1: forall t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
+ CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
+ CTIfDisjoint t2 t1 t3 T2 T1 T3 X2 X1 X3 C2 C1 C3.
+Proof.
+unfold CTIfDisjoint.
+intros.
+decompose [and] H.
+repeat (split;
+        try (apply TVars.disjoint_sym);
+        auto).
+Qed.
+
+Lemma if_disjoint_sym2: forall t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
+ CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
+ CTIfDisjoint t3 t2 t1 T3 T2 T1 X3 X2 X1 C3 C2 C1.
+Proof.
+unfold CTIfDisjoint.
+intros.
+decompose [and] H.
+repeat (split;
+        try (apply TVars.disjoint_sym);
+        auto).
+Qed.
+
+Lemma free_if_inv : forall x t1 t2 t3,
+  ~ FreeTerm x t1 -> ~ FreeTerm x t2 -> ~ FreeTerm x t3 ->
+  ~ FreeTerm x (If t1 t2 t3).
+Proof.
+intros.
+intro.
+inversion H2.
+decompose [or] H5; contradiction.
 Qed.
 
 Lemma tvars_not_free : forall t X x tenv Ts S C,
@@ -62,7 +117,7 @@ apply TypeConstraint_ind; intros; auto.
  inversion H0.
 
  rewrite H7 in H8.
- apply TVars.WFact.add_iff in H8.
+ rewrite TVars.WFact.add_iff, TVars.WFact.union_iff in H8.
  decompose [or] H8.
   rewrite <- H9 in |- *.
   split.
@@ -72,69 +127,43 @@ apply TypeConstraint_ind; intros; auto.
    decompose [and] H5.
    contradiction.
 
-   intro.
-   inversion H10.
-   decompose [or] H13;
-    unfold Fresh in H5;
-    decompose [and] H5;
-    contradiction.
+   unfold Fresh in H5.
+   decompose [and] H5.
+   apply free_apply_inv; auto.
 
-  apply TVars.WFact.union_iff in H9.
-  apply (apply_disjoint_term x) in H4.
-  decompose [and] H4.
-  decompose [or] H9.
-   Dup H12.
-   apply H1 in H12.
-   apply H10 in H13.
-   decompose [and] H12.
-   split; auto.
-   intro.
-   inversion H16.
-   decompose [or] H19; contradiction.
+  apply (apply_disjoint_term x) in H4; auto.
+  apply H1 in H10.
+  decompose [and] H10.
+  split; auto.
+  apply free_apply_inv; auto.
 
-   Dup H12.
-   apply H3 in H12.
-   apply H11 in H13.
-   decompose [and] H12.
-   split; auto.
-   intro.
-   inversion H16.
-   decompose [or] H19; contradiction.
+  apply apply_disjoint_sym, (apply_disjoint_term x) in H4; auto.
+  apply H3 in H10.
+  decompose [and] H10.
+  split; auto.
+  apply free_apply_inv; auto.
 
- apply (if_disjoint_term x) in H6.
- decompose [and] H6.
  rewrite H8 in H9.
- apply TVars.WFact.union_iff in H9.
+ do 2 (rewrite TVars.WFact.union_iff in H9).
  decompose [or] H9.
-  split; try (apply H1 in H11; tauto).
-  Dup H11.
-  apply H1 in H11.
+  apply (if_disjoint_term x) in H6; auto.
+  decompose [and] H6.
+  apply H1 in H10.
+  decompose [and] H10.
+  split; auto.
+  apply free_if_inv; auto.
+
+  apply if_disjoint_sym1, (if_disjoint_term x) in H6; auto.
+  decompose [and] H6.
+  apply H3 in H11.
   decompose [and] H11.
-  apply H10 in H14.
-  decompose [and] H14.
-  intro.
-  inversion H19.
-  decompose [or] H22; contradiction.
+  split; auto.
+  apply free_if_inv; auto.
 
-  apply TVars.WFact.union_iff in H11.
-   decompose [or] H11.
-   split; (try (apply H3 in H14; tauto)).
-   Dup H14.
-   apply H3 in H14.
-   decompose [and] H14.
-   apply H12 in H15.
-   decompose [and] H15.
-   intro.
-   inversion H20.
-   decompose [or] H23; contradiction.
-
-   split; try (apply H5 in H14; tauto).
-   Dup H14.
-   apply H5 in H14.
-   decompose [and] H14.
-   apply H13 in H15.
-   decompose [and] H15.
-   intro.
-   inversion H20.
-   decompose [or] H23; contradiction.
+  apply if_disjoint_sym2, (if_disjoint_term x) in H6; auto.
+  decompose [and] H6.
+  apply H5 in H11.
+  decompose [and] H11.
+  split; auto.
+  apply free_if_inv; auto.
 Qed.
