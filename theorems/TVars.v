@@ -8,8 +8,8 @@ Require Import Sets.
 Module TVars  := Sets.Make StrDec.
 Definition tvars  := TVars.t.
 
-Definition DisjointBy {A : Type} (Free : string -> A -> Prop) xs (T : A) := forall x,
-  TVars.In x xs -> ~ Free x T /\ Free x T -> ~ TVars.In x xs.
+Definition DisjointBy {A : Type} (Free : string -> A -> Prop) xs (T : A) :=
+  (forall x, TVars.In x xs -> ~ Free x T) /\ (forall x, Free x T -> ~ TVars.In x xs).
 
 Lemma in_not_eq: forall x y X,
  ~ TVars.In x X -> TVars.In y X -> x <> y.
