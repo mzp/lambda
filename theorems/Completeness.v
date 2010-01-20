@@ -8,6 +8,7 @@ Require Import Tables.
 Require Import Sets.
 Require Import Term.
 Require Import TVars.
+Require Import TVarsFree.
 Require Import Constraint.
 Require Import ConstraintRule.
 Require Import Solution.
@@ -16,6 +17,8 @@ Require Import TSolutionInv.
 Require Import TVarsSub.
 Require Import TypeSubst.
 Require Import TypeSubstMerge.
+
+
 
 Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
   (forall Y U, ~ TVars.In Y X  ->
@@ -106,55 +109,42 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
 
  apply lambda_inv in H2.
  decompose [ex and] H2.
- apply H1 in H5.
+ apply H1 in H5; auto.
   decompose [ex and] H5.
   exists x1.
   split; auto.
   exists X0.
-  split; [ | split ]; auto.
+  repeat split; auto.
    apply CTLambda.
    tauto.
 
+   rewrite <- H10, H6, H7.
    assert (type_subst T1 x1 = type_subst T1 (x1 // X0)).
     apply sub_type_subst.
     intros.
-    apply tvars_free with (x := x2) in H0.
-        decompose [and] H0.
-        unfold FreshTs in H11.
-        apply H11.
-        apply in_eq.
+    apply tvars_not_free with (x := x3) in H0; auto.
+    decompose [and] H0.
+    unfold FreeTs in H11.
+    Contrapositive H11.
+    exists T1.
+    split; auto.
+    apply in_eq.
 
-        trivial.
-
-       trivial.
-
-      rewrite H6 in |- *.
-      rewrite H10 in |- *.
-      decompose [ex] H9.
-      decompose [and] H11.
-      rewrite H15 in |- *.
-      trivial.
-
-  trivial.
-
- exists tsubst1.
- split.
-  apply sub_empty.
-
-  exists TVars.empty.
-  split.
-   apply CTBool.
-
-   split.
-    apply Unified_empty.
-
-    inversion H0.
+    rewrite H9.
     reflexivity.
 
- apply apply_inv in H13.
- decompose [ex] H13.
- decompose [and] H15.
- apply H1 in H16.
+ exists tsubst1.
+ split; (try apply sub_empty).
+ exists TVars.empty.
+ split; (try apply CTBool).
+ split; (try (apply unified_empty)).
+ inversion H0.
+ reflexivity.
+
+ apply apply_inv in H8.
+ decompose [ex and] H8.
+(*
+ apply H1 in H11; auto.
   apply H3 in H17.
    decompose [ex] H16; decompose [ex] H17.
    decompose [and] H18; decompose [and] H19.
@@ -1651,4 +1641,4 @@ apply TypeConstraint_ind; unfold Constraint.Solution in |- *; simpl in |- *;
 
  tauto.
 Qed.
-*)*)
+*)
