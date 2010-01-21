@@ -14,6 +14,82 @@ Definition Disjoint {A : Type} (tsubst : table A) tvars := forall x,
   (Table.In x tsubst -> ~ TVars.In x tvars) /\
   (TVars.In x tvars  -> ~ Table.In x tsubst).
 
+Lemma union_disjoint_iff: forall A (m : table A) X Y,
+  Disjoint m (TVars.union X Y) <-> Disjoint m X /\ Disjoint m Y.
+Proof.
+unfold Disjoint.
+split; intros.
+ split; intros; decompose [and] (H x); split; intros.
+
+  apply H0 in H2.
+  Contrapositive H2.
+  apply <- TVars.WFact.union_iff.
+  tauto.
+
+  apply H1.
+  apply <- TVars.WFact.union_iff.
+  tauto.
+
+  apply H0 in H2.
+  Contrapositive H2.
+  apply <- TVars.WFact.union_iff.
+  tauto.
+
+  apply H1.
+  apply <- TVars.WFact.union_iff.
+  tauto.
+
+ decompose [and] H.
+ decompose [and] (H0 x).
+ decompose [and] (H1 x).
+ split; intros.
+  intro.
+  apply TVars.WFact.union_iff in H7.
+  decompose [or] H7;
+   [ apply H2 in H6 | apply H4 in H6];
+   contradiction.
+
+  intro.
+  apply TVars.WFact.union_iff in H6.
+  decompose [or] H6;
+   [apply H3 in H8 | apply H5 in H8 ];
+   contradiction.
+Qed.
+
+Lemma add_disjoint_iff: forall A (m : table A) x X,
+  Disjoint m (TVars.add x X) <-> ~ Table.In x m /\ Disjoint m X.
+Proof.
+intros.
+rewrite TVars.add_union.
+split; intros.
+ apply union_disjoint_iff in H.
+ decompose [and] H.
+ split; auto.
+ unfold Disjoint in H0.
+ specialize (H0 x).
+ decompose [and] H0.
+ apply H3.
+ apply <- TVars.WFact.singleton_iff.
+ reflexivity.
+
+ apply <- union_disjoint_iff.
+ decompose [and] H.
+ split; auto.
+ unfold Disjoint in H1.
+ unfold Disjoint.
+ intros.
+ split; intros.
+ decompose [and] (H1 x0).
+  intro.
+  apply TVars.WFact.singleton_iff in H5.
+  rewrite <- H5 in H2.
+  contradiction.
+
+  apply TVars.WFact.singleton_iff in H2.
+  rewrite <- H2.
+  assumption.
+Qed.
+
 Lemma sub_empty : forall A (tsubst : table A),
   tsubst = tsubst // TVars.empty.
 Proof.
