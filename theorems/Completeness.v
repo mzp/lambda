@@ -7,6 +7,7 @@ Require Import Util.
 Require Import Tables.
 Require Import Sets.
 Require Import Term.
+Require Import TVar.
 Require Import TVars.
 Require Import TVarsFree.
 Require Import Constraint.
@@ -81,6 +82,77 @@ split; [ idtac | split; [ idtac | split ] ]; intros; try (split; intro MH).
  tauto.
 Qed.
 
+Lemma not_in_sub : forall A (m' m : table A) X,
+  Disjoint m X ->
+  (forall Y U, ~ TVars.In Y X  ->
+    (Table.MapsTo Y U m <-> Table.MapsTo Y U m')) ->
+  m = m' // X.
+Proof.
+intros.
+apply Extensionality_Table.
+apply <- TableWF.Equal_mapsto_iff.
+intros.
+unfold sub.
+specialize (H0 k e).
+split; intros.
+ unfold Disjoint in H.
+ decompose [and] (H k).
+ destruct (TVars.WProp.In_dec k X).
+  assert (Table.In k m).
+   unfold Table.In, Table.Raw.PX.In in |- *.
+   exists e.
+   tauto.
+
+   apply H2 in H4.
+   contradiction.
+
+  apply <- filter_iff.
+  split; auto.
+  apply H0 in n.
+  apply n in H1.
+  assumption.
+
+ apply filter_iff in H1.
+ decompose [and] H1.
+ apply H0 in H3.
+ apply H3 in H2.
+ assumption.
+Qed.
+(*
+Lemma x_subst_eq: forall s X X1 tsubst tsubst1 T,
+  (forall Y U, ~ TVars.In Y X  ->
+    (Table.MapsTo Y U tsubst <-> Table.MapsTo Y U s)) ->
+  (forall Y U,   TVars.In Y X1 ->
+    (Table.MapsTo Y U tsubst1 <-> Table.MapsTo Y U s)) ->
+  (forall x, FreeT x T -> ~ TVars.In x X1 -> ~ TVars.In x X) ->
+  tsubst = tsubst1 // X1 ->
+  type_subst T s = type_subst T tsubst1.
+Proof.
+intros.
+induction T; intros; simpl in |- *; auto.
+ destruct (TVars.WProp.In_dec s0 X).
+  apply H in i.
+  inversion i.
+  tauto.
+
+  apply sub_find with (A:=type) (tsubst:=tsubst2) in n.
+  rewrite <- n in |- *.
+  rewrite H0 in |- *.
+  reflexivity.
+
+ apply fun_fresh_inv in H.
+ decompose [and] H.
+ apply (IHT1 _ tsubst1 tsubst2) in H1.
+  apply (IHT2 _ tsubst1 tsubst2) in H2.
+   rewrite H1 in |- *.
+   rewrite H2 in |- *.
+   reflexivity.
+
+   trivial.
+
+  trivial.
+*)
+
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
   TypeConstraint t tenv Ts S X C ->
   TSolution tsubst1 T tenv t ->
@@ -142,24 +214,41 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
  apply apply_inv in H8.
  decompose [ex and] H8.
  rewrite H7 in H9.
+ Dup H9.
  apply add_disjoint_iff in H9.
  rewrite union_disjoint_iff in H9.
  decompose [and] H9.
  apply H1 in H11; auto.
  apply H3 in H12; auto.
+ decompose [ex and] H11.
+ decompose [ex and] H12.
+ assert (exists s,
+       ApplyMaps s (TVars.add x (TVars.union X1 X2)) X1 X2 tsubst1 x1 x3 x T0).
+  unfold CTApplyDisjoint in H4.
+  decompose [and] H4.
+  unfold Fresh in H5.
+  decompose [and] H5.
+  apply ex_ApplyMaps; auto; intros;
+   rewrite TVars.WFact.add_iff, TVars.WFact.union_iff;
+   tauto.
+
+   decompose [ex] H23.
+   exists x5.
+   split.
+    unfold ApplyMaps in H25.
+    decompose [and] H25.
+    rewrite H7.
+    apply not_in_sub; auto.
+
+    exists (TVars.add x (TVars.union X1 X2)).
+    repeat split.
+     apply (CTApply _ _ _ T1 T2 _ _ _ X1 X2 C1 C2); auto.
+
+     rewrite H6.
+     rewrite unified_add_iff, <- unified_union_iff.
+     repeat split.
+      rewrite  H20.
 (*
- apply H1 in H11; auto.
-
-   decompose [ex] H16; decompose [ex] H17.
-   decompose [and] H18; decompose [and] H19.
-   assert
-    (exists s : _,
-       ApplyTSubst s (TVars.add x (TVars.union X1 X2)) X1 X2 tsubst1 x1 x2 x
-         T0).
-    unfold Fresh in H11.
-    decompose [and] H11.
-    apply ex_ApplyTSubst; trivial.
-
     decompose [ex] H24.
     exists x3.
     split.
