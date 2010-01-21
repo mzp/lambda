@@ -118,40 +118,64 @@ split; intros.
  apply H3 in H2.
  assumption.
 Qed.
-(*
-Lemma x_subst_eq: forall s X X1 tsubst tsubst1 T,
+
+Lemma disjoint_fun_inv: forall X T1 T2,
+  DisjointT X (FunT T1 T2) ->
+  DisjointT X T1 /\ DisjointT X T2.
+Proof.
+unfold DisjointT, DisjointBy.
+intros.
+decompose [and] H.
+repeat split; intros.
+ apply H0 in H2.
+ Contrapositive H2.
+ apply FFunT.
+ tauto.
+
+ apply H1.
+ apply FFunT.
+ tauto.
+
+ apply H0 in H2.
+ Contrapositive H2.
+ apply FFunT.
+ tauto.
+
+ apply H1.
+ apply FFunT.
+ tauto.
+Qed.
+
+Lemma disjoint_subst: forall T m' m X,
   (forall Y U, ~ TVars.In Y X  ->
-    (Table.MapsTo Y U tsubst <-> Table.MapsTo Y U s)) ->
-  (forall Y U,   TVars.In Y X1 ->
-    (Table.MapsTo Y U tsubst1 <-> Table.MapsTo Y U s)) ->
-  (forall x, FreeT x T -> ~ TVars.In x X1 -> ~ TVars.In x X) ->
-  tsubst = tsubst1 // X1 ->
-  type_subst T s = type_subst T tsubst1.
+    (Table.MapsTo Y U m <-> Table.MapsTo Y U m')) ->
+  DisjointT X T ->
+  m' = m // X ->
+  type_subst T m' = type_subst T m.
 Proof.
 intros.
-induction T; intros; simpl in |- *; auto.
- destruct (TVars.WProp.In_dec s0 X).
-  apply H in i.
-  inversion i.
+induction T; intros; auto.
+ unfold DisjointT, DisjointBy in H0.
+ decompose [and] H0.
+ destruct (TVars.WProp.In_dec s X).
+  apply H2 in i.
+  assert False; try contradiction.
+  apply i.
+  apply FVarT.
+
+  apply mapsto_type_subst.
+  intros.
+  apply H with (U:=U) in n.
   tauto.
 
-  apply sub_find with (A:=type) (tsubst:=tsubst2) in n.
-  rewrite <- n in |- *.
-  rewrite H0 in |- *.
-  reflexivity.
-
- apply fun_fresh_inv in H.
- decompose [and] H.
- apply (IHT1 _ tsubst1 tsubst2) in H1.
-  apply (IHT2 _ tsubst1 tsubst2) in H2.
-   rewrite H1 in |- *.
-   rewrite H2 in |- *.
-   reflexivity.
-
-   trivial.
-
-  trivial.
-*)
+ apply disjoint_fun_inv in H0.
+ decompose [and] H0.
+ apply IHT1 in H2.
+ apply IHT2 in H3.
+ simpl.
+ rewrite H2, H3.
+ reflexivity.
+Qed.
 
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
   TypeConstraint t tenv Ts S X C ->
