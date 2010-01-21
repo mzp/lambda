@@ -18,8 +18,6 @@ Require Import TVarsSub.
 Require Import TypeSubst.
 Require Import TypeSubstMerge.
 
-
-
 Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
   (forall Y U, ~ TVars.In Y X  ->
     (Table.MapsTo Y U m <-> Table.MapsTo Y U m')) /\
@@ -143,9 +141,15 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
 
  apply apply_inv in H8.
  decompose [ex and] H8.
+ rewrite H7 in H9.
+ apply add_disjoint_iff in H9.
+ rewrite union_disjoint_iff in H9.
+ decompose [and] H9.
+ apply H1 in H11; auto.
+ apply H3 in H12; auto.
 (*
  apply H1 in H11; auto.
-  apply H3 in H17.
+
    decompose [ex] H16; decompose [ex] H17.
    decompose [and] H18; decompose [and] H19.
    assert
