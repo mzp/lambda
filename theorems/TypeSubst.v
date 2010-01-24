@@ -32,35 +32,6 @@ Fixpoint term_subst t tsubst :=
      If (term_subst t1 tsubst) (term_subst t2 tsubst) (term_subst t3 tsubst)
   end.
 
-Lemma mapsto_type_subst: forall x tsubst1 tsubst2,
- (forall U, Table.MapsTo x U tsubst1 <-> Table.MapsTo x U tsubst2) ->
- type_subst (VarT x) tsubst1 = type_subst (VarT x) tsubst2.
-Proof.
-intros; simpl.
-destruct (TableWF.In_dec tsubst1 x).
- UnfoldIn i.
- Dup H0.
- apply H in H0.
- apply TableWF.find_mapsto_iff in H0.
- apply TableWF.find_mapsto_iff in H1.
- rewrite H0,H1 in |- *.
- reflexivity.
-
- assert (~ Table.In (elt:=type) x tsubst2).
-  Contrapositive n.
-  UnfoldIn H0.
-  unfold Table.In, Table.Raw.PX.In in |- *.
-  exists x0.
-  apply <- H.
-  tauto.
-
-  apply TableWF.not_find_mapsto_iff in n.
-  apply TableWF.not_find_mapsto_iff in H0.
-  rewrite n,H0 in |- *.
-  reflexivity.
-Qed.
-
-
 (*Lemma add_eq : forall x T tenv tsubst,
   (Table.add x (type_subst T tsubst) (tenv_subst tenv tsubst)) = (tenv_subst (Table.add x T tenv) tsubst).
 Proof.
