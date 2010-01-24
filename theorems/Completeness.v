@@ -19,6 +19,88 @@ Require Import TVarsSub.
 Require Import TypeSubst.
 Require Import TypeSubstMerge.
 
+Lemma mapsto_var_type_subst: forall x tsubst1 tsubst2,
+ (forall U, (Table.MapsTo x U tsubst1 <-> Table.MapsTo x U tsubst2)) ->
+ type_subst (VarT x) tsubst1 = type_subst (VarT x) tsubst2.
+Proof.
+intros; simpl.
+destruct (TableWF.In_dec tsubst1 x).
+ UnfoldIn i.
+ Dup H0.
+ apply H in H0.
+ apply TableWF.find_mapsto_iff in H0.
+ apply TableWF.find_mapsto_iff in H1.
+ rewrite H0,H1 in |- *.
+ reflexivity.
+
+ assert (~ Table.In (elt:=type) x tsubst2).
+  Contrapositive n.
+  UnfoldIn H0.
+  unfold Table.In, Table.Raw.PX.In in |- *.
+  exists x0.
+  apply <- H.
+  tauto.
+
+  apply TableWF.not_find_mapsto_iff in n.
+  apply TableWF.not_find_mapsto_iff in H0.
+  rewrite n,H0 in |- *.
+  reflexivity.
+Qed.
+
+Lemma free_mapsto_type_subst: forall T m1 m2,
+  (forall k e, FreeT k T -> (Table.MapsTo k e m1 <-> Table.MapsTo k e m2)) ->
+  type_subst T m1 = type_subst T m2.
+Proof.
+induction T; intros; auto.
+ intros.
+ apply mapsto_var_type_subst.
+ intros.
+ apply H.
+ apply FVarT.
+
+ simpl.
+ rewrite IHT1 with (m2:=m2), IHT2 with (m2:=m2); intros.
+  reflexivity.
+
+  apply H.
+  apply FFunT.
+  tauto.
+
+  apply H.
+  apply FFunT.
+  tauto.
+Qed.
+
+Lemma free_mapsto_eq: forall A T (m' m1 m2 : table A) X1 X2 k e,
+  (forall x, FreeT x T -> ~ TVars.In x X2 -> ~ TVars.In x X1) ->
+  (forall k e, ~ TVars.In k X1  ->
+    (Table.MapsTo k e m1 <-> Table.MapsTo k e m')) ->
+  (forall k e, TVars.In k X2 ->
+    (Table.MapsTo k e m2 <-> Table.MapsTo k e m')) ->
+  m1 = m2 // X2 ->
+  FreeT k T ->
+  (Table.MapsTo k e m' <-> Table.MapsTo k e m2).
+Proof.
+intros.
+destruct (TVars.WProp.In_dec k X2); intros.
+ apply (H1 _ e) in i.
+ apply iff_sym.
+ assumption.
+
+ split; intros.
+  rewrite <- (sub_mapsto _ _ _ X2), <- H2; auto.
+  apply H in H3; auto.
+  apply (H0 _ e) in H3.
+  apply H3.
+  assumption.
+
+  rewrite <- (sub_mapsto _ _ _ X2), <- H2 in H4; auto.
+  apply H in H3; auto.
+  apply (H0 _ e) in H3.
+  apply H3.
+  assumption.
+Qed.
+
 Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
   (forall Y U, ~ TVars.In Y X  ->
     (Table.MapsTo Y U m <-> Table.MapsTo Y U m')) /\
@@ -163,7 +245,7 @@ induction T; intros; auto.
   apply i.
   apply FVarT.
 
-  apply mapsto_type_subst.
+  apply mapsto_var_type_subst.
   intros.
   apply H with (U:=U) in n.
   tauto.
@@ -175,6 +257,16 @@ induction T; intros; auto.
  simpl.
  rewrite H2, H3.
  reflexivity.
+Qed.
+
+Lemma CTApplyDisjoint_DisjointT: forall t1 t2 T1 T2 X1 X2 C1 C2,
+   CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
+   DisjointT X2 T1.
+Proof.
+intros.
+unfold CTApplyDisjoint in H.
+decompose [and] H.
+tauto.
 Qed.
 
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
@@ -213,7 +305,11 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
    tauto.
 
    rewrite <- H10, H6, H7.
-   assert (type_subst T1 x1 = type_subst T1 (x1 // X0)).
+   cut (type_subst T1 x1 = type_subst T1 (x1 // X0)).
+    intros.
+    rewrite H9.
+    reflexivity.
+
     apply sub_type_subst.
     intros.
     apply tvars_not_free with (x := x3) in H0; auto.
@@ -223,9 +319,6 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
     exists T1.
     split; auto.
     apply in_eq.
-
-    rewrite H9.
-    reflexivity.
 
  exists tsubst1.
  split; (try apply sub_empty).
@@ -271,7 +364,31 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
      rewrite H6.
      rewrite unified_add_iff, <- unified_union_iff.
      repeat split.
-      rewrite  H20.
+     assert (type_subst T1 x5 = type_subst T1 x1).
+      apply free_mapsto_type_subst.
+      intros.
+      apply (free_mapsto_eq _ T1 _ tsubst1 _ (TVars.add x (TVars.union X1 X2)) X1);
+       (try (unfold ApplyMaps in H25;
+             decompose [and] H25;
+             tauto)).
+      intros.
+      Contrapositive H28.
+      rewrite TVars.WFact.add_iff, TVars.WFact.union_iff in H29.
+      decompose [or] H29.
+       rewrite <- H30 in H27.
+       unfold Fresh in H5.
+       decompose [and] H5.
+       contradiction.
+
+       assumption.
+
+       apply CTApplyDisjoint_DisjointT in H4.
+       unfold DisjointT,DisjointBy in H4.
+       decompose [and] H4.
+       apply H32 in H27.
+       contradiction.
+
+
 (*
     decompose [ex] H24.
     exists x3.
