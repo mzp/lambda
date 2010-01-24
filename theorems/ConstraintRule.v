@@ -31,6 +31,40 @@ Definition CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 :=
     DisjointTerm X1 t2   /\ DisjointTerm X2 t1 /\
     DisjointC X1 C2      /\ DisjointC X2 C1.
 
+Lemma apply_disjoint_term: forall x t1 t2 T1 T2 X1 X2 C1 C2,
+  CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
+  TVars.In x X1 -> ~FreeTerm x t2.
+Proof.
+unfold CTApplyDisjoint, DisjointTerm, DisjointBy.
+intros.
+decompose [and] H.
+auto.
+Qed.
+
+Lemma apply_disjoint_t: forall t1 t2 T1 T2 X1 X2 C1 C2,
+   CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
+   DisjointT X2 T1.
+Proof.
+intros.
+unfold CTApplyDisjoint in H.
+decompose [and] H.
+tauto.
+Qed.
+
+Lemma apply_disjoint_sym: forall t1 t2 T1 T2 X1 X2 C1 C2,
+  CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
+  CTApplyDisjoint t2 t1 T2 T1 X2 X1 C2 C1.
+Proof.
+unfold CTApplyDisjoint.
+intros.
+decompose [and] H.
+split.
+ apply TVars.disjoint_sym.
+ auto.
+
+ split; auto.
+Qed.
+
 Definition CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3:=
     TVars.Disjoint X1 X2 /\ TVars.Disjoint X2 X3 /\ TVars.Disjoint X3 X1 /\
     DisjointTerm X1 t2 /\ DisjointTerm X1 t3 /\
@@ -42,6 +76,40 @@ Definition CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3:=
     DisjointT X1 T2 /\ DisjointT X1 T3 /\
     DisjointT X2 T1 /\ DisjointT X2 T3 /\
     DisjointT X3 T1 /\ DisjointT X3 T2.
+
+Lemma if_disjoint_term: forall x t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
+ CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
+ TVars.In x X1 -> ~FreeTerm x t2 /\ ~FreeTerm x t3.
+Proof.
+unfold CTIfDisjoint,DisjointTerm,DisjointBy.
+intros.
+decompose [and] H.
+auto.
+Qed.
+
+Lemma if_disjoint_sym1: forall t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
+ CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
+ CTIfDisjoint t2 t1 t3 T2 T1 T3 X2 X1 X3 C2 C1 C3.
+Proof.
+unfold CTIfDisjoint.
+intros.
+decompose [and] H.
+repeat (split;
+        try (apply TVars.disjoint_sym);
+        auto).
+Qed.
+
+Lemma if_disjoint_sym2: forall t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
+ CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
+ CTIfDisjoint t3 t2 t1 T3 T2 T1 X3 X2 X1 C3 C2 C1.
+Proof.
+unfold CTIfDisjoint.
+intros.
+decompose [and] H.
+repeat (split;
+        try (apply TVars.disjoint_sym);
+        auto).
+Qed.
 
 Inductive TypeConstraint : term -> tenv -> list type -> type -> tvars -> tconst -> Prop :=
   CTVar : forall s tenv Ts T,

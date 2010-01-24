@@ -7,30 +7,6 @@ Require Import TVar.
 Require Import TVars.
 Require Import ConstraintRule.
 
-Lemma apply_disjoint_term: forall x t1 t2 T1 T2 X1 X2 C1 C2,
-  CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
-  TVars.In x X1 -> ~FreeTerm x t2.
-Proof.
-unfold CTApplyDisjoint, DisjointTerm, DisjointBy.
-intros.
-decompose [and] H.
-auto.
-Qed.
-
-Lemma apply_disjoint_sym: forall t1 t2 T1 T2 X1 X2 C1 C2,
-  CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
-  CTApplyDisjoint t2 t1 T2 T1 X2 X1 C2 C1.
-Proof.
-unfold CTApplyDisjoint.
-intros.
-decompose [and] H.
-split.
- apply TVars.disjoint_sym.
- auto.
-
- split; auto.
-Qed.
-
 Lemma free_apply_inv : forall x t1 t2,
   ~ FreeTerm x t1 -> ~ FreeTerm x t2 -> ~ FreeTerm x (Apply t1 t2).
 Proof.
@@ -38,40 +14,6 @@ intros.
 intro.
 inversion H1.
 decompose [or] H4; contradiction.
-Qed.
-
-Lemma if_disjoint_term: forall x t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
- CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
- TVars.In x X1 -> ~FreeTerm x t2 /\ ~FreeTerm x t3.
-Proof.
-unfold CTIfDisjoint,DisjointTerm,DisjointBy.
-intros.
-decompose [and] H.
-auto.
-Qed.
-
-Lemma if_disjoint_sym1: forall t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
- CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
- CTIfDisjoint t2 t1 t3 T2 T1 T3 X2 X1 X3 C2 C1 C3.
-Proof.
-unfold CTIfDisjoint.
-intros.
-decompose [and] H.
-repeat (split;
-        try (apply TVars.disjoint_sym);
-        auto).
-Qed.
-
-Lemma if_disjoint_sym2: forall t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3,
- CTIfDisjoint t1 t2 t3 T1 T2 T3 X1 X2 X3 C1 C2 C3 ->
- CTIfDisjoint t3 t2 t1 T3 T2 T1 X3 X2 X1 C3 C2 C1.
-Proof.
-unfold CTIfDisjoint.
-intros.
-decompose [and] H.
-repeat (split;
-        try (apply TVars.disjoint_sym);
-        auto).
 Qed.
 
 Lemma free_if_inv : forall x t1 t2 t3,

@@ -259,14 +259,24 @@ induction T; intros; auto.
  reflexivity.
 Qed.
 
-Lemma CTApplyDisjoint_DisjointT: forall t1 t2 T1 T2 X1 X2 C1 C2,
-   CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
-   DisjointT X2 T1.
+Lemma in_apply_union: forall x T y X1 X2,
+  FreeT x T -> DisjointT X2 T ->
+  ~ FreeT y T ->
+  ~ TVars.In x X1 -> ~ TVars.In x (TVars.add y (TVars.union X1 X2)).
 Proof.
 intros.
-unfold CTApplyDisjoint in H.
-decompose [and] H.
-tauto.
+Contrapositive H2.
+rewrite TVars.WFact.add_iff, TVars.WFact.union_iff in H3.
+decompose [or] H3.
+ rewrite <- H4 in H.
+ contradiction.
+
+ assumption.
+
+ unfold DisjointT,DisjointBy in H0.
+ decompose [and] H0.
+ apply H4 in H5.
+ contradiction.
 Qed.
 
 Theorem completeness: forall t tenv Ts S T X C tsubst1,
@@ -351,19 +361,27 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
 
    decompose [ex] H23.
    exists x5.
-   split.
+   assert (type_subst (VarT x) x5 = T0).
+    simpl.
     unfold ApplyMaps in H25.
     decompose [and] H25.
-    rewrite H7.
-    apply not_in_sub; auto.
+    apply TableWF.find_mapsto_iff in H30.
+    rewrite H30.
+    reflexivity.
 
-    exists (TVars.add x (TVars.union X1 X2)).
-    repeat split.
+    split.
+     unfold ApplyMaps in H25.
+     decompose [and] H25.
+     rewrite H7.
+     apply not_in_sub; auto.
+
+     exists (TVars.add x (TVars.union X1 X2)).
+     repeat split; auto.
      apply (CTApply _ _ _ T1 T2 _ _ _ X1 X2 C1 C2); auto.
 
      rewrite H6.
      rewrite unified_add_iff, <- unified_union_iff.
-     repeat split.
+     repeat split; auto.
      assert (type_subst T1 x5 = type_subst T1 x1).
       apply free_mapsto_type_subst.
       intros.
@@ -372,23 +390,36 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
              decompose [and] H25;
              tauto)).
       intros.
-      Contrapositive H28.
-      rewrite TVars.WFact.add_iff, TVars.WFact.union_iff in H29.
-      decompose [or] H29.
-       rewrite <- H30 in H27.
+      apply (in_apply_union _ T1); auto.
+       apply apply_disjoint_t in H4.
+       tauto.
+
        unfold Fresh in H5.
        decompose [and] H5.
-       contradiction.
+       tauto.
 
-       assumption.
+      assert (type_subst T2 x5 = type_subst T2 x3).
+       apply free_mapsto_type_subst.
+       intros.
+       apply (free_mapsto_eq _ T2 _ tsubst1 _ (TVars.add x (TVars.union X1 X2)) X2);
+        (try (unfold ApplyMaps in H25;
+              decompose [and] H25;
+              tauto)).
+       intros.
+       rewrite TVars.union_sym.
+       apply  apply_disjoint_sym in H4.
+       apply (in_apply_union _ T2); auto.
+        apply apply_disjoint_t in H4.
+        tauto.
 
-       apply CTApplyDisjoint_DisjointT in H4.
-       unfold DisjointT,DisjointBy in H4.
-       decompose [and] H4.
-       apply H32 in H27.
-       contradiction.
+        unfold Fresh in H5.
+        decompose [and] H5.
+        tauto.
 
-
+       simpl.
+       simpl in H26.
+       rewrite H26, H27, H28, <- H20, <- H24.
+       reflexivity.
 (*
     decompose [ex] H24.
     exists x3.
