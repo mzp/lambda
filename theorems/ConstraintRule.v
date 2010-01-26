@@ -48,7 +48,17 @@ Proof.
 intros.
 unfold CTApplyDisjoint in H.
 decompose [and] H.
-tauto.
+assumption.
+Qed.
+
+Lemma apply_disjoint_c: forall t1 t2 T1 T2 X1 X2 C1 C2,
+   CTApplyDisjoint t1 t2 T1 T2 X1 X2 C1 C2 ->
+   DisjointC X2 C1.
+Proof.
+intros.
+unfold CTApplyDisjoint in H.
+decompose [and] H.
+assumption.
 Qed.
 
 Lemma apply_disjoint_sym: forall t1 t2 T1 T2 X1 X2 C1 C2,
