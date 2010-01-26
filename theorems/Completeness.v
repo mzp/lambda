@@ -297,9 +297,9 @@ induction T; intros; auto.
  reflexivity.
 Qed.
 
-Lemma in_apply_union: forall x T y X1 X2,
-  FreeT x T -> DisjointT X2 T ->
-  ~ FreeT y T ->
+Lemma in_apply_union: forall A (Free : string -> A -> Prop) (T : A) x y X1 X2,
+  Free x T -> DisjointBy Free X2 T ->
+  ~ Free y T ->
   ~ TVars.In x X1 -> ~ TVars.In x (TVars.add y (TVars.union X1 X2)).
 Proof.
 intros.
@@ -311,7 +311,7 @@ decompose [or] H3.
 
  assumption.
 
- unfold DisjointT,DisjointBy in H0.
+ unfold DisjointBy in H0.
  decompose [and] H0.
  apply H4 in H5.
  contradiction.
@@ -428,7 +428,7 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
              decompose [and] H25;
              tauto)).
       intros.
-      apply (in_apply_union _ T1); auto.
+      apply (in_apply_union _ FreeT T1); auto.
        apply apply_disjoint_t in H4.
        tauto.
 
@@ -446,7 +446,7 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
        intros.
        rewrite TVars.union_sym.
        apply  apply_disjoint_sym in H4.
-       apply (in_apply_union _ T2); auto.
+       apply (in_apply_union _ FreeT T2); auto.
         apply apply_disjoint_t in H4.
         tauto.
 
@@ -464,7 +464,29 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
               decompose [and] H25;
               tauto)).
      intros.
-     apply (in_apply_union _ x7); auto.
+     apply (in_apply_union _ FreeC C1); auto.
+      apply apply_disjoint_c in H4.
+      tauto.
+
+      unfold Fresh in H5.
+      decompose [and] H5.
+      tauto.
+
+     apply (free_unified _ tsubst1 x3 (TVars.add x (TVars.union X1 X2)) X2);
+        (try (unfold ApplyMaps in H25;
+              decompose [and] H25;
+              tauto)).
+     intros.
+     rewrite TVars.union_sym.
+     apply  apply_disjoint_sym in H4.
+     apply (in_apply_union _ FreeC C2); auto.
+      apply apply_disjoint_c in H4.
+      assumption.
+
+      unfold Fresh in H5.
+      decompose [and] H5.
+      assumption.
+
 
 Lemma free_unified: forall m' m1 m2 X1 X2 C,
 unfold Unified.
