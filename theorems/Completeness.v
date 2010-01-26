@@ -109,8 +109,35 @@ Lemma free_unified: forall m' m1 m2 X1 X2 C,
     (Table.MapsTo k e m2 <-> Table.MapsTo k e m')) ->
   m1 = m2 // X2 ->
   Unified C m2 -> Unified C m'.
+Proof.
+unfold Unified.
+intros.
+assert (type_subst S m' = type_subst S m2).
+ apply free_mapsto_type_subst.
+ intros.
+ apply (free_mapsto _ S _ m1 _ X1 X2); auto.
+ intros.
+ apply H; auto.
+ unfold FreeC.
+ exists S.
+ exists T.
+ tauto.
 
+ assert (type_subst T m' = type_subst T m2).
+  apply free_mapsto_type_subst.
+  intros.
+  apply (free_mapsto _ T _ m1 _ X1 X2); auto.
+  intros.
+  apply H; auto.
+  unfold FreeC.
+  exists S.
+  exists T.
+  tauto.
 
+  rewrite H5, H6.
+  apply H3.
+  assumption.
+Qed.
 
 Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
   (forall Y U, ~ TVars.In Y X  ->
@@ -431,6 +458,15 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
        simpl in H26.
        rewrite H26, H27, H28, <- H20, <- H24.
        reflexivity.
+
+     apply (free_unified _ tsubst1 x1 (TVars.add x (TVars.union X1 X2)) X1);
+        (try (unfold ApplyMaps in H25;
+              decompose [and] H25;
+              tauto)).
+     intros.
+     apply (in_apply_union _ x7); auto.
+
+Lemma free_unified: forall m' m1 m2 X1 X2 C,
 unfold Unified.
 intros.
 unfold Unified in H14.

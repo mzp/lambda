@@ -19,8 +19,8 @@ Open Scope const_scope.
 Infix "∪" := TConst.union (at level 50) : const_scope.
 Close Scope  const_scope.
 
-Definition FreeC x c := forall S T,
-  TConst.In (S,T) c -> FreeT x S \/ FreeT x T.
+Definition FreeC x c := exists S, exists T,
+  TConst.In (S,T) c /\ (FreeT x S \/ FreeT x T).
 
 Definition Unified (c : tconst) (t : tsubst) := forall S T,
   TConst.In (S,T) c -> type_subst S t = type_subst T t.
