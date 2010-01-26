@@ -71,7 +71,7 @@ induction T; intros; auto.
   tauto.
 Qed.
 
-Lemma free_mapsto_eq: forall A T (m' m1 m2 : table A) X1 X2 k e,
+Lemma free_mapsto: forall A T (m' m1 m2 : table A) X1 X2 k e,
   (forall x, FreeT x T -> ~ TVars.In x X2 -> ~ TVars.In x X1) ->
   (forall k e, ~ TVars.In k X1  ->
     (Table.MapsTo k e m1 <-> Table.MapsTo k e m')) ->
@@ -100,6 +100,17 @@ destruct (TVars.WProp.In_dec k X2); intros.
   apply H3.
   assumption.
 Qed.
+
+Lemma free_unified: forall m' m1 m2 X1 X2 C,
+  (forall x, FreeC x C -> ~ TVars.In x X2 -> ~ TVars.In x X1) ->
+  (forall k e, ~ TVars.In k X1  ->
+    (Table.MapsTo k e m1 <-> Table.MapsTo k e m')) ->
+  (forall k e,   TVars.In k X2 ->
+    (Table.MapsTo k e m2 <-> Table.MapsTo k e m')) ->
+  m1 = m2 // X2 ->
+  Unified C m2 -> Unified C m'.
+
+
 
 Definition ApplyMaps {A : Type} m' X X1 X2 (m m1 m2 : table A) x T :=
   (forall Y U, ~ TVars.In Y X  ->
@@ -385,7 +396,7 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
      assert (type_subst T1 x5 = type_subst T1 x1).
       apply free_mapsto_type_subst.
       intros.
-      apply (free_mapsto_eq _ T1 _ tsubst1 _ (TVars.add x (TVars.union X1 X2)) X1);
+      apply (free_mapsto _ T1 _ tsubst1 _ (TVars.add x (TVars.union X1 X2)) X1);
        (try (unfold ApplyMaps in H25;
              decompose [and] H25;
              tauto)).
@@ -401,7 +412,7 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
       assert (type_subst T2 x5 = type_subst T2 x3).
        apply free_mapsto_type_subst.
        intros.
-       apply (free_mapsto_eq _ T2 _ tsubst1 _ (TVars.add x (TVars.union X1 X2)) X2);
+       apply (free_mapsto _ T2 _ tsubst1 _ (TVars.add x (TVars.union X1 X2)) X2);
         (try (unfold ApplyMaps in H25;
               decompose [and] H25;
               tauto)).
@@ -420,6 +431,10 @@ apply TypeConstraint_ind; unfold CSolution in |- *; simpl in |- *; intros; auto.
        simpl in H26.
        rewrite H26, H27, H28, <- H20, <- H24.
        reflexivity.
+unfold Unified.
+intros.
+unfold Unified in H14.
+apply H14 in H27.
 (*
     decompose [ex] H24.
     exists x3.
