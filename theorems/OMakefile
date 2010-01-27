@@ -29,7 +29,7 @@ FILES[] =
 	TSolutionInv
 	CSolutionInv
 	Soundness
-#	Completeness
+	Completeness
 
 .DEFAULT: $(CoqProof $(FILES))
 
