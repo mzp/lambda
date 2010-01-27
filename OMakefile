@@ -1,9 +1,7 @@
-
-.SUBDIRS : theorems
-
 .DEFAULT:
 
 .PHONY: clean doc
+.SUBDIRS : theorems
 
 doc:
 	mkdir -p doc
